@@ -18,20 +18,21 @@ func newTestApp(t *testing.T) *App {
 	t.Helper()
 	dir := t.TempDir()
 	cfg := &Config{
-		AdminPassword:   "testpass",
-		AuthSecret:      "testpass",
-		OpenRouterKey:   "",
-		OpenRouterModel: "google/gemini-2.5-flash",
-		OpenRouterBase:  "https://openrouter.ai/api/v1",
-		WebDir:          filepath.Join("..", "web"),
-		OtherDir:        dir,
-		Port:            "0",
+		AdminPassword:        "testpass",
+		AuthSecret:           "testpass",
+		OpenRouterKeys:       []string{},
+		OpenRouterTextModel:  "google/gemini-2.5-flash",
+		OpenRouterImageModel: "google/gemini-2.5-flash-image",
+		OpenRouterBase:       "https://openrouter.ai/api/v1",
+		WebDir:               filepath.Join("..", "web"),
+		OtherDir:             dir,
+		Port:                 "0",
 	}
 	store, err := storage.New(dir, "", "")
 	if err != nil {
 		t.Fatalf("storage.New: %v", err)
 	}
-	return &App{cfg: cfg, store: store}
+	return &App{cfg: cfg, store: store, or: newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.OpenRouterBase)}
 }
 
 func authCookie(cfg *Config) *http.Cookie {

@@ -13,18 +13,33 @@ func main() {
 	if err != nil {
 		log.Fatalf("storage init: %v", err)
 	}
-	app := &App{cfg: cfg, store: store}
-
-	if cfg.AdminPassword == "" || cfg.AdminPassword == "changeme" {
-		log.Printf("WARNING: ADMIN_PASSWORD is default/empty — set a real one in .env")
+	app := &App{
+		cfg:   cfg,
+		store: store,
+		or:    newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.OpenRouterBase),
 	}
-	if cfg.AzureConnString == "" {
+
+	if cfg.AdminPassword == "" {
+		log.Print("WARNING: ADMIN_PASSWORD not set — login disabled effectively")
+	}
+	if len(cfg.OpenRouterKeys) == 0 {
+		log.Print("WARNING: OPENROUTER_API_KEY not set")
+	}
+	if cfg.AzureConnString != "" {
+		log.Printf("Azure storage enabled (container=%s)", cfg.AzureContainer)
+	} else {
 		log.Printf("WARNING: using local storage at %s (Azure not configured)", cfg.OtherDir)
 	}
-
-	mux := app.routes()
-	log.Printf("Animation Assistant listening on :%s (web=%s other=%s)", cfg.Port, cfg.WebDir, cfg.OtherDir)
-	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
+	log.Printf("listening on :%s (text=%s image=%s tts=%s)",
+		cfg.Port, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, onOff(cfg.ElevenLabsKey != ""))
+	if err := http.ListenAndServe(":"+cfg.Port, app.routes()); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func onOff(b bool) string {
+	if b {
+		return "on"
+	}
+	return "off"
 }

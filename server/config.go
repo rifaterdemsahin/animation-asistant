@@ -12,11 +12,20 @@ import (
 
 // Config holds all runtime configuration loaded from the environment.
 type Config struct {
-	AdminPassword   string
-	AuthSecret      string
-	OpenRouterKey   string
-	OpenRouterModel string
-	OpenRouterBase  string
+	AdminPassword string
+	AuthSecret    string
+
+	// OpenRouter (text + images). Keys may be comma-separated for rotation.
+	OpenRouterKeys       []string
+	OpenRouterTextModel  string
+	OpenRouterImageModel string
+	OpenRouterBase       string
+
+	// ElevenLabs TTS
+	ElevenLabsKey   string
+	ElevenLabsVoice string
+	ElevenLabsModel string
+
 	AzureConnString string
 	AzureContainer  string
 	WebDir          string
@@ -26,16 +35,20 @@ type Config struct {
 
 func LoadConfig() *Config {
 	c := &Config{
-		AdminPassword:   os.Getenv("ADMIN_PASSWORD"),
-		AuthSecret:      os.Getenv("AUTH_SECRET"),
-		OpenRouterKey:   os.Getenv("OPENROUTER_API_KEY"),
-		OpenRouterModel: getenvDefault("OPENROUTER_MODEL", "google/gemini-2.5-flash"),
-		OpenRouterBase:  getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
-		AzureConnString: os.Getenv("AZURE_STORAGE_CONNECTION_STRING"),
-		AzureContainer:  getenvDefault("AZURE_CONTAINER", "projects"),
-		WebDir:          getenvDefault("WEB_DIR", "web"),
-		OtherDir:        getenvDefault("OTHER_DIR", "other"),
-		Port:            getenvDefault("PORT", "8080"),
+		AdminPassword:        os.Getenv("ADMIN_PASSWORD"),
+		AuthSecret:           os.Getenv("AUTH_SECRET"),
+		OpenRouterKeys:       splitCSV(os.Getenv("OPENROUTER_API_KEY")),
+		OpenRouterTextModel:  getenvDefault("OPENROUTER_TEXT_MODEL", getenvDefault("OPENROUTER_MODEL", "google/gemini-2.5-flash")),
+		OpenRouterImageModel: getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-2.5-flash-image"),
+		OpenRouterBase:       getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
+		ElevenLabsKey:        os.Getenv("TTS_API_KEY"),
+		ElevenLabsVoice:      getenvDefault("TTS_VOICE", "JBFqnCBsd6RMkjVDRZzb"), // George — Warm Storyteller
+		ElevenLabsModel:      getenvDefault("TTS_MODEL", "eleven_turbo_v2_5"),    // good rate + quality
+		AzureConnString:      os.Getenv("AZURE_STORAGE_CONNECTION_STRING"),
+		AzureContainer:       getenvDefault("AZURE_CONTAINER", "projects"),
+		WebDir:               getenvDefault("WEB_DIR", "web"),
+		OtherDir:             getenvDefault("OTHER_DIR", "other"),
+		Port:                 getenvDefault("PORT", "8080"),
 	}
 	if c.AuthSecret == "" {
 		c.AuthSecret = c.AdminPassword
@@ -50,9 +63,18 @@ func getenvDefault(k, d string) string {
 	return d
 }
 
+func splitCSV(s string) []string {
+	out := []string{}
+	for _, part := range strings.Split(s, ",") {
+		if t := strings.TrimSpace(part); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
 // --- HMAC-signed auth cookie token ---
 
-// MakeToken returns "<payloadHex>.<sig>" valid for 7 days.
 func (c *Config) MakeToken() string {
 	payload, _ := json.Marshal(map[string]int64{"exp": time.Now().Add(7 * 24 * time.Hour).Unix()})
 	enc := hex.EncodeToString(payload)
