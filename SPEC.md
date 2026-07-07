@@ -410,8 +410,46 @@ Items planned but not yet implemented:
 
 ## 14. Open Questions ❓
 
-- Which image-generation provider/model to standardize on (key placeholder
-  `IMAGE_API_KEY`).
-- Which TTS provider/model to standardize on (key placeholder `TTS_API_KEY`).
-- Default Gemini model id on OpenRouter for script + storyboard.
-- Exact set of animation types to support in v1.
+Answered during implementation:
+
+- ✅ **Image provider**: OpenRouter → `google/gemini-2.5-flash-image` (not a separate `IMAGE_API_KEY`)
+- ✅ **TTS provider**: ElevenLabs `eleven_turbo_v2_5`, voice "George" (`TTS_API_KEY`)
+- ✅ **Default Gemini model**: `google/gemini-2.5-flash` for text/script/storyboard
+- ✅ **Music + SFX**: fal.ai (`fal-ai/mmaudio-v2` for music, `fal-ai/stable-audio` for SFX, `FAL_KEY`)
+- ✅ **Animation types**: 9 built-in types (background, lower-third, speech-bubble, infographic, character, icon, title-card, transition + extensible)
+
+Still open:
+
+- ❓ Best model for image generation if `gemini-2.5-flash-image` is deprecated
+- ❓ Which fal.ai model for SFX when `stable-audio` is deprecated
+
+## 15. Lessons Learned 📝
+
+From commits `5876de2` → `053aa52`:
+
+| Commit | What we learned |
+|--------|----------------|
+| `5876de2` | Emoji-heavy UX works well for dev tools — menu items, section headers, status badges all benefit from visual cues. Backlog section keeps the spec actionable. |
+| `cc84c5f` | Azure portal deep-links work reliably when the full `#@tenant/resource/...` path is used. Direct container links are more useful than the generic storage overview. |
+| `1d01e07` | KeyVault **version history** preserves old secrets automatically. New secret names (e.g. `AZURE-STORAGE-CONN-STR-AA`) avoid overwrites. Use `az keyvault secret list-versions` to audit. |
+| `4d69499` | Storage `List()` was missing from the interface — added to browse generated files in the UI. File cards with inline image/audio previews give instant feedback. Key exposure in dev chat is an accepted risk (rotate via Azure Portal). |
+| `053aa52` | `fly deploy --build-arg BUILD_COMMIT=$(git rev-parse --short HEAD)` + Go `-ldflags="-X main.buildCommit=..."` = commit-to-deploy traceability. Footer shows clickable commit SHA. |
+
+**Critical pitfalls:**
+- 🔴 `fly secrets import` treats `#` as comment delimiter → truncates values. **Always single-quote** values containing `#` in import files, or use `fly secrets set KEY='value'`.
+- 🟡 Azure connection strings contain `;` and `=` — these are safe in quoted `.env` values but break unquoted shell commands. Always single-quote AZURE variables.
+- 🟡 `go build ./server` fails when `./server` is a directory — use `go build ./server/...` to check compilation or `-o <path>` to output.
+
+## 16. Mismatches with Implementation ⚠️
+
+These parts of the spec diverge from what's actually built. See [risks.md](risks.md) for risk tracking.
+
+| § | Spec says | Actual implementation | Severity |
+|---|----------|----------------------|----------|
+| §7 Secrets table | Only `OPENROUTER`, `IMAGE`, `TTS`, `FLY` | Also needs `FAL_KEY`, `ELEVEN_LABS_API_KEY`, `AZURE_STORAGE_CONNECTION_STRING` | 🟡 |
+| §8 Deployment | "one Python service" in fly.toml | **Go** service (`server/main.go`), Python only for local scripts | 🟢 resolved |
+| §11 Repo Layout | Old Python-only file listing (`server/app.py`, `routes/`) | Now 18 Go files: `fal.go`, `elevenlabs.go`, `components.go`, `audio.go`, `storyboard.go`, `errors.go`, `main_test.go` + `storage/` with Azure SDK | 🟡 |
+| §5.3.3 SFX | "tied to a component or scene beat" | Generated per **act** (whoosh/ding/reveal), not per component | 🟢 minor |
+| §5.4 Project Create | Prompt audit as sub-item | Now a full cross-cutting feature — all handlers save prompts (outline, script, components, audio, music, SFX, storyboard) | 🟢 implemented |
+| §9 Shared Layout | "links to Dashboard, Media Manager, Storyboard Creator" | Full menu: Dashboard → Projects → Storyboard → Media Manager → Audio → Create → Test → Tools → Login (emojis + `>` separators) | 🟢 enriched |
+| §13 Phased Plan | Only phases 0–6 listed | Phases 7 (error handling) and 8 (prompt audit) completed but not in original plan | 🟡 missing in spec |

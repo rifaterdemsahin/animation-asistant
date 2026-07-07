@@ -11,10 +11,10 @@
   <header id="app-header"></header>
 
   <main class="page">
-    <h1>Storyboard Creator</h1>
+    <h1>📋 Storyboard Creator</h1>
 
     <div id="no-project" class="panel">
-      <p>No project selected. <a href="/pages/projects.html">Pick or create one</a> first.</p>
+      <p>No project selected. <a href="/pages/projects.html">📁 Pick or create one</a> first.</p>
     </div>
 
     <div id="manager" class="hidden">
@@ -22,18 +22,21 @@
         <span id="sb-title" class="mm-title"></span>
       </div>
       <div class="row" style="margin-top:12px">
-        <button id="gen-storyboard" class="btn primary">Generate storyboard</button>
+        <button id="gen-storyboard" class="btn primary">📋 Generate storyboard</button>
         <span class="muted">combines outline + scripts + components (Gemini)</span>
+      </div>
+      <div id="mm-link" class="row hidden" style="margin-top:4px">
+        <a href="/pages/media-manager.html" class="btn primary">🎛️ Continue to Media Manager</a>
       </div>
 
       <section class="panel">
-        <h2>Overview</h2>
+        <h2>🖼️ Overview</h2>
         <img id="sb-image" class="hidden" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">
       </section>
 
       <section class="panel">
-        <h2>Scenes by act</h2>
-        <div id="sb-out"><p class="muted">No storyboard yet.</p></div>
+        <h2>🎬 Scenes by act</h2>
+        <div id="sb-out"><p class="muted">No storyboard yet — generate above.</p></div>
       </section>
     </div>
   </main>
@@ -41,6 +44,7 @@
   <footer id="app-footer"></footer>
   <script src="/assets/js/layout.js"></script>
   <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
   <script src="/assets/js/storyboard.js"></script>
 </body>
 </html>

@@ -1,175 +1,112 @@
-// Media Manager: outline + per-act script + typed components + audio.
-const api = "/api";
-const slug = () => (window.currentProject && window.currentProject() || {}).slug;
+var api = "/api";
+var slug = function () { return (window.currentProject && window.currentProject() || {}).slug; };
 
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => (
-    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-async function json(url, opts) {
-  const r = await fetch(url, { credentials: "same-origin", ...opts });
-  if (!r.ok) throw new Error((await r.text()) || r.statusText);
-  return r.json();
-}
-function setLoading(btn, on) {
-  if (!btn) return;
-  btn.disabled = on;
-  if (on) { btn.dataset.label = btn.textContent; btn.textContent = "Working…"; }
-  else if (btn.dataset.label) btn.textContent = btn.dataset.label;
-}
-function selectedActs() {
-  return ["act-1", "act-2", "act-3"].filter(k => document.getElementById(k).checked);
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; }); }
+async function j(url, opts) { var r = await fetch(url, { credentials: "same-origin", ...opts }); if (!r.ok) throw new Error((await r.text()) || r.statusText); return r.json(); }
+function loading(btn, on) { if (!btn) return; btn.disabled = on; if (on) { btn.dataset.label = btn.textContent; btn.textContent = "Working…"; } else if (btn.dataset.label) btn.textContent = btn.dataset.label; }
+function acts() { return ["act-1","act-2","act-3"].filter(function (k) { return document.getElementById(k).checked; }); }
+
+function togglePrompt(btnId, preId, text) {
+  document.getElementById(btnId).addEventListener("click", function () {
+    var pre = document.getElementById(preId);
+    if (pre.classList.contains("hidden")) { pre.textContent = text; pre.classList.remove("hidden"); }
+    else pre.classList.add("hidden");
+  });
 }
 
-// --- outline ---
-async function loadOutline() {
+async function loadStoryboardImg() {
+  var s = slug();
   try {
-    const { outline } = await json(`${api}/projects/${slug()}/outline`);
-    if (outline) {
-      document.getElementById("outline-out").textContent = JSON.stringify(outline, null, 2);
-      document.getElementById("outline-out").classList.remove("hidden");
-      document.getElementById("outline-state").textContent = "outline ready";
+    var sb = await j(api + "/projects/" + s + "/storyboard");
+    if (sb.storyboard) {
+      document.getElementById("storyboard-preview").classList.remove("hidden");
+      var img = document.getElementById("sb-preview-img");
+      img.src = api + "/projects/" + s + "/raw/storyboard/storyboard.png";
+      img.onerror = function () { document.getElementById("storyboard-preview").classList.add("hidden"); };
     }
   } catch {}
 }
 
-// --- script ---
+async function loadOutline() {
+  try {
+    var r = await j(api + "/projects/" + slug() + "/outline");
+    if (r.outline) { document.getElementById("outline-out").textContent = JSON.stringify(r.outline, null, 2); document.getElementById("outline-out").classList.remove("hidden"); document.getElementById("outline-state").textContent = "✅ ready"; }
+  } catch {}
+}
+
 function renderScripts(acts) {
-  const out = document.getElementById("script-out");
-  out.innerHTML = "";
-  const order = [["act-1", "Act 1 — Problem"], ["act-2", "Act 2 — Solution"], ["act-3", "Act 3 — Lesson"]];
-  let any = false;
-  for (const [key, title] of order) {
-    if (!acts[key]) continue;
-    any = true;
-    const div = document.createElement("div");
-    div.className = "act";
-    div.innerHTML = `<h3>${title}</h3><pre>${escapeHtml(acts[key])}</pre>`;
-    out.append(div);
-  }
-  if (!any) out.innerHTML = `<p class="muted">No script yet — generate one above.</p>`;
+  var out = document.getElementById("script-out"); out.innerHTML = "";
+  var order = [["act-1","Act 1 — 😱 Problem"],["act-2","Act 2 — 💡 Solution"],["act-3","Act 3 — 🎓 Lesson"]];
+  var any = false;
+  for (var i = 0; i < order.length; i++) { var k = order[i][0], t = order[i][1]; if (!acts[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h3>" + t + "</h3><pre>" + esc(acts[k]) + "</pre>"; out.append(d); }
+  if (!any) out.innerHTML = "<p class='muted'>No script yet — generate one above.</p>";
 }
-async function loadScript() {
-  try { const { acts } = await json(`${api}/projects/${slug()}/script`); renderScripts(acts || {}); } catch {}
-}
+async function loadScript() { try { var r = await j(api + "/projects/" + slug() + "/script"); renderScripts(r.acts || {}); } catch {} }
 
-// --- components ---
 function renderComponents(acts) {
-  const out = document.getElementById("components-out");
-  out.innerHTML = "";
-  const order = [["act-1", "Act 1"], ["act-2", "Act 2"], ["act-3", "Act 3"]];
-  let any = false;
-  for (const [key, title] of order) {
-    const list = acts[key] || [];
-    if (!list.length) continue;
-    any = true;
-    const sec = document.createElement("div");
-    sec.className = "panel";
-    sec.innerHTML = `<h3>${title}</h3>`;
-    const grid = document.createElement("div");
-    grid.className = "grid";
-    for (const c of list) {
-      const card = document.createElement("div");
-      card.className = "comp";
-      const url = `${api}/projects/${slug()}/raw/${c.file}`;
-      card.innerHTML = `<img loading="lazy" src="${url}" alt="${escapeHtml(c.type)}">
-        <div class="comp-meta"><span class="badge">${escapeHtml(c.type)}</span>
-        <span class="muted">${escapeHtml(c.script_ref || "")}</span></div>`;
-      grid.append(card);
-    }
-    sec.append(grid);
-    out.append(sec);
+  var out = document.getElementById("components-out"); out.innerHTML = "";
+  var order = [["act-1","Act 1"],["act-2","Act 2"],["act-3","Act 3"]];
+  var any = false;
+  for (var i = 0; i < order.length; i++) { var k = order[i][0], t = order[i][1]; var l = acts[k] || []; if (!l.length) continue; any = true;
+    var s = document.createElement("div"); s.className = "panel"; s.innerHTML = "<h3>" + t + "</h3>";
+    var g = document.createElement("div"); g.className = "grid";
+    for (var jj = 0; jj < l.length; jj++) { var c = l[jj]; var card = document.createElement("div"); card.className = "comp"; card.innerHTML = "<img loading='lazy' src='" + api + "/projects/" + slug() + "/raw/" + c.file + "' alt='" + esc(c.type) + "'><div class='comp-meta'><span class='badge'>" + esc(c.type) + "</span><span class='muted'>" + esc(c.script_ref||"") + "</span></div><div class='comp-prompt muted' style='font-size:10px'>" + esc(c.prompt||"") + "</div>"; g.append(card); }
+    s.append(g); out.append(s);
   }
-  if (!any) out.innerHTML = `<p class="muted">No components yet — generate above.</p>`;
+  if (!any) out.innerHTML = "<p class='muted'>No components yet — generate above.</p>";
 }
-async function loadComponents() {
-  try { const { acts } = await json(`${api}/projects/${slug()}/components`); renderComponents(acts || {}); } catch {}
-}
+async function loadComponents() { try { var r = await j(api + "/projects/" + slug() + "/components"); renderComponents(r.acts || {}); } catch {} }
 
-// --- audio ---
 function renderAudio(audio) {
-  const out = document.getElementById("audio-out");
-  out.innerHTML = "";
-  const order = [["act-1", "Act 1 — Problem"], ["act-2", "Act 2 — Solution"], ["act-3", "Act 3 — Lesson"]];
-  let any = false;
-  for (const [key, title] of order) {
-    if (!audio[key]) continue;
-    any = true;
-    const url = `${api}/projects/${slug()}/raw/${audio[key]}`;
-    const div = document.createElement("div");
-    div.className = "act";
-    div.innerHTML = `<h3>${title}</h3><audio controls src="${url}"></audio>`;
-    out.append(div);
-  }
-  if (!any) out.innerHTML = `<p class="muted">No audio yet — generate above.</p>`;
+  var out = document.getElementById("audio-out"); out.innerHTML = "";
+  var order = [["act-1","Act 1 — 😱 Problem"],["act-2","Act 2 — 💡 Solution"],["act-3","Act 3 — 🎓 Lesson"]];
+  var any = false;
+  for (var i = 0; i < order.length; i++) { var k = order[i][0], t = order[i][1]; if (!audio[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h3>" + t + "</h3>🎙️ <audio controls src='" + api + "/projects/" + slug() + "/raw/" + audio[k] + "'></audio>"; out.append(d); }
+  if (!any) out.innerHTML = "<p class='muted'>No audio yet — generate above.</p>";
 }
-async function loadAudio() {
-  try { const { audio } = await json(`${api}/projects/${slug()}/audio`); renderAudio(audio || {}); } catch {}
-}
+async function loadAudio() { try { var r = await j(api + "/projects/" + slug() + "/audio"); renderAudio(r.audio || {}); } catch {} }
 
 async function loadBrowse() {
-  const out = document.getElementById("files-out");
+  var out = document.getElementById("files-out");
   try {
-    const { files } = await json(`${api}/projects/${slug()}/browse`);
-    if (!files || !files.length) { out.innerHTML = `<p class="muted">No files generated yet.</p>`; return; }
-    out.innerHTML = files.map(f => {
-      if (f.type === "image") return `<div class="file-card"><img loading="lazy" src="${f.url}" alt="${f.path}"><div class="file-meta"><a href="${f.url}" target="_blank">🖼️ ${f.path}</a></div></div>`;
-      if (f.type === "audio") return `<div class="file-card"><audio controls src="${f.url}"></audio><div class="file-meta"><a href="${f.url}" target="_blank">🎵 ${f.path}</a></div></div>`;
-      return `<div class="file-card"><div class="file-icon">📄</div><div class="file-meta"><a href="${f.url}" target="_blank">${f.path}</a></div></div>`;
+    var r = await j(api + "/projects/" + slug() + "/browse"); var f = r.files || [];
+    if (!f.length) { out.innerHTML = "<p class='muted'>No files generated yet.</p>"; return; }
+    out.innerHTML = f.map(function (x) {
+      if (x.type === "image") return "<div class='file-card'><img loading='lazy' src='" + x.url + "' alt='" + x.path + "'><div class='file-meta'><a href='" + x.url + "' target='_blank'>🖼️ " + x.path + "</a></div></div>";
+      if (x.type === "audio") return "<div class='file-card'>🎧 <audio controls src='" + x.url + "'></audio><div class='file-meta'><a href='" + x.url + "' target='_blank'>🎵 " + x.path + "</a></div></div>";
+      return "<div class='file-card'><div class='file-icon'>📄</div><div class='file-meta'><a href='" + x.url + "' target='_blank'>" + x.path + "</a></div></div>";
     }).join("");
-  } catch { out.innerHTML = `<p class="muted">Could not load files.</p>`; }
+  } catch { out.innerHTML = "<p class='muted'>Could not load files.</p>"; }
 }
 
-document.addEventListener("layout:ready", () => {
-  const s = slug();
-  if (!s) return;
+document.addEventListener("layout:ready", function () {
+  var s = slug(); if (!s) return;
   document.getElementById("no-project").classList.add("hidden");
   document.getElementById("manager").classList.remove("hidden");
-  const cur = window.currentProject();
+  var cur = window.currentProject();
   document.getElementById("mm-title").textContent = cur.title + " (" + s + ")";
   document.getElementById("mm-status").textContent = cur.slug;
 
-  document.getElementById("gen-outline").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; setLoading(btn, true);
-    try {
-      const { outline } = await json(`${api}/projects/${s}/outline`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      document.getElementById("outline-out").textContent = JSON.stringify(outline, null, 2);
-      document.getElementById("outline-out").classList.remove("hidden");
-      document.getElementById("outline-state").textContent = "outline ready";
-    } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
-  });
+  togglePrompt("show-outline-prompt", "outline-prompt",
+    "System: You design short animated explainer video outlines using a STRICT 3-act structure: Act 1 = Problem, Act 2 = Solution, Act 3 = Lesson. You return JSON only, no markdown.\n\n" +
+    "User: Topic: " + cur.title + "\nComponent type: explainer\n\nProduce a JSON object with this exact shape:\n{\"title\":\"short title\",\"logline\":\"one sentence\",\"acts\":{\"act-1\":{\"summary\":\"...\"},\"act-2\":{\"summary\":\"...\"},\"act-3\":{\"summary\":\"...\"}}}\nEach act summary must be 1-2 sentences fitting the act's role. JSON only.");
 
-  document.getElementById("gen-script").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; const acts = selectedActs();
-    if (!acts.length) { alert("Select at least one act."); return; }
-    setLoading(btn, true);
-    try {
-      await json(`${api}/projects/${s}/script`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts }) });
-      await loadScript();
-    } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
-  });
+  togglePrompt("show-script-prompt", "script-prompt",
+    "System: You are a scriptwriter for short animated explainer videos. You write ONE act and return STRICT JSON only, no markdown.\n\n" +
+    "User: Topic: " + cur.title + "\nAct: act-1 (problem)\nOutline summary for this act: <from outline>\n\n" +
+    "Write only this act. Return JSON with shape:\n{\"narration\":\"1-3 paragraphs\",\"beats\":[{\"id\":\"beat-1\",\"text\":\"one concrete beat\"}]}\n3 to 6 beats. JSON only.");
 
-  document.getElementById("gen-components").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; const acts = selectedActs();
-    if (!acts.length) { alert("Select at least one act."); return; }
-    setLoading(btn, true);
-    try {
-      await json(`${api}/projects/${s}/components`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts }) });
-      await loadComponents();
-    } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
-  });
+  togglePrompt("show-comp-prompt", "comp-prompt",
+    "Image model: google/gemini-2.5-flash-image\nPrompt per type:\n• background: 'wide 16:9 background scene illustration, clean flat vector style, no text. Illustrate this idea: <beat>. Topic: " + cur.title + ". Flat vector, clean.'\n• lower-third: 'lower-third banner overlay graphic with space for a short caption, flat vector, minimal.'\n• speech-bubble: 'speech bubble graphic with space for a short quote, flat vector, clean.'\n• infographic: 'clean infographic with simple data visualization using icons and numbers, flat vector.'\nDefaults: 4 types × 3 acts = 12 images.");
 
-  document.getElementById("gen-audio").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; const acts = selectedActs();
-    if (!acts.length) { alert("Select at least one act."); return; }
-    setLoading(btn, true);
-    try {
-      await json(`${api}/projects/${s}/audio`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts }) });
-      await loadAudio();
-    } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
-  });
+  togglePrompt("show-audio-prompt", "audio-prompt",
+    "ElevenLabs TTS\nVoice: George (warm storyteller)\nModel: eleven_turbo_v2_5\nInput: act narration text from script generation.");
 
-  document.getElementById("refresh-files").addEventListener("click", () => loadBrowse());
+  document.getElementById("gen-outline").addEventListener("click", async function (e) { var b = e.currentTarget; loading(b, true); try { var r = await j(api + "/projects/" + s + "/outline", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); document.getElementById("outline-out").textContent = JSON.stringify(r.outline, null, 2); document.getElementById("outline-out").classList.remove("hidden"); document.getElementById("outline-state").textContent = "✅ ready"; } catch (err) { alert(err.message); } finally { loading(b, false); } });
+  document.getElementById("gen-script").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadScript(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
+  document.getElementById("gen-components").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadComponents(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
+  document.getElementById("gen-audio").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadAudio(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
+  document.getElementById("refresh-files").addEventListener("click", function () { loadBrowse(); });
 
-  loadOutline(); loadScript(); loadComponents(); loadAudio(); loadBrowse();
+  loadStoryboardImg(); loadOutline(); loadScript(); loadComponents(); loadAudio(); loadBrowse();
 });

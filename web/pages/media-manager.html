@@ -11,10 +11,10 @@
   <header id="app-header"></header>
 
   <main class="page">
-    <h1>Media Manager</h1>
+    <h1>🎛️ Media Manager</h1>
 
     <div id="no-project" class="panel">
-      <p>No project selected. <a href="/pages/projects.html">Pick or create one</a> first.</p>
+      <p>No project selected. <a href="/pages/projects.html">📁 Pick or create one</a> first.</p>
     </div>
 
     <div id="manager" class="hidden">
@@ -23,48 +23,64 @@
         <span id="mm-status" class="badge"></span>
       </div>
 
+      <section id="storyboard-preview" class="panel hidden">
+        <h2>📋 Storyboard Overview</h2>
+        <img id="sb-preview-img" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">
+        <p style="margin-top:6px"><a href="/pages/storyboard.html" class="btn">📋 Open Storyboard</a></p>
+      </section>
+
       <section class="panel">
-        <h2>1. Outline</h2>
+        <h2>📝 1. Outline</h2>
         <p class="muted">Project-level outline across the 3 acts (Problem → Solution → Lesson).</p>
         <div class="row">
+          <button id="show-outline-prompt" class="btn">👁️ Show Prompt</button>
           <button id="gen-outline" class="btn primary">Generate outline</button>
           <span id="outline-state" class="muted"></span>
         </div>
+        <pre id="outline-prompt" class="out hidden muted" style="font-size:12px;max-height:120px;overflow:auto"></pre>
         <pre id="outline-out" class="out hidden"></pre>
       </section>
 
       <section class="panel">
-        <h2>2. Script (per act)</h2>
+        <h2>📜 2. Script (per act)</h2>
         <div class="row">
-          <label class="row"><input type="checkbox" id="act-1" checked> Act 1 — Problem</label>
-          <label class="row"><input type="checkbox" id="act-2" checked> Act 2 — Solution</label>
-          <label class="row"><input type="checkbox" id="act-3" checked> Act 3 — Lesson</label>
+          <label class="row"><input type="checkbox" id="act-1" checked> Act 1 — 😱 Problem</label>
+          <label class="row"><input type="checkbox" id="act-2" checked> Act 2 — 💡 Solution</label>
+          <label class="row"><input type="checkbox" id="act-3" checked> Act 3 — 🎓 Lesson</label>
+        </div>
+        <div class="row" style="margin-top:4px">
+          <button id="show-script-prompt" class="btn">👁️ Show Prompt</button>
           <button id="gen-script" class="btn primary">Generate script</button>
         </div>
+        <pre id="script-prompt" class="out hidden muted" style="font-size:12px;max-height:120px;overflow:auto"></pre>
         <div id="script-out" class="acts"></div>
       </section>
 
       <section class="panel">
-        <h2>3. Components (typed images)</h2>
+        <h2>🖼️ 3. Components (typed images)</h2>
         <p class="muted">Generates one of each type per act: background, lower-third, speech-bubble, infographic.</p>
         <div class="row">
+          <button id="show-comp-prompt" class="btn">👁️ Show Prompt</button>
           <button id="gen-components" class="btn primary">Generate components</button>
-          <span class="muted">uses the act checkboxes above</span>
+          <span class="muted">uses act checkboxes above</span>
         </div>
+        <pre id="comp-prompt" class="out hidden muted" style="font-size:12px;max-height:120px;overflow:auto"></pre>
         <div id="components-out"></div>
       </section>
 
       <section class="panel">
-        <h2>4. Audio (narration)</h2>
+        <h2>🎙️ 4. Audio (narration)</h2>
         <p class="muted">ElevenLabs TTS from each act's narration.</p>
         <div class="row">
+          <button id="show-audio-prompt" class="btn">👁️ Show Prompt</button>
           <button id="gen-audio" class="btn primary">Generate audio</button>
         </div>
+        <pre id="audio-prompt" class="out hidden muted" style="font-size:12px;max-height:120px;overflow:auto"></pre>
         <div id="audio-out" class="acts"></div>
       </section>
 
       <section class="panel">
-        <h2>📁 Generated Files <a id="azure-link" class="muted" style="font-size:13px" target="_blank" href="https://portal.azure.com/#@infodeliverypilot.onmicrosoft.com/resource/subscriptions/b85b029d-9f7c-4c5a-8939-819480780c5d/resourceGroups/animation-asistant/providers/Microsoft.Storage/storageAccounts/animationasistant/overview">☁️ View in Azure</a></h2>
+        <h2>📁 Generated Files <a class="muted" style="font-size:13px" target="_blank" href="https://portal.azure.com/#@infodeliverypilot.onmicrosoft.com/resource/subscriptions/b85b029d-9f7c-4c5a-8939-819480780c5d/resourceGroups/animation-asistant/providers/Microsoft.Storage/storageAccounts/animationasistant/overview">☁️ View in Azure</a></h2>
         <button id="refresh-files" class="btn">🔄 Refresh</button>
         <div id="files-out" class="files-grid" style="margin-top:10px"></div>
       </section>
@@ -72,7 +88,6 @@
   </main>
 
   <footer id="app-footer"></footer>
-
   <script src="/assets/js/layout.js"></script>
   <script src="/assets/js/auth.js"></script>
   <script src="/assets/js/debug.js"></script>

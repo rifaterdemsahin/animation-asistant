@@ -48,7 +48,7 @@ async function loadProjects() {
 
 function selectProject(p) {
   localStorage.setItem("current_project", JSON.stringify({ slug: p.slug, title: p.title }));
-  location.href = "/pages/media-manager.html";
+  location.href = "/pages/storyboard.html";
 }
 
 async function deleteProject(p) {

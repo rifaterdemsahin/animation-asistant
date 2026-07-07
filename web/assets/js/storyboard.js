@@ -70,7 +70,10 @@ document.addEventListener("layout:ready", () => {
     try {
       await json(`${api}/projects/${s}/storyboard`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
       await loadStoryboard();
+      document.getElementById("mm-link").classList.remove("hidden");
     } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
   });
-  loadStoryboard();
+  loadStoryboard().then(() => {
+    document.getElementById("mm-link").classList.remove("hidden");
+  });
 });
