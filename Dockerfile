@@ -4,7 +4,8 @@ WORKDIR /src
 COPY go.mod ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /out/app ./server
+ARG BUILD_COMMIT=unknown
+RUN CGO_ENABLED=0 go build -ldflags="-X main.buildCommit=${BUILD_COMMIT}" -o /out/app ./server
 
 FROM python:3.12-slim
 WORKDIR /app

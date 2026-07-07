@@ -2,6 +2,8 @@ package main
 
 import "net/http"
 
+var buildCommit = "unknown"
+
 func (a *App) healthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok": true,
@@ -14,6 +16,7 @@ func (a *App) healthz(w http.ResponseWriter, r *http.Request) {
 		"text_model":  a.cfg.OpenRouterTextModel,
 		"image_model": a.cfg.OpenRouterImageModel,
 		"started_at":  a.startedAt,
+		"commit":      buildCommit,
 	})
 }
 

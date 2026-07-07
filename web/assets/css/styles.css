@@ -29,6 +29,7 @@ body {
 .nav-links a { color: var(--ink); text-decoration: none; padding: 6px 8px; border-radius: 6px; }
 .nav-links a:hover { background: var(--panel-2); }
 .nav-links a.disabled { color: var(--muted); pointer-events: none; }
+.nav-sep { color: var(--border); margin: 0 -4px; }
 .search { position: relative; margin-left: auto; }
 .search input { background: var(--panel-2); border: 1px solid var(--border); color: var(--ink);
   padding: 6px 10px; border-radius: 6px; width: 200px; }

@@ -30,11 +30,11 @@ function currentProject() {
 function renderNav() {
   const nav = document.getElementById("topnav");
   if (!nav) return;
-  const links = PAGES.map(p =>
-    `<a href="${p.url || "#"}" class="${p.url ? "" : "disabled"}">${p.name}</a>`).join("");
+  const links = PAGES.filter(p => p.url).map(p =>
+    `<a href="${p.url}">${p.name}</a>`).join(" <span class=\"nav-sep\">&gt;</span> ");
   nav.innerHTML = `
     <div class="navbar">
-      <a class="brand" href="/">Animation Assistant</a>
+      <a class="brand" href="/">🎬 Animation Assistant</a>
       <nav class="nav-links">${links}</nav>
       <div class="search">
         <input id="nav-search" type="search" placeholder="Search pages…" autocomplete="off">
@@ -61,10 +61,9 @@ function renderFooter() {
   const f = document.getElementById("app-footer");
   if (!f) return;
   f.innerHTML = `<div class="footer">
-      <span>Animation Assistant</span>
+      <span>🎬 Animation Assistant</span>
       <a href="/pages/tools.html">🛠️ Tools</a>
       <a href="${REPO}" target="_blank">GitHub</a>
-      <a href="${REPO_COMMITS}" target="_blank">Commits</a>
       <a href="https://openrouter.ai/logs" target="_blank">OpenRouter Logs</a>
       <a href="https://animation-assistant.fly.dev" target="_blank">fly.io</a>
       <a href="http://localhost:8080">Local</a>
@@ -79,7 +78,10 @@ function fetchDeployTime() {
   fetch("/healthz", { credentials: "same-origin" })
     .then(r => r.json())
     .then(d => {
-      if (d.started_at) el.textContent = "🚀 Deployed: " + d.started_at;
+      var commit = d.commit || "";
+      var url = commit ? "https://github.com/rifaterdemsahin/animation-asistant/commit/" + commit : "https://github.com/rifaterdemsahin/animation-asistant/commits/main";
+      var short = commit ? commit.substring(0, 7) : "main";
+      el.innerHTML = '🚀 <a href="' + url + '" target="_blank" style="color:var(--accent)">' + short + '</a> — ' + (d.started_at || "");
     })
     .catch(() => {});
 }
