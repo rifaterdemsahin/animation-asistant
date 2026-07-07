@@ -33,6 +33,7 @@ func (a *App) generateOutline(w http.ResponseWriter, r *http.Request) {
 				"Each act summary must be 1-2 sentences fitting the act's role. JSON only.",
 			p.Topic, p.ComponentType)},
 	}
+	a.savePromptMsg(slug, "outline", "outline", msgs)
 	raw, err := a.chatText(msgs)
 	if err != nil {
 		writeError(w, r, http.StatusInternalServerError, "openrouter_error", err.Error())
@@ -135,6 +136,7 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 				"Rules: stay focused on the act role (%s); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only.",
 			p.Topic, act.Key, act.Role, summary, act.Purpose)},
 	}
+	a.savePromptMsg(p.Slug, act.Key, "script", msgs)
 	raw, err := a.chatText(msgs)
 	if err != nil {
 		return nil, err

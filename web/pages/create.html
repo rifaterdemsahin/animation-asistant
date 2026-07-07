@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Create Project</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>🆕 Create Project</h1>
+    <p class="lede">Frame your topic as a question &amp; answer, then create a single act for testing or the full pipeline for Canva.</p>
+
+    <form id="create-form" class="form" style="max-width:620px">
+      <label>Question
+        <input type="text" name="question" id="cq" required placeholder="e.g. How does machine learning work?">
+      </label>
+      <label>Answer
+        <textarea name="answer" id="ca" rows="3" placeholder="e.g. It learns patterns from data to make predictions."></textarea>
+      </label>
+      <label>Component type
+        <input type="text" name="component_type" id="ct" placeholder="explainer" value="explainer">
+      </label>
+
+      <label>Canva link (optional)
+        <input type="url" name="canva_link" id="cl" placeholder="https://www.canva.com/design/...">
+      </label>
+
+      <div class="row" style="margin-top:8px">
+        <button type="button" id="btn-test" class="btn">🧪 Test: Create project only</button>
+        <button type="button" id="btn-act1" class="btn">📝 Generate Act 1</button>
+        <button type="button" id="btn-bulk" class="btn primary">⚡ Bulk: Create + Run full pipeline</button>
+      </div>
+    </form>
+
+    <section id="progress" class="panel hidden" style="margin-top:20px">
+      <h2>Progress</h2>
+      <div id="steps"></div>
+    </section>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
+  <script src="/assets/js/create.js"></script>
+</body>
+</html>

@@ -39,6 +39,10 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/components", a.authed(a.getComponents))
 	mux.HandleFunc("POST /api/projects/{slug}/audio", a.authed(a.generateAudio))
 	mux.HandleFunc("GET /api/projects/{slug}/audio", a.authed(a.getAudio))
+	mux.HandleFunc("POST /api/projects/{slug}/audio/music", a.authed(a.generateMusic))
+	mux.HandleFunc("GET /api/projects/{slug}/audio/music", a.authed(a.getMusicStatus))
+	mux.HandleFunc("POST /api/projects/{slug}/audio/sfx", a.authed(a.generateSFX))
+	mux.HandleFunc("GET /api/projects/{slug}/audio/sfx", a.authed(a.getSFXStatus))
 	mux.HandleFunc("POST /api/projects/{slug}/storyboard", a.authed(a.generateStoryboard))
 	mux.HandleFunc("GET /api/projects/{slug}/storyboard", a.authed(a.getStoryboard))
 

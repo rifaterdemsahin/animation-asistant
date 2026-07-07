@@ -56,7 +56,7 @@ func (c *orClient) call(payload map[string]any) (map[string]any, error) {
 		req, _ := http.NewRequest("POST", c.base+"/chat/completions", bytes.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+key)
 		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("X-Title", "Animation Assistant")
+		req.Header.Set("X-Title", "animation-assistant-fly")
 		resp, err := (&http.Client{Timeout: 180 * time.Second}).Do(req)
 		if err != nil {
 			lastErr = err

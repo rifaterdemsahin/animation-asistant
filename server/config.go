@@ -26,6 +26,9 @@ type Config struct {
 	ElevenLabsVoice string
 	ElevenLabsModel string
 
+	// fal.ai (music + sound effects)
+	FalKey string
+
 	AzureConnString string
 	AzureContainer  string
 	WebDir          string
@@ -44,6 +47,7 @@ func LoadConfig() *Config {
 		ElevenLabsKey:        os.Getenv("TTS_API_KEY"),
 		ElevenLabsVoice:      getenvDefault("TTS_VOICE", "JBFqnCBsd6RMkjVDRZzb"), // George — Warm Storyteller
 		ElevenLabsModel:      getenvDefault("TTS_MODEL", "eleven_turbo_v2_5"),    // good rate + quality
+		FalKey:               os.Getenv("FAL_KEY"),
 		AzureConnString:      os.Getenv("AZURE_STORAGE_CONNECTION_STRING"),
 		AzureContainer:       getenvDefault("AZURE_CONTAINER", "projects"),
 		WebDir:               getenvDefault("WEB_DIR", "web"),

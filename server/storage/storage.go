@@ -27,6 +27,7 @@ type Backend interface {
 	Write(slug, relpath string, data []byte) error
 	Delete(slug string) error
 	Exists(slug string) bool
+	List(slug, prefix string) ([]string, error)
 }
 
 // New picks a backend: Azure when a connection string is provided, else local.
@@ -106,6 +107,25 @@ func (l *Local) Exists(slug string) bool {
 	return err == nil
 }
 
+func (l *Local) List(slug, prefix string) ([]string, error) {
+	var out []string
+	dir := l.dir(slug)
+	_ = filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			return nil
+		}
+		rel, _ := filepath.Rel(dir, p)
+		if strings.HasPrefix(rel, prefix) {
+			out = append(out, rel)
+		}
+		return nil
+	})
+	return out, nil
+}
+
 // --- Azure Blob backend ---
 
 type Azure struct {
@@ -162,6 +182,25 @@ func (a *Azure) Delete(slug string) error {
 func (a *Azure) Exists(slug string) bool {
 	_, err := a.Read(slug, "project.json")
 	return err == nil
+}
+
+func (a *Azure) List(slug, prefix string) ([]string, error) {
+	ctx := context.Background()
+	fullPrefix := slug + "/" + prefix
+	pager := a.client.NewListBlobsFlatPager(a.container, &azblob.ListBlobsFlatOptions{Prefix: &fullPrefix})
+	var out []string
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range page.Segment.BlobItems {
+			if item.Name != nil {
+				out = append(out, strings.TrimPrefix(*item.Name, slug+"/"))
+			}
+		}
+	}
+	return out, nil
 }
 
 func (a *Azure) ListProjects() ([]string, error) {

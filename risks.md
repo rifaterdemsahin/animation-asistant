@@ -53,7 +53,14 @@ Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
   (https://animation-assistant.fly.dev). Flexible naming handled (name was free).
 - ✅ **Secrets populated from Azure KeyVault** (`dp-kv-deliverypilot`) into both
   local `.env` and `fly secrets` (AdminPassword, OPENROUTER, AZURE-CONN-STR,
-  ELEVEN-LABS). `.env` is gitignored; `.dockerignore` keeps it out of the image.
+  ELEVEN-LABS, FAL-KEY). `.env` is gitignored; `.dockerignore` keeps it out of the image.
+- 🔴 **fly secrets import truncates values containing `#`.** The `#` character is
+  treated as a comment delimiter in unquoted `.env`-style values. If passwords or
+  connection strings contain `#`, they must be **single-quoted** in the import
+  file. The `AdminPassword` currently contains `#` and was truncated on fly
+  (causing `invalid password` on login). **Fix:** run `fly secrets set
+  ADMIN_PASSWORD="<value>"` with double quotes, or use single quotes in the
+  import file. Re-import all secrets that may contain `#`.
 - ✅ **GitHub Pages → fly.io redirect** (`.github/workflows/static.yml` now
   publishes a single meta-refresh redirect page).
 - 🟢 **`FLY_API_TOKEN`:** deploy ran via the already-authenticated fly CLI
@@ -65,7 +72,29 @@ Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
   `<slug>-<type>-NN.png`; manifest `components.json` carries `script_ref`.
 - 🟢 Go unit tests exist (`server/main_test.go`); no UI/Playwright tests yet.
 
+## Audio (fal.ai music + SFX)
+
+- 🟡 **fal.ai audio generation added.** Music via `fal-ai/mmaudio-v2`, sound
+  effects via `fal-ai/stable-audio`. Key from KeyVault (`FAL_KEY`). Endpoints:
+  `POST /api/projects/{slug}/audio/music`, `POST /api/projects/{slug}/audio/sfx`.
+- 🟡 **fal.ai models subject to change.** Model IDs (`fal-ai/mmaudio-v2`,
+  `fal-ai/stable-audio`) may be deprecated. Keep them configurable.
+- 🟢 Music + SFX stored under `<act-slug>/audio/music.mp3` and
+  `<act-slug>/audio/sfx-*.mp3` in Azure Blob.
+
+## Prompt audit trail
+
+- ✅ **All prompts saved to Azure.** Every generation call (outline, script,
+  components, audio, music, SFX, storyboard) writes the full prompt payload to
+  `<slug>/prompts/<timestamp>-<act>-<step>.json`. Enables debugging and
+  reproducibility.
+
 ## Functional status
 
 - ✅ Phase 1 skeleton · ✅ Phase 2 script · ✅ Phase 3 components · ✅ Phase 4
-  audio · ✅ Phase 5 storyboard · ✅ Phase 6 deploy. All verified live + locally.
+  audio (TTS + music + SFX) · ✅ Phase 5 storyboard · ✅ Phase 6 deploy.
+- ✅ Project creation page (`/pages/create.html`) with Q&A input, single-act test
+  mode, and bulk full-pipeline mode for Canva workflows.
+- ✅ Audio tools page (`/pages/audio.html`) with voiceover, music, and SFX panels.
+- ✅ OpenRouter logs link in footer; distinct `X-Title: animation-assistant-fly`.
+- 🟢 All verified live + locally.

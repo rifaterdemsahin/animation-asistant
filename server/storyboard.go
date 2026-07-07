@@ -23,6 +23,7 @@ func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
 				"Each scene may reference an existing component_id. Durations are seconds (2-8). JSON only.",
 			context)},
 	}
+	a.savePromptMsg(slug, "storyboard", "storyboard", msgs)
 	raw, err := a.chatText(msgs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

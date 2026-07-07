@@ -3,8 +3,10 @@
 
 const PAGES = [
   { name: "Dashboard", url: "/" },
+  { name: "Create", url: "/pages/create.html" },
   { name: "Projects", url: "/pages/projects.html" },
   { name: "Media Manager", url: "/pages/media-manager.html" },
+  { name: "Audio", url: "/pages/audio.html" },
   { name: "Storyboard", url: "/pages/storyboard.html" },
   { name: "Login", url: "/pages/login.html" },
 ];
@@ -60,6 +62,7 @@ function renderFooter() {
       <span>Animation Assistant</span>
       <a href="${REPO}" target="_blank">GitHub</a>
       <a href="${REPO_COMMITS}" target="_blank">Commits</a>
+      <a href="https://openrouter.ai/logs" target="_blank">OpenRouter Logs</a>
       <a href="https://animation-assistant.fly.dev" target="_blank">fly.io</a>
       <a href="http://localhost:8080">Local</a>
     </div>`;

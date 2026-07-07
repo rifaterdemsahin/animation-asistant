@@ -63,6 +63,7 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 			}
 			prompt := fmt.Sprintf("%s. Illustrate this idea: %s. Topic: %s. Flat vector, clean, consistent style.",
 				style, beatText, p.Topic)
+			a.savePrompt(slug, act.Key, "component-"+t, prompt)
 			img, err := a.generateImage(prompt)
 			if err != nil {
 				http.Error(w, fmt.Sprintf("component %s/%s: %v", act.Key, t, err), http.StatusInternalServerError)

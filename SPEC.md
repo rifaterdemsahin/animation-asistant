@@ -3,7 +3,7 @@
 > Status: **Draft v2** — planning/spec phase. No implementation exists yet.
 > This document defines what we are building before any code is written.
 
-## 1. Overview
+## 1. Overview 🎬
 
 **Animation Assistant** is an HTML-based, multi-tool web app that helps build
 animations. It orchestrates AI generation (script, images, audio) and assembles
@@ -25,26 +25,26 @@ from the terminal via `az secrets` and placed into `.env` (local) and
 animation components, and every animation component is kept isolated so it is
 easier to use in Canva video timelines where they turn into final animations.
 
-## 2. Goals
+## 2. Goals 🎯
 
 - Provide a unified web UI for animation production tasks for its components.
 - namings for the items come with project name as prefix.
-- Generate **scripts**, **images**, and **audio** from a single Media Manager.
+- Generate **scripts** 📝, **images** 🖼️, **music** 🎵, **sound effects** 🔊, and **voiceover audio** 🎙️ from a single Media Manager.
 - Whole goal is to leverage the large language models capacaity to trigger self learning process.
 - Self learning happens when generated content is placed in canva and created an aestethic learning experience.
-- Generate a **storyboard** from a script + images using OpenRouter calls to Gemini or other related models.
-- Keep each animation project isolated in its own folder under the azure.
-- Have an an admin login and keep that password in .env file so not everyone should be able to trigger have a login page in a common menu.
-- Run locally and deploy to **fly.io** with the same secrets model.
-- Share a consistent layout (top menu + footer) across every page which has the links to all the tools and have search to be able find pages.
+- Generate a **storyboard** 📋 from a script + images using OpenRouter calls to Gemini or other related models.
+- Keep each animation project isolated in its own folder under the azure storage ☁️.
+- Have an an admin login 🔐 and keep that password in .env file so not everyone should be able to trigger have a login page in a common menu.
+- Run locally 💻 and deploy to **fly.io** 🚀 with the same secrets model.
+- Share a consistent layout (top menu + footer) across every page which has the links to all the tools and have search 🔍 to be able find pages.
 
-## 3. Non-Goals (for now)
+## 3. Non-Goals (for now) 🚫
 
 - Full timeline/keyframe video editing UI this is delegated to canva which does the final post production
 - Real-time collaboration we only focus on production and self learning in the process.
 - Account/auth system (single-user tool for the owner) and there is a canva video project link that gets saved. 
 
-## 4. Architecture (high level)
+## 4. Architecture (high level) 🏗️
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -84,9 +84,9 @@ easier to use in Canva video timelines where they turn into final animations.
   hold secrets — they use the same storage interface (local or Azure) and may call
   the Go API for generation.
 
-## 5. Tools
+## 5. Tools 🛠️
 
-### 5.1 Media Manager (the orchestrator)
+### 5.1 Media Manager (the orchestrator) 🎛️
 The central tool that produces the raw materials for an animation. It generates:
 1. **Outline** — text/script for the storyboard via OpenRouter (Gemini models).
 1. **Script** — text/script produced via OpenRouter (Gemini models).
@@ -96,7 +96,7 @@ The central tool that produces the raw materials for an animation. It generates:
 The Media Manager lets you pick/create a project, then run each generation step
 per **act** (see §5.1.1) and see the results.
 
-#### 5.1.1 Three-Act narrative structure
+#### 5.1.1 Three-Act narrative structure 🎭
 Every project is built on a fixed **three-act** story structure. Generation
 (script → images → audio) runs **per act**, and each act has one defined role:
 
@@ -112,7 +112,7 @@ Every project is built on a fixed **three-act** story structure. Generation
   §5.1.2); audio is generated from the act script.
 - `project.json` stores the topic and any per-act prompts/overrides.
 
-#### 5.1.2 Components (typed visual parts)
+#### 5.1.2 Components (typed visual parts) 🧩
 For each act we generate **components**, not random images. A **component** is a
 visual part that relates to a specific beat/moment of the act's script and that
 plays a defined **role** in the video. Each component has a `type` that tells
@@ -139,7 +139,7 @@ how it demonstrates the act:
 - Components are the building blocks the Storyboard assembles into scenes.
 - Use json structures in Azure to hold the metadata and the data 
 
-### 5.2 Storyboard Creator
+### 5.2 Storyboard Creator 📋
 Takes the existing **act scripts** and the generated **components** for each
 act, then produces a **storyboard** organized by act — a scene-by-scene plan
 that places components (by type) against script beats with timing — using
@@ -148,12 +148,42 @@ Story board gets created with a problem and answer about a large language models
 `storyboard/` folder as `storyboard.json` with sections `act-1` / `act-2` /
 `act-3`, each scene referencing component `id`s (and therefore `type` + file).
 
-### 5.3 Animation components
-One project should be able to create different *types* of animation components. The
-project model carries an `component_type` so the pipeline can adapt. More
-specialized tools can be added behind the same shared menu.
+### 5.3 Audio Tools 🎧
+Audio is handled by two complementary systems:
 
-## 6. Project & Data Model
+#### 5.3.1 Voiceover / Narration 🎙️
+Full-act narration voiceover via **ElevenLabs** TTS. One MP3 per act, stored at
+`<act-slug>/audio/narration.mp3`. Voice defaults to "George" (warm storyteller),
+model `eleven_turbo_v2_5`.
+
+#### 5.3.2 Music Generation 🎵
+Background music tracks generated via **fal.ai** (`fal-ai/mmaudio-v2` or similar).
+Supports prompt-based generation (genre, mood, tempo). Stored per act as
+`<act-slug>/audio/music.mp3`.
+
+#### 5.3.3 Sound Effects 🔉
+Spot sound effects (whooshes, dings, transitions) generated via **fal.ai**
+(`fal-ai/stable-audio`). Each SFX is tied to a component or scene beat and stored
+as `<act-slug>/audio/sfx-<id>.mp3`.
+
+> All fal.ai keys come from **Azure KeyVault** and are set in `.env` locally +
+> `fly secrets` for deployment. The `FAL_KEY` env var is read by both the Go
+> server and Python scripts.
+
+### 5.4 Project Creation Page 🆕
+Dedicated page at `/pages/create.html` where users:
+
+1. **Enter a question + answer** — the core topic framed as Q&A (e.g. "How does
+   machine learning work? → It learns patterns from data").
+2. **Single creation mode** 🧪 — generate one act or one full project for testing
+   and feedback before bulk production.
+3. **Bulk creation mode** ⚡ — generate all 3 acts (outline → script → components
+   → audio → storyboard) for the full pipeline, optimized for Canva workflows.
+4. **Progress visualization** — per-act status with pass/fail indicators.
+5. **Prompt audit trail** — every prompt sent to the LLM is saved to Azure under
+   `<slug>/prompts/<timestamp>-<step>.json` for debugging and reproducibility.
+
+## 6. Project & Data Model 📁
 
 An **animation project** is a folder + a metadata file, organized by the fixed
 **three-act** structure (Problem → Solution → Lesson). Per act, it holds a
@@ -202,7 +232,7 @@ script, a set of typed **components**, and audio.
 ]
 ```
 
-## 7. Secrets
+## 7. Secrets 🔑
 
 Secrets are **never committed**. They are provided through the environment and
 read by the backend only.
@@ -222,7 +252,7 @@ read by the backend only.
   documented. Passwords/tokens live only in `.env` locally and in fly.io
   secrets remotely.
 
-## 8. Deployment (fly.io)
+## 8. Deployment (fly.io) 🚀
 
 - Deploy from the **local machine** using the existing fly CLI token
   (`fly auth whoami` → already authenticated).
@@ -232,7 +262,7 @@ read by the backend only.
   deploys. New deploys never contain secrets in the image.
 - The app is a single service: serves the static HTML **and** exposes the API.
 
-## 9. Shared Layout
+## 9. Shared Layout 🖼️
 
 Every page reuses:
 - **Top menu** — links to Dashboard, Media Manager, Storyboard Creator, etc.
@@ -242,7 +272,7 @@ Implemented with a small shared component (JS layout injection + shared CSS),
 so a single edit updates all pages. No page is built from scratch; each page
 just renders into the shared shell.
 
-## 10. Central Error Handling
+## 10. Central Error Handling 🛡️
 
 ### 10.1 Server runtime
 - All handler panics are recovered by middleware — the server never crashes from
@@ -275,7 +305,7 @@ Every page includes a **debug bar** component injected by `debug.js`:
 - The debug bar also has a **Clear** button and a **Pull server errors** button
   that fetches `GET /api/errors` and appends the server-side errors to the feed.
 
-## 11. Repository Layout (planned)
+## 11. Repository Layout (planned) 📦
 
 ```
 animation-asistant/
@@ -326,7 +356,7 @@ animation-asistant/
     └── .gitkeep
 ```
 
-## 12. Tech Choices
+## 12. Tech Choices ⚙️
 
 - **Frontend**: vanilla HTML/CSS/JS (no heavy framework) — pages are simple tool
   screens. Shared layout via a JS helper + shared CSS. Debug bar included on
@@ -347,7 +377,7 @@ animation-asistant/
   bar that captures and displays errors/actions with copy-to-clipboard for
   feeding into AI agents for manual resolution.
 
-## 13. Phased Plan
+## 13. Phased Plan 📅
 
 1. **Phase 0 — Foundations (this step):** SPEC.md + AGENTS.md only.
 2. **Phase 1 — Skeleton:** repo layout, shared layout (menu/footer/debug bar),
@@ -364,7 +394,7 @@ animation-asistant/
 7. **Phase 6 — Deploy:** `fly secrets set`, `fly deploy`, GitHub Pages → fly.io
    redirect, verify on remote.
 
-## 14. Open Questions
+## 14. Open Questions ❓
 
 - Which image-generation provider/model to standardize on (key placeholder
   `IMAGE_API_KEY`).

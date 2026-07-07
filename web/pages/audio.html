@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Audio Tools</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>🎧 Audio Tools</h1>
+
+    <div id="no-project" class="panel">
+      <p>No project selected. <a href="/pages/projects.html">Pick or create one</a> first.</p>
+    </div>
+
+    <div id="manager" class="hidden">
+      <div class="toolbar">
+        <span id="at-title" class="mm-title"></span>
+        <span id="at-status" class="badge"></span>
+      </div>
+
+      <section class="panel">
+        <h2>🎙️ Voiceover (Narration)</h2>
+        <p class="muted">Full-act narration via ElevenLabs TTS.</p>
+        <div class="row">
+          <label class="row"><input type="checkbox" id="vo-act-1" checked> Act 1 — Problem</label>
+          <label class="row"><input type="checkbox" id="vo-act-2" checked> Act 2 — Solution</label>
+          <label class="row"><input type="checkbox" id="vo-act-3" checked> Act 3 — Lesson</label>
+          <button id="gen-voiceover" class="btn primary">Generate Voiceover</button>
+        </div>
+        <div id="vo-out"></div>
+      </section>
+
+      <section class="panel">
+        <h2>🎵 Background Music</h2>
+        <p class="muted">AI-generated music via fal.ai. Pick genre and mood.</p>
+        <div class="row">
+          <label>Genre <input type="text" id="music-genre" placeholder="cinematic" value="cinematic"></label>
+          <label>Mood <input type="text" id="music-mood" placeholder="inspiring" value="inspiring"></label>
+          <label class="row"><input type="checkbox" id="mu-act-1" checked> Act 1</label>
+          <label class="row"><input type="checkbox" id="mu-act-2" checked> Act 2</label>
+          <label class="row"><input type="checkbox" id="mu-act-3" checked> Act 3</label>
+          <button id="gen-music" class="btn primary">Generate Music</button>
+        </div>
+        <div id="mu-out"></div>
+      </section>
+
+      <section class="panel">
+        <h2>🔉 Sound Effects</h2>
+        <p class="muted">Spot SFX (whoosh, ding, reveal) via fal.ai.</p>
+        <div class="row">
+          <label class="row"><input type="checkbox" id="sfx-act-1" checked> Act 1</label>
+          <label class="row"><input type="checkbox" id="sfx-act-2" checked> Act 2</label>
+          <label class="row"><input type="checkbox" id="sfx-act-3" checked> Act 3</label>
+          <button id="gen-sfx" class="btn primary">Generate SFX</button>
+        </div>
+        <div id="sfx-out"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
+  <script src="/assets/js/audio.js"></script>
+</body>
+</html>
