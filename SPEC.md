@@ -1,7 +1,7 @@
 # Animation Assistant — Project Specification
 
-> Status: **Draft v2** — planning/spec phase. No implementation exists yet.
-> This document defines what we are building before any code is written.
+> Status: **v3 — all phases complete, live at https://animation-assistant.fly.dev/** 🚀
+> This document defines what we built and what's next.
 
 ## 1. Overview 🎬
 
@@ -379,20 +379,34 @@ animation-asistant/
 
 ## 13. Phased Plan 📅
 
-1. **Phase 0 — Foundations (this step):** SPEC.md + AGENTS.md only.
-2. **Phase 1 — Skeleton:** repo layout, shared layout (menu/footer/debug bar),
-   dashboard page, Go backend serving static files + REST API, `.env.example`,
-   `fly.toml`, `Dockerfile`, `.gitignore`. Storage backend interface with local
-   + Azure impl.
-3. **Phase 2 — Script generation:** `generate_script.py` + Media Manager page
-   (OpenRouter/Gemini), write to Azure Blob Storage (dev fallback: `./other/`).
-4. **Phase 3 — Images:** `generate_image.py` + UI, write typed components
-   per act with `<slug>-<type>-<n>.<ext>` naming.
-5. **Phase 4 — Audio:** `generate_audio.py` + UI.
-6. **Phase 5 — Storyboard Creator:** combine script + components via OpenRouter
-   (Gemini) → storyboard per act.
-7. **Phase 6 — Deploy:** `fly secrets set`, `fly deploy`, GitHub Pages → fly.io
-   redirect, verify on remote.
+| # | Phase | Status |
+|---|-------|--------|
+| 0 | 📄 Foundations — SPEC.md + AGENTS.md | ✅ Complete |
+| 1 | 🏗️ Skeleton — Go backend, shared layout, auth, CRUD, Azure + Local storage | ✅ Complete |
+| 2 | 📜 Script — Outline + per-act script generation (OpenRouter/Gemini) | ✅ Complete |
+| 3 | 🖼️ Components — Typed component images per act (OpenRouter image model) | ✅ Complete |
+| 4 | 🎧 Audio — TTS voiceover (ElevenLabs) + Music/SFX (fal.ai) | ✅ Complete |
+| 5 | 📋 Storyboard — Scene-by-scene plan from scripts + components | ✅ Complete |
+| 6 | 🚀 Deploy — fly.io, fly secrets, GitHub Pages redirect | ✅ Complete |
+| 7 | 🛡️ Error handling — Central middleware, debug bar, /api/errors | ✅ Complete |
+| 8 | 💾 Prompt audit — All prompts saved to Azure per project | ✅ Complete |
+
+## 15. Backlog 🗒️
+
+Items planned but not yet implemented:
+
+- [ ] 🔄 Per-act retry/backoff for OpenRouter calls (partial progress is kept but handler returns 500)
+- [ ] 🎥 Video rendering pipeline — combine components + audio into a single MP4 per act
+- [ ] 🔍 Full-text search across projects (titles, topics, scripts)
+- [ ] 📊 Usage dashboard — token counts, generation stats per project
+- [ ] 🎚️ Component style presets — save and reuse style configurations
+- [ ] 🔗 Canva deep-link integration — push components directly to Canva via API
+- [ ] 🧠 AI error fixer skill — agent that checks all pages, finds errors, opens GitHub issues, fixes and closes
+- [ ] 📱 Mobile-responsive layout pass
+- [ ] 🎭 Custom component types — user-defined types beyond the 9 built-in types
+- [ ] 📦 Export — download entire project as ZIP from Azure
+- [ ] 🔔 Webhook/email notification when bulk pipeline completes
+- [ ] 🎬 Animation preview — in-browser preview of storyboard scenes with timing
 
 ## 14. Open Questions ❓
 

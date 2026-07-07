@@ -13,6 +13,7 @@ func (a *App) healthz(w http.ResponseWriter, r *http.Request) {
 		"storage":     a.store.Name(),
 		"text_model":  a.cfg.OpenRouterTextModel,
 		"image_model": a.cfg.OpenRouterImageModel,
+		"started_at":  a.startedAt,
 	})
 }
 

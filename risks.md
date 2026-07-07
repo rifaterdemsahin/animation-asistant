@@ -23,14 +23,16 @@ Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
 
 ## Auth & security
 
-- 🟡 **Basic login only (by design).** Single shared `ADMIN_PASSWORD` (from
-  Azure KeyVault → fly secret). No 2FA, no rate limiting on `/api/login`. This
-  is accepted for a single-user tool. Action if exposed broadly: add rate
-  limiting + fail2ban-style lockout.
-- 🟡 **Auth cookie `HttpOnly` + `SameSite=Lax`, not `Secure`** (so local http
-  works). Behind fly.io TLS this is fine; set `Secure=true` if ever proxied over
-  plain http.
-- 🟢 7-day HMAC token; rotating `AUTH_SECRET`/`ADMIN_PASSWORD` invalidates all.
+- ✅ **Basic login accepted.** Single shared `ADMIN_PASSWORD` (from Azure KeyVault →
+  fly secret). No 2FA, no rate limiting on `/api/login`. Accepted for a
+  single-user tool. 👍
+- ✅ **Auth cookie `HttpOnly` + `SameSite=Lax`, not `Secure`** (so local http
+  works). Behind fly.io TLS this is fine. Accepted. 👍
+- ✅ **7-day HMAC token accepted.** Rotating `AUTH_SECRET`/`ADMIN_PASSWORD`
+  invalidates all. 👍
+- ✅ **`#` truncation resolved.** Changed trailing `#` to `!` in `ADMIN_PASSWORD`
+  (KeyVault + fly secret). fly secrets import no longer truncates at comment
+  delimiter. All secrets with special chars should be single-quoted.
 
 ## OpenRouter / model tokens (expiry + usage limits)
 

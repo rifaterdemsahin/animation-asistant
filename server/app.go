@@ -9,9 +9,10 @@ import (
 
 // App holds shared dependencies for all HTTP handlers.
 type App struct {
-	cfg   *Config
-	store storage.Backend
-	or    *orClient
+	cfg       *Config
+	store     storage.Backend
+	or        *orClient
+	startedAt string
 }
 
 func (a *App) routes() http.Handler {

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"animation-assistant/server/storage"
 )
@@ -14,9 +15,10 @@ func main() {
 		log.Fatalf("storage init: %v", err)
 	}
 	app := &App{
-		cfg:   cfg,
-		store: store,
-		or:    newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.OpenRouterBase),
+		cfg:       cfg,
+		store:     store,
+		or:        newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.OpenRouterBase),
+		startedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
 	if cfg.AdminPassword == "" {
