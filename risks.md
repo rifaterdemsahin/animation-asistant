@@ -67,6 +67,10 @@ Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
   publishes a single meta-refresh redirect page).
 - 🟢 **`FLY_API_TOKEN`:** deploy ran via the already-authenticated fly CLI
   (`fly auth whoami`), so no token-in-env was required.
+- 👍 **Storage key exposed in development chat.** The animationasistant account
+  key appeared in plaintext during configuration. Accepted — this is a dev
+  tool, the key is rotated via Azure Portal. KeyVault holds the latest.
+  Command: `az storage account keys renew -g animation-asistant -n animationasistant --key key1`
 
 ## Data model / naming
 

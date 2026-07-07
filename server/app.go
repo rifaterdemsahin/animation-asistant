@@ -48,6 +48,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/storyboard", a.authed(a.getStoryboard))
 
 	// raw asset serving (images/audio) from storage
+	mux.HandleFunc("GET /api/projects/{slug}/browse", a.authed(a.browseFiles))
 	mux.HandleFunc("GET /api/projects/{slug}/raw/{path...}", a.authed(a.serveRaw))
 
 	// static frontend (subtree catch-all; registered after API routes)

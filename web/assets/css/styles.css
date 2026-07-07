@@ -134,3 +134,13 @@ input:focus { outline: none; border-color: var(--accent); }
 .db-msg { grid-column: 1 / -1; color: var(--danger); font-size: 11px; }
 .db-ok .db-msg { color: var(--accent-2); }
 .db-empty { text-align: center; padding: 12px; }
+
+/* file cards */
+.files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.file-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.file-card img { width: 100%; display: block; max-height: 120px; object-fit: cover; }
+.file-card audio { width: 100%; }
+.file-card .file-meta { padding: 6px 10px; }
+.file-card .file-meta a { color: var(--muted); font-size: 12px; word-break: break-all; }
+.file-card .file-icon { padding: 16px; text-align: center; font-size: 28px; }
+.file-card .file-meta a:hover { color: var(--accent); }

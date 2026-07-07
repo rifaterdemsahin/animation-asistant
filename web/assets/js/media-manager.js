@@ -107,6 +107,19 @@ async function loadAudio() {
   try { const { audio } = await json(`${api}/projects/${slug()}/audio`); renderAudio(audio || {}); } catch {}
 }
 
+async function loadBrowse() {
+  const out = document.getElementById("files-out");
+  try {
+    const { files } = await json(`${api}/projects/${slug()}/browse`);
+    if (!files || !files.length) { out.innerHTML = `<p class="muted">No files generated yet.</p>`; return; }
+    out.innerHTML = files.map(f => {
+      if (f.type === "image") return `<div class="file-card"><img loading="lazy" src="${f.url}" alt="${f.path}"><div class="file-meta"><a href="${f.url}" target="_blank">🖼️ ${f.path}</a></div></div>`;
+      if (f.type === "audio") return `<div class="file-card"><audio controls src="${f.url}"></audio><div class="file-meta"><a href="${f.url}" target="_blank">🎵 ${f.path}</a></div></div>`;
+      return `<div class="file-card"><div class="file-icon">📄</div><div class="file-meta"><a href="${f.url}" target="_blank">${f.path}</a></div></div>`;
+    }).join("");
+  } catch { out.innerHTML = `<p class="muted">Could not load files.</p>`; }
+}
+
 document.addEventListener("layout:ready", () => {
   const s = slug();
   if (!s) return;
@@ -156,5 +169,7 @@ document.addEventListener("layout:ready", () => {
     } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
   });
 
-  loadOutline(); loadScript(); loadComponents(); loadAudio();
+  document.getElementById("refresh-files").addEventListener("click", () => loadBrowse());
+
+  loadOutline(); loadScript(); loadComponents(); loadAudio(); loadBrowse();
 });
