@@ -25,6 +25,12 @@ from the terminal via `az secrets` and placed into `.env` (local) and
 animation components, and every animation component is kept isolated so it is
 easier to use in Canva video timelines where they turn into final animations.
 
+**This project is focused on production of assets for Canva.** It is NOT a video
+editor — Canva handles final post-production. The self-learning process happens
+when generated content is arranged in Canva to create an aesthetic learning
+experience. See the [🔄 Production Process](/pages/process.html) page for the
+full pipeline.
+
 ## 2. Goals 🎯
 
 - Provide a unified web UI for animation production tasks for its components.
@@ -195,6 +201,22 @@ Dedicated page at `/pages/create.html` where users:
 4. **Progress visualization** — per-act status with pass/fail indicators.
 5. **Prompt audit trail** — every prompt sent to the LLM is saved to Azure under
    `<slug>/prompts/<timestamp>-<step>.json` for debugging and reproducibility.
+
+### 5.5 Production Process 🔄
+Full pipeline documented at `/pages/process.html`:
+
+| Step | Page | What happens |
+|------|------|-------------|
+| 1. 📝 Q&A | `/pages/create.html` | Frame topic as question + answer. Creates project. |
+| 2. 📋 Storyboard | `/pages/storyboard.html` | Generate 3 infographic images (4 frames each, 2×2 grid) per act. JSON scene plan. |
+| 3. 🎛️ Assets | `/pages/media-manager.html` | Outline → Script → Typed Components → Voiceover → Music → SFX. All saved to Azure. |
+| 4. 📥 Download | Media Manager + Azure | Browse images/audio, download individually or via Azure Portal blob access. |
+| 5. 🎨 Canva | canva.com | Place components into Canva video timeline. Arranging creates the self-learning loop. |
+
+> This project is focused on **production of assets** for Canva. It is NOT a
+> video editor — Canva handles final post-production. The self-learning process
+> happens when generated content is arranged in Canva to create an aesthetic
+> learning experience.
 
 ## 6. Project & Data Model 📁
 
