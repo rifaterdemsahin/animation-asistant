@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Storyboard</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>Storyboard Creator</h1>
+
+    <div id="no-project" class="panel">
+      <p>No project selected. <a href="/pages/projects.html">Pick or create one</a> first.</p>
+    </div>
+
+    <div id="manager" class="hidden">
+      <div class="toolbar">
+        <span id="sb-title" class="mm-title"></span>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button id="gen-storyboard" class="btn primary">Generate storyboard</button>
+        <span class="muted">combines outline + scripts + components (Gemini)</span>
+      </div>
+
+      <section class="panel">
+        <h2>Overview</h2>
+        <img id="sb-image" class="hidden" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">
+      </section>
+
+      <section class="panel">
+        <h2>Scenes by act</h2>
+        <div id="sb-out"><p class="muted">No storyboard yet.</p></div>
+      </section>
+    </div>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/storyboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+.venv
+venv
+other
+*.log
+/tmp
+.DS_Store
+README.md
+SPEC.md
+AGENTS.md
+risks.md
+*.md

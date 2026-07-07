@@ -5,7 +5,7 @@ const PAGES = [
   { name: "Dashboard", url: "/" },
   { name: "Projects", url: "/pages/projects.html" },
   { name: "Media Manager", url: "/pages/media-manager.html" },
-  { name: "Storyboard (soon)", url: "" },
+  { name: "Storyboard", url: "/pages/storyboard.html" },
   { name: "Login", url: "/pages/login.html" },
 ];
 

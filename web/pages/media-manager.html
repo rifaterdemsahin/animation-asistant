@@ -44,9 +44,23 @@
         <div id="script-out" class="acts"></div>
       </section>
 
-      <section class="panel muted">
-        <h2>3. Components &amp; 4. Audio</h2>
-        <p>Coming in Phase 3 (images) and Phase 4 (audio).</p>
+      <section class="panel">
+        <h2>3. Components (typed images)</h2>
+        <p class="muted">Generates one of each type per act: background, lower-third, speech-bubble, infographic.</p>
+        <div class="row">
+          <button id="gen-components" class="btn primary">Generate components</button>
+          <span class="muted">uses the act checkboxes above</span>
+        </div>
+        <div id="components-out"></div>
+      </section>
+
+      <section class="panel">
+        <h2>4. Audio (narration)</h2>
+        <p class="muted">ElevenLabs TTS from each act's narration.</p>
+        <div class="row">
+          <button id="gen-audio" class="btn primary">Generate audio</button>
+        </div>
+        <div id="audio-out" class="acts"></div>
       </section>
     </div>
   </main>
@@ -55,7 +69,6 @@
 
   <script src="/assets/js/layout.js"></script>
   <script src="/assets/js/auth.js"></script>
-  <script src="/assets/js/debug.js"></script>
   <script src="/assets/js/media-manager.js"></script>
 </body>
 </html>
