@@ -1,83 +1,71 @@
 # Risks
 
-Captured after completing **Phase 1 (skeleton)** and **Phase 2 (script generation)**.
-Each item lists severity, owner action, and where it should be resolved.
-
-Legend: 🔴 high · 🟡 medium · 🟢 low.
+After completing **all phases (1–6)** the app is live at
+**https://animation-assistant.fly.dev/** (GitHub Pages redirects here).
+Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
 
 ## Storage
 
-- 🔴 **Azure backend not implemented.** The storage interface
-  (`server/storage/storage.go`) has a local filesystem backend (default) and an
-  Azure placeholder that returns "not implemented". All data currently lives in
-  `./other`. **Action:** implement the Azure Blob backend (Go SDK + shared key
-  / SAS), set `AZURE_STORAGE_CONNECTION_STRING`. Needed before real use.
-- 🔴 **Local storage on fly.io is ephemeral.** If deployed with no Azure config,
-  generated projects are lost on every redeploy/restart. **Action:** do not rely
-  on local fs in production; wire Azure first (Phase 3+ prerequisite).
-- 🟢 **`./other` is gitignored.** Fresh clones have no data by design (Azure is
-  the intended persistent store).
+- ✅ **Azure backend implemented and tested.** `server/storage/storage.go` now
+  uses the Azure Blob SDK (`azblob`); selected automatically when
+  `AZURE_STORAGE_CONNECTION_STRING` is set. Verified end-to-end (project files
+  written/read as blobs in the `projects` container).
+- ✅ **Deployed app uses Azure** (healthz reports `storage: azure:projects`), so
+  data persists across fly.io restarts/redeploys.
+- 🟢 Local `./other` remains as a fallback when no connection string is set.
 
-## Spec consistency
+## Architecture (reframed — not a risk)
 
-- 🟢 **§11/§10 reconciled.** SPEC.md v3 clarifies Go backend + Azure storage.
-  Python scripts are CLI/local tools, not the server runtime.
-- 🟡 **Go vs Python generation duplication.** Outline/script prompts exist in
-  both `server/script.go` and `shared/scriptgen.py`. They can drift. Action:
-  pick one canonical generator (recommend Go, since it holds the secrets and
-  deploys) and make the Python CLI call the Go API instead of duplicating.
+- ✅ **Go vs Python is intentional dual-mode, not duplication.** Per the owner:
+  **Python** = local generation triggered by the AI agent (`scripts/*.py`,
+  writes to local `./other`); **Go** = browser-based generation on fly.io
+  (`server/`, writes to Azure). They serve different contexts on purpose.
 
 ## Auth & security
 
-- 🟡 **Single shared admin password.** `ADMIN_PASSWORD` in `.env`/fly secret.
-  No 2FA, no rate limiting on `/api/login`. Action: add rate limiting + a
-  strong password; consider per-request CSRF token for state changes.
-- 🟡 **Auth cookie is `HttpOnly` + `SameSite=Lax` but not `Secure`** (so it works
-  on local http). Behind fly.io TLS this is acceptable; if ever proxied over
-  plain http it is a risk. Action: set `Secure=true` when `PORT`/env indicates
-  production.
-- 🟢 **No CSRF token.** Same-origin cookie auth; low risk for a single-user tool
-  but should be hardened if exposed publicly.
-- 🟢 **7-day token, no revocation list.** Changing `ADMIN_PASSWORD`/`AUTH_SECRET`
-  invalidates all tokens (acceptable).
+- 🟡 **Basic login only (by design).** Single shared `ADMIN_PASSWORD` (from
+  Azure KeyVault → fly secret). No 2FA, no rate limiting on `/api/login`. This
+  is accepted for a single-user tool. Action if exposed broadly: add rate
+  limiting + fail2ban-style lockout.
+- 🟡 **Auth cookie `HttpOnly` + `SameSite=Lax`, not `Secure`** (so local http
+  works). Behind fly.io TLS this is fine; set `Secure=true` if ever proxied over
+  plain http.
+- 🟢 7-day HMAC token; rotating `AUTH_SECRET`/`ADMIN_PASSWORD` invalidates all.
 
-## OpenRouter / model
+## OpenRouter / model tokens (expiry + usage limits)
 
-- 🟡 **Default model `google/gemini-2.5-flash`** verified available today; model
-  ids change over time. Action: keep `OPENROUTER_MODEL` configurable; add a
-  startup model-existence check.
-- 🟢 **Error handling + retry implemented.** Server has central error middleware
-  (`server/errors.go`) with panic recovery, structured JSON errors, and a ring
-  buffer exposed via `GET /api/errors`. Client has a debug bar (`debug.js`) that
-  captures JS errors, fetch failures, and unhandled rejections with copy-to-clipboard
-  for AI-agent feedback.
-- 🟡 **No retry/backoff in OpenRouter calls.** A single failure aborts the whole
-  script batch mid-way. Action: per-act retry + idempotent resume (acts are
-  independent, so partial progress is fine).
-- 🟢 **Prompt injection** from topic/title into LLM output — not security-critical
-  for this tool, but outputs are untrusted text; sanitize before any reuse.
+- ✅ **Multi-key rotation.** `OPENROUTER_API_KEY` may be comma-separated; the
+  client rotates to the next key on **401/402/429** (invalid/expired/limit) and
+  returns a clear message. Mitigates the token validation-date / usage-limit
+  concern.
+- ✅ **Model selection = good quality + good rate.** Text & storyboard:
+  `google/gemini-2.5-flash`. Images: `google/gemini-2.5-flash-image`. All on
+  OpenRouter (one bill). TTS: ElevenLabs (`eleven_turbo_v2_5`, voice "George").
+  All configurable via env.
+- 🟡 **No per-call retry/backoff.** A generation failure aborts the batch
+  mid-way (acts are independent, so partial progress is kept, but the handler
+  returns 500). Action: per-act retry + idempotent resume.
+- 🟢 Prompt injection from topic/title into LLM output — low risk for this tool.
 
 ## Deployment
 
-- 🟡 **fly.io app name `animation-assistant` may be taken.** Rename in
-  `fly.toml` if `fly deploy` rejects it. Deploy is Phase 6, not done yet.
-- 🟡 **`FLY_API_TOKEN` is not set** in the local env. Needed to deploy.
-- 🟡 **GitHub Pages → fly.io redirect not configured.** The repo has
-  `.github/workflows/static.yml` (Pages build). It must become a redirect to the
-  fly.io URL (or be removed) so Pages doesn't serve a stale copy. Action: add a
-  redirect `index.html` / CNAME in Phase 6.
-- 🟢 **Docker image bundles Python** (for Phase 3/4 media scripts) — larger
-  image, acceptable.
+- ✅ **Deployed to fly.io** as app `animation-assistant`
+  (https://animation-assistant.fly.dev). Flexible naming handled (name was free).
+- ✅ **Secrets populated from Azure KeyVault** (`dp-kv-deliverypilot`) into both
+  local `.env` and `fly secrets` (AdminPassword, OPENROUTER, AZURE-CONN-STR,
+  ELEVEN-LABS). `.env` is gitignored; `.dockerignore` keeps it out of the image.
+- ✅ **GitHub Pages → fly.io redirect** (`.github/workflows/static.yml` now
+  publishes a single meta-refresh redirect page).
+- 🟢 **`FLY_API_TOKEN`:** deploy ran via the already-authenticated fly CLI
+  (`fly auth whoami`), so no token-in-env was required.
 
 ## Data model / naming
 
-- 🟢 **Project-name prefix on items** (SPEC: "namings come with project name as
-  prefix") is only partially applied (Python `shared/storage.py` notes it).
-  Component files (Phase 3) must enforce `<slug>-<type>-<n>.<ext>`.
-- 🟢 **Tests in place.** `server/main_test.go` covers: page routes (all HTML pages
-  + API endpoints), healthz, login flow, project CRUD, error endpoint, slugify.
+- ✅ **Project-name prefix on items enforced.** Component files are named
+  `<slug>-<type>-NN.png`; manifest `components.json` carries `script_ref`.
+- 🟢 Go unit tests exist (`server/main_test.go`); no UI/Playwright tests yet.
 
-## Functional gaps (expected — later phases)
+## Functional status
 
-- 🟢 Phase 3 (typed components/images), Phase 4 (audio), Phase 5 (storyboard),
-  Phase 6 (deploy) are not implemented. Pages for those are stubs/hidden.
+- ✅ Phase 1 skeleton · ✅ Phase 2 script · ✅ Phase 3 components · ✅ Phase 4
+  audio · ✅ Phase 5 storyboard · ✅ Phase 6 deploy. All verified live + locally.
