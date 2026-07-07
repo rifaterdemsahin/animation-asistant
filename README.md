@@ -53,7 +53,7 @@ KV=dp-kv-deliverypilot
 get(){ az keyvault secret show --vault-name "$KV" --name "$1" --query value -o tsv; }
 echo "ADMIN_PASSWORD='$(get AdminPassword)'" > .env
 echo "OPENROUTER_API_KEY='$(get OPENROUTER-API-KEY)'" >> .env
-echo "AZURE_STORAGE_CONNECTION_STRING='$(get AZURE-STORAGE-CONN-STR)'" >> .env
+echo "AZURE_STORAGE_CONNECTION_STRING='$(get AZURE-STORAGE-CONN-STR-AA)'" >> .env
 echo "TTS_API_KEY='$(get ELEVEN-LABS-API-KEY)'" >> .env
 echo "FAL_KEY='$(get FAL-KEY)'" >> .env
 ```
