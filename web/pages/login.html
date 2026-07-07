@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Login</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+
+  <main class="page narrow">
+    <h1>Admin login</h1>
+    <p class="lede">Enter the admin password to use the tools.</p>
+
+    <form id="login-form" class="form">
+      <label>Password
+        <input type="password" name="password" id="password" required autofocus>
+      </label>
+      <p id="login-error" class="error hidden"></p>
+      <button type="submit" class="btn primary">Sign in</button>
+    </form>
+  </main>
+
+  <footer id="app-footer"></footer>
+
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+</body>
+</html>

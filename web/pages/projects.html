@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Projects</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>Projects</h1>
+
+    <form id="new-project" class="form row">
+      <label>Title
+        <input type="text" name="title" id="p-title" required placeholder="e.g. Why sleep matters">
+      </label>
+      <label>Topic
+        <input type="text" name="topic" id="p-topic" placeholder="One-line topic / prompt">
+      </label>
+      <label>Component type
+        <input type="text" name="component_type" id="p-type" placeholder="explainer" value="explainer">
+      </label>
+      <button type="submit" class="btn primary">Create</button>
+    </form>
+
+    <ul id="project-list" class="list"></ul>
+    <p id="empty-state" class="muted">No projects yet.</p>
+  </main>
+
+  <footer id="app-footer"></footer>
+
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/projects.js"></script>
+</body>
+</html>

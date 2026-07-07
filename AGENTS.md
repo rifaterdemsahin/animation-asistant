@@ -1,144 +1,100 @@
 # AGENTS.md — Guidance for AI coding agents working on this repo
 
-This file tells any coding agent (human or AI) how this project is structured,
-what the rules are, and how to run/build/deploy it. **Read this before making
-changes.** The source of truth for *what* we are building is `SPEC.md`.
+Read before making changes. Source of truth for *what* we build is `SPEC.md`;
+*this* file is *how*. Also read `risks.md` for known issues.
 
----
+## 1. What this is
 
-## 0. Working order
+Animation Assistant = HTML multi-tool web app to build animation components for
+Canva. A **Go backend** (deployed to fly.io) holds the secrets, serves the
+static frontend, exposes the API, and calls OpenRouter (Gemini). **Python
+scripts** under `scripts/` do local/CLI generation and write to the same storage
+layout. Data lives under a storage backend (local `./other` now; **Azure** is
+the intended production store — not yet implemented).
 
-The owner requested: **spec + AGENTS.md first, before any implementation.**
-Do not jump ahead. Implement in the phased order in `SPEC.md §12` unless told
-otherwise. When unsure, ask before generating large amounts of code.
+Flow per project: **project → outline → script → components → storyboard**.
 
-## 1. What this project is
+## 2. Hard rules
 
-Animation Assistant = HTML multi-tool web app to help build animations.
+- **Three-act structure is mandatory.** `act-1` = Problem, `act-2` = Solution,
+  `act-3` = Lesson. Outline is project-level; script/components/audio are per
+  act. Never produce a single flat script.
+- **Components are typed, not plain images.** Types: `background`,
+  `lower-third`, `speech-bubble`, `infographic`, `character`, `icon`,
+  `title-card`, `transition` (extensible). Every component references its script
+  beat (`script_ref`).
+- **Naming prefix:** items are prefixed with the project slug
+  (`<slug>-<type>-<n>.<ext>`).
+- **Shared layout on every page:** top nav (links + search + logout), header
+  showing the current project, footer (GitHub/commits/fly/local). Pages render
+  into `<div id="topnav">`, `<header id="app-header">`, `<footer id="app-footer">`
+  and include `layout.js` + `auth.js`. Never hand-copy the chrome.
+- **Secrets only via env.** Local: `.env` (gitignored). Deployed: `fly secrets`.
+  Never log secrets. `ADMIN_PASSWORD` gates all tools (cookie auth).
+- **Storage via the Backend interface** (`server/storage/storage.go`). Never
+  hardcode `./other` paths in handlers — use `a.store`. Add the Azure impl there.
+- **Keep the backend thin:** validate input, delegate to generation, write to
+  storage, return JSON. Generation prompts live in `server/script.go`.
 
-- Shared top menu + footer on every page.
-- A **Media Manager** generates **script**, **images**, **audio**.
-- A **Storyboard Creator** turns **act scripts** + **images** into a storyboard
-  using **OpenRouter (Gemini models)**.
-- Output for each animation lives in its own folder under `other/`.
-- Runs locally and deploys to **fly.io**.
-
-**Three-Act structure is mandatory.** Every project is built on three acts:
-- `act-1` = **Problem**, `act-2` = **Solution**, `act-3` = **Lesson**.
-- Script, images, and audio are generated **per act**.
-- The storyboard groups scenes by act.
-Never generate a project as a single flat script; always split into the 3 acts.
-
-## 2. Repository map
+## 3. Repo map
 
 ```
-web/        static HTML/CSS/JS frontend (shared layout in assets/js/layout.js)
-server/     Python backend: serves static files + JSON API, orchestrates calls
-scripts/    standalone Python generation workers (script/image/audio)
-shared/     config, paths, io helpers shared by server + scripts
-other/      OUTPUT ONLY — one subfolder per animation project (gitignored)
-  other/<slug>/project.json          metadata (topic, type, acts status)
-  other/<slug>/act-1-problem/{script,components,audio}
-  other/<slug>/act-2-solution/{script,components,audio}
-  other/<slug>/act-3-lesson/{script,components,audio}
-  other/<slug>/storyboard/storyboard.json
-.env        local secrets (NEVER commit) — loaded by server at startup
-.env.example  documented placeholder keys (committed)
-fly.toml    fly.io app definition
+server/           Go backend (package main): app.go, config.go, auth.go,
+                  openrouter.go, jsonx.go, acts.go, projects.go, script.go,
+                  healthz.go, util.go, main.go
+server/storage/   storage Backend interface + Local (default) + Azure stub
+web/              static frontend (index.html + pages/ + assets/{css,js})
+                  assets/js/layout.js = shared nav/header/footer + search
+                  assets/js/auth.js   = login + requireAuth gate
+scripts/          standalone Python workers (generate_script.py …)
+shared/           Python helpers mirroring Go logic (config, acts, openrouter,
+                  storage, scriptgen)
+other/            OUTPUT ONLY (local storage fallback) — gitignored
+.env.example      documented keys (placeholders only)
+fly.toml/Dockerfile  fly.io deploy (Go build + Python runtime)
+risks.md          known risks / TODOs
 ```
 
-- `other/` is **generated output**, treat it as disposable data, not source.
-  Never check generated assets into git.
-- Each animation project = one folder `other/<slug>/` with `project.json`,
-  split into the three act folders (`act-1-problem`, `act-2-solution`,
-  `act-3-lesson`).
+## 4. Run (local)
 
-## 3. Rules (do / don't)
-
-**DO**
-- Keep every page inside the shared layout (top menu + footer). Edit the layout
-  helper once; never copy the menu/footer by hand into each page.
-- Make generation scripts standalone and CLI-callable (server calls the same
-  code). Example: `python scripts/generate_image.py --project x --prompt "..."`.
-- Read secrets **only** from environment variables (via `os.environ` / pydantic
-  settings). Local: `.env`. Remote: fly.io secrets.
-- Write all generated artifacts into `other/<project>/<kind>/`.
-- Keep the backend thin: it validates input, delegates to `scripts/`/APIs,
-  writes files, returns JSON.
-- Prefer small, composable functions; one responsibility per script.
-
-**DON'T**
-- Don't hardcode API keys, tokens, or passwords anywhere.
-- Don't commit `.env`, `other/`, or any generated asset.
-- Don't build pages without the shared menu/footer.
-- Don't store output anywhere except under `other/`.
-- Don't add heavy frameworks unless the owner approves.
-
-## 4. Secrets model (important)
-
-Secrets are identical in name locally and on fly.io, only the *delivery*
-differs:
-
-| Variable          | Local source | Deployed source |
-|-------------------|--------------|-----------------|
-| `OPENROUTER_API_KEY` | `.env` | `fly secrets set` |
-| `IMAGE_API_KEY`      | `.env` | `fly secrets set` |
-| `TTS_API_KEY`        | `.env` | `fly secrets set` |
-| `FLY_API_TOKEN`      | `.env` / keychain | n/a (deploy only) |
-
-- When adding a new secret: add it to `.env.example` (placeholder), document it
-  in `SPEC.md §7`, and tell the owner to run `fly secrets set KEY=value`.
-- Never print secrets to logs. Redact before logging request bodies.
-
-## 5. How to run (once Phase 1 exists)
-
-Local dev:
 ```bash
-cp .env.example .env        # then fill real values
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python server/app.py        # serves web/ + API on http://localhost:8080
+cp .env.example .env        # fill ADMIN_PASSWORD + OPENROUTER_API_KEY (+ set both in your shell)
+go run ./server             # serves web/ + API on http://localhost:8080
+```
+Open http://localhost:8080 → redirected to login (`/pages/login.html`).
+
+Python CLI (writes to the same local layout under `./other`):
+```bash
+python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+python scripts/generate_script.py create "My topic" --topic "..."
+python scripts/generate_script.py outline --slug my-topic
+python scripts/generate_script.py script  --slug my-topic           # all 3 acts
+python scripts/generate_script.py script  --slug my-topic --act 1   # one act
 ```
 
-CLI test of a generation worker (no server needed):
-```bash
-python scripts/generate_script.py --project demo --topic "..."
-python scripts/generate_image.py  --project demo --prompt "..."
-python scripts/generate_audio.py  --project demo --text "..."
-```
+## 5. Deploy (Phase 6)
 
-## 6. How to deploy
-
-Deploy runs from the owner's local machine using the existing fly token:
 ```bash
-# one-time per new secret:
-fly secrets set OPENROUTER_API_KEY=... IMAGE_API_KEY=... TTS_API_KEY=...
-# every release:
+fly secrets set ADMIN_PASSWORD=... OPENROUTER_API_KEY=... AZURE_STORAGE_CONNECTION_STRING=...
 fly deploy
-fly apps open        # or visit the fly.io URL
 ```
-- Never put secrets in the deployed image; they come from `fly secrets`.
-- After deploy, verify the remote app can read secrets (a `/healthz` that
-  reports which keys are present — without printing values).
+GitHub Pages should redirect to the fly.io URL (see risks.md).
 
-## 7. Coding conventions
+## 6. Conventions
 
-- Python: functions typed, `pathlib` for paths, no shell-out when a library
-  exists. One entry-point per script with `argparse`.
-- HTML/CSS/JS: semantic HTML, small modules, no build step required. Shared
-  styling in `web/assets/css/styles.css`.
-- File naming: lowercase-hyphenated (`media-manager.html`).
-- Keep commits focused; this repo already has a GitHub remote
-  (`git@github.com:rifaterdemsahin/animation-asistant.git`).
+- Go: stdlib-only so far; `gofmt`/`go vet` clean. Handlers in `package main`.
+- Frontend: vanilla HTML/CSS/JS, no build step, absolute asset paths (`/assets/...`).
+- JSON on disk is pretty-printed UTF-8; timestamps are RFC3339 UTC.
 
-## 8. Environment facts (verified)
+## 7. Known gotchas
 
-- OS: macOS (arm64). Python 3.14, Node v22, ffmpeg present, fly CLI present
-  and authenticated as `rifaterdemsahin@gmail.com`.
-- `OPENROUTER_API_KEY` is already exported in the owner's local shell.
-- No implementation files exist yet — start from Phase 1 in `SPEC.md §12`.
+- Azure backend is a stub — setting `AZURE_STORAGE_CONNECTION_STRING` currently
+  makes every storage call fail. Don't set it until implemented.
+- OpenRouter model id is configurable (`OPENROUTER_MODEL`); `google/gemini-2.0-flash-001`
+  does NOT exist — default is `google/gemini-2.5-flash`.
+- Go + Python prompts are duplicated (drift risk) — see risks.md.
 
-## 9. When in doubt
+## 8. When in doubt
 
-- Re-read `SPEC.md`. If still unclear, ask the owner before building.
-- Don't expand scope (new tools, new providers) without confirmation.
+Re-read `SPEC.md` + `risks.md`. If still unclear, ask before building. Don't
+expand scope (new tools/providers) without confirmation.

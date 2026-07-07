@@ -1,0 +1,24 @@
+# Go
+/server/app
+/bin/
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets — never commit
+.env
+.env.local
+*.secret
+
+# Generated output (local storage fallback; Azure is the intended backend)
+other/*
+!other/.gitkeep
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
