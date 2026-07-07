@@ -37,9 +37,17 @@ func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
 	buf, _ := json.MarshalIndent(obj, "", "  ")
 	_ = a.store.Write(slug, "storyboard/storyboard.json", buf)
 
-	// infographic overview image
-	pngPrompt := fmt.Sprintf("an infographic storyboard overview for a 3-act explainer video about: %s. "+
-		"Three labeled sections: Problem, Solution, Lesson. Clean flat vector, modern.", p.Topic)
+	// 4-frame storyboard infographic image
+	pngPrompt := fmt.Sprintf(
+		"A 4-frame storyboard infographic for a 3-act explainer video about: %s. "+
+			"Arrange four horizontal frames in a 2x2 grid. "+
+			"Frame 1 (top-left): Problem setup — show the pain point visually. "+
+			"Frame 2 (top-right): Solution approach — introduce the key idea. "+
+			"Frame 3 (bottom-left): Implementation — show how it works step by step. "+
+			"Frame 4 (bottom-right): Lesson/takeaway — the insight the audience leaves with. "+
+			"Each frame has a short label below it. Clean flat vector style, "+
+			"modern explainer video aesthetic, consistent colors, no text inside frames.",
+		p.Topic)
 	if png, err := a.generateImage(pngPrompt); err == nil {
 		_ = a.store.Write(slug, "storyboard/storyboard.png", png)
 	}

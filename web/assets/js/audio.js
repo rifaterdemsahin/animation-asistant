@@ -28,6 +28,29 @@ document.addEventListener("layout:ready", function () {
   el("at-title").textContent = cur.title + " (" + s + ")";
   el("at-status").textContent = cur.slug;
 
+  el("show-vo-prompt").addEventListener("click", function () {
+    var pre = el("vo-prompt");
+    if (pre.classList.contains("hidden")) {
+      pre.textContent = "ElevenLabs TTS\nVoice: George (warm storyteller)\nModel: eleven_turbo_v2_5\nInput: narration text from each act's script (beats.json → narration field)\nOutput: MP3 per act → saved to Azure: <act-slug>/audio/narration.mp3";
+      pre.classList.remove("hidden");
+    } else pre.classList.add("hidden");
+  });
+  el("show-mu-prompt").addEventListener("click", function () {
+    var pre = el("mu-prompt");
+    if (pre.classList.contains("hidden")) {
+      var g = el("music-genre").value, m = el("music-mood").value;
+      pre.textContent = "fal.ai — fal-ai/mmaudio-v2\nGenre: " + g + "\nMood: " + m + "\nPrompt per act: '" + g + " " + m + " background music for a <role> act in an explainer video about: " + cur.title + ". 30 seconds, seamless loop.'\nOutput: MP3 per act → saved to Azure: <act-slug>/audio/music.mp3";
+      pre.classList.remove("hidden");
+    } else pre.classList.add("hidden");
+  });
+  el("show-sfx-prompt").addEventListener("click", function () {
+    var pre = el("sfx-prompt");
+    if (pre.classList.contains("hidden")) {
+      pre.textContent = "fal.ai — fal-ai/stable-audio\n3 effects per act: whoosh (transition), ding (notification), reveal (dramatic)\nPrompt per effect: '<description>. Short, clean, game-quality sound effect.'\nOutput: MP3 per effect → saved to Azure: <act-slug>/audio/sfx-<name>-01.mp3";
+      pre.classList.remove("hidden");
+    } else pre.classList.add("hidden");
+  });
+
   el("gen-voiceover").addEventListener("click", async function (e) {
     var acts = checked("vo-act");
     if (!acts.length) { alert("Select at least one act."); return; }

@@ -143,10 +143,23 @@ how it demonstrates the act:
 Takes the existing **act scripts** and the generated **components** for each
 act, then produces a **storyboard** organized by act — a scene-by-scene plan
 that places components (by type) against script beats with timing — using
-Story board gets created with a problem and answer about a large language models
 **OpenRouter with Gemini models**. Output is saved into the project's
 `storyboard/` folder as `storyboard.json` with sections `act-1` / `act-2` /
 `act-3`, each scene referencing component `id`s (and therefore `type` + file).
+
+#### 5.2.1 4-Frame Infographic 🖼️
+In addition to the JSON storyboard, a **4-frame infographic PNG** is generated:
+- **Frame 1** (top-left): Problem setup — visualizes the pain point
+- **Frame 2** (top-right): Solution approach — introduces the key idea
+- **Frame 3** (bottom-left): Implementation — shows how it works
+- **Frame 4** (bottom-right): Lesson/takeaway — the insight the audience leaves with
+- Arranged in a 2×2 grid, clean flat vector style, labels under each frame
+- Saved as `storyboard/storyboard.png`
+
+#### 5.2.2 Prompt Visibility 👁️
+Every generation step on the **Storyboard page** has a **Show Prompt** button
+that reveals the full prompt being sent to the model before generation. This
+applies to both the JSON text prompt and the infographic image prompt.
 
 ### 5.3 Audio Tools 🎧
 Audio is handled by two complementary systems:

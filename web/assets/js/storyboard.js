@@ -65,6 +65,28 @@ document.addEventListener("layout:ready", () => {
   const cur = window.currentProject();
   document.getElementById("sb-title").textContent = cur.title + " (" + s + ")";
 
+  document.getElementById("show-sb-prompt").addEventListener("click", function () {
+    var pre = document.getElementById("sb-prompt");
+    if (pre.classList.contains("hidden")) {
+      pre.textContent = "System: You are a storyboard director assembling a 3-act explainer video. " +
+        "You frame the topic as a Problem→Solution→Lesson arc and produce scene-by-scene breakdowns.\n\n" +
+        "User: Topic: " + cur.title + "\n" +
+        "Project: " + s + "\n\n" +
+        "## Text prompt (Gemini):\n" +
+        "Build a scene-by-scene storyboard from this project material. " +
+        "Return JSON with acts → scenes (id, beat_ref, component_ids, duration, description). " +
+        "4-6 scenes across all acts, 2-8 seconds each.\n\n" +
+        "## Infographic prompt (image model):\n" +
+        "A 4-frame storyboard infographic for: " + cur.title + ". " +
+        "Four horizontal frames arranged in a grid, each showing one key scene: " +
+        "Frame 1=Problem setup, Frame 2=Solution approach, " +
+        "Frame 3=Implementation, Frame 4=Lesson/takeaway. " +
+        "Clean flat vector style, modern explainer video aesthetic, " +
+        "labels under each frame.";
+      pre.classList.remove("hidden");
+    } else { pre.classList.add("hidden"); }
+  });
+
   document.getElementById("gen-storyboard").addEventListener("click", async (e) => {
     const btn = e.currentTarget; setLoading(btn, true);
     try {
