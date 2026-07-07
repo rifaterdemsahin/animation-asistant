@@ -1,6 +1,6 @@
 # Animation Assistant — Project Specification
 
-> Status: **Draft v1** — planning/spec phase. No implementation exists yet.
+> Status: **Draft v2** — planning/spec phase. No implementation exists yet.
 > This document defines what we are building before any code is written.
 
 ## 1. Overview
@@ -9,25 +9,31 @@
 animations. It orchestrates AI generation (script, images, audio) and assembles
 them into storyboards that can be turned into animation components.
 
+the backend to hold secrets is GO and getting deployed to fly.io locally it uses gitignored .env file  to tyrigger pythons and load the GO runtime. 
+It gets deployed to fly.io and github pages gets redirected to fly.io.
+
 The app is a collection of focused **tools** that all share a common UI shell
-(top menu + bottom footer). A single project can produce many different kinds of
-animations, and every animation gets its own isolated output folder so nothing
-overlaps.
+(top menu + bottom footer). It serves multiple animation projects which has the data and metadata hosted in Azure storage.  A single project can produce many different kinds of
+animation components, and every animation components is not mixed so it is easier to use in canva video timelines where they turn into final animations.
 
 ## 2. Goals
 
-- Provide a unified web UI for animation production tasks.
+- Provide a unified web UI for animation production tasks for its components.
+- namings for the items come with project name as prefix.
 - Generate **scripts**, **images**, and **audio** from a single Media Manager.
-- Generate a **storyboard** from a script + images using OpenRouter (Gemini).
-- Keep each animation project isolated in its own folder under `other/`.
+- Whole goal is to leverage the large language models capacaity to trigger self learning process.
+- Self learning happens when generated content is placed in canva and created an aestethic learning experience.
+- Generate a **storyboard** from a script + images using OpenRouter calls to Gemini or other related models.
+- Keep each animation project isolated in its own folder under the azure.
+- Have an an admin login and keep that password in .env file so not everyone should be able to trigger have a login page in a common menu.
 - Run locally and deploy to **fly.io** with the same secrets model.
-- Share a consistent layout (top menu + footer) across every page.
+- Share a consistent layout (top menu + footer) across every page which has the links to all the tools and have search to be able find pages.
 
 ## 3. Non-Goals (for now)
 
-- Full timeline/keyframe video editing UI.
-- Real-time collaboration.
-- Account/auth system (single-user tool for the owner).
+- Full timeline/keyframe video editing UI this is delegated to canva which does the final post production
+- Real-time collaboration we only focus on production and self learning in the process.
+- Account/auth system (single-user tool for the owner) and there is a canva video project link that gets saved. 
 
 ## 4. Architecture (high level)
 
@@ -38,16 +44,16 @@ overlaps.
 └───────────────────────────┬─────────────────────────────────┘
                             │ HTTP / fetch
 ┌───────────────────────────▼─────────────────────────────────┐
-│  Backend  (Python web server — thin API/orchestration layer)│
+│  Backend  (GO, Python scripts for local create and push to Azure — thin API/orchestration layer)│
 │   - Exposes endpoints for each tool                         │
-│   - Reads secrets from environment (.env local / fly remote)│
-│   - Calls OpenRouter (Gemini) + runs generation scripts     │
+│   - Reads secrets from environment (.env local / fly secrets)│
+│   - Calls OpenRouter (Gemini) + runs generation scripts from local and places into Azure    │
 └───────────────────────────┬─────────────────────────────────┘
                             │
         ┌───────────────────┼────────────────────────┐
         ▼                   ▼                        ▼
    generate_script     generate_image          generate_audio
-   (OpenRouter/Gemini) (Python + image API)    (Python + TTS API)
+   (OpenRouter/Gemini,etc) (Python + image API)    (Python + TTS API in openrouter)
         │                   │                        │
         └───────────────────┴────────────────────────┘
                             ▼
@@ -56,18 +62,21 @@ overlaps.
 
 - **Frontend**: static HTML/CSS/JS. A small shared layout helper injects the
   common top menu and footer into every page so all pages stay consistent.
+  It follows the project, outline, script, assets order
+  Header would display which project we are currently working on
 - **Backend**: a lightweight Python server (FastAPI or Flask) that exposes
   endpoints and orchestrates generation. It only does I/O + delegation.
 - **Generation workers**: standalone Python scripts under `scripts/` that do the
   real work (one responsibility each). They can be called by the server **or**
   directly from the CLI for local testing.
-- **Storage**: all generated artifacts live under `other/`, one subfolder per
+- **Storage**: all generated artifacts live under Azure storage subfolder per
   animation project.
 
 ## 5. Tools
 
 ### 5.1 Media Manager (the orchestrator)
 The central tool that produces the raw materials for an animation. It generates:
+1. **Outline** — text/script for the storyboard via OpenRouter (Gemini models).
 1. **Script** — text/script produced via OpenRouter (Gemini models).
 2. **Images** — visuals produced by the image generator (Python script).
 3. **Audio** — voiceover/sound produced by the audio generator (Python script).
@@ -116,18 +125,20 @@ how it demonstrates the act:
 - The image generator (`generate_image.py`) is type-aware: it takes a `--type`
   and adapts the prompt/style for that component type.
 - Components are the building blocks the Storyboard assembles into scenes.
+- Use json structures in Azure to hold the metadata and the data 
 
 ### 5.2 Storyboard Creator
 Takes the existing **act scripts** and the generated **components** for each
 act, then produces a **storyboard** organized by act — a scene-by-scene plan
 that places components (by type) against script beats with timing — using
+Story board gets created with a problem and answer about a large language models
 **OpenRouter with Gemini models**. Output is saved into the project's
 `storyboard/` folder as `storyboard.json` with sections `act-1` / `act-2` /
 `act-3`, each scene referencing component `id`s (and therefore `type` + file).
 
-### 5.3 (Future) Animation types
-One project should be able to create different *types* of animations. The
-project model carries an `animation_type` so the pipeline can adapt. More
+### 5.3 Animation components
+One project should be able to create different *types* of animation components. The
+project model carries an `component_type` so the pipeline can adapt. More
 specialized tools can be added behind the same shared menu.
 
 ## 6. Project & Data Model
@@ -137,7 +148,7 @@ An **animation project** is a folder + a metadata file, organized by the fixed
 script, a set of typed **components**, and audio.
 
 ```
-other/
+azure_project folder/
 └── <project-slug>/                 # one folder per animation
     ├── project.json                # metadata: topic, animation_type, acts status
     ├── act-1-problem/              # Act 1 — Problem
@@ -153,6 +164,7 @@ other/
     ├── act-3-lesson/               # Act 3 — Lesson   (same structure)
     └── storyboard/
         └── storyboard.json         # scenes grouped by act, referencing component ids
+            storyboard.png          # info graphic stype generated image
 ```
 
 - `components.json` (per act) is an array of components:
@@ -212,7 +224,7 @@ read by the backend only.
 
 Every page reuses:
 - **Top menu** — links to Dashboard, Media Manager, Storyboard Creator, etc.
-- **Bottom footer** — project info / links.
+- **Bottom footer** — project info / links / github build link/ commits link/ fly.io link and local link
 
 Implemented with a small shared component (JS layout injection + shared CSS),
 so a single edit updates all pages. No page is built from scratch; each page
@@ -238,6 +250,7 @@ animation-asistant/
 │       ├── dashboard.html
 │       ├── media-manager.html
 │       └── storyboard.html
+│       └── projects.html
 ├── server/                  # Python backend (API + orchestration)
 │   ├── app.py
 │   └── routes/
