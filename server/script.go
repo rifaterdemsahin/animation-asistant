@@ -18,7 +18,7 @@ func (a *App) generateOutline(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	p, err := a.loadProject(slug)
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
 	var req outlineReq
@@ -35,17 +35,17 @@ func (a *App) generateOutline(w http.ResponseWriter, r *http.Request) {
 	}
 	raw, err := a.chatJSON(msgs)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, "openrouter_error", err.Error())
 		return
 	}
 	obj, err := extractJSON(raw)
 	if err != nil {
-		http.Error(w, "model did not return JSON: "+err.Error(), http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, "json_parse_error", "model did not return valid JSON: "+err.Error())
 		return
 	}
 	buf, _ := json.MarshalIndent(obj, "", "  ")
 	if err := a.store.Write(slug, "outline.json", buf); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to store outline: "+err.Error())
 		return
 	}
 	for k := range p.Acts {
@@ -80,7 +80,7 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	p, err := a.loadProject(slug)
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
 	var req scriptReq
@@ -101,14 +101,14 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 		}
 		obj, err := a.generateAct(p, act, outline[act.Key])
 		if err != nil {
-			http.Error(w, fmt.Sprintf("act %s: %v", act.Key, err), http.StatusInternalServerError)
+			writeError(w, r, http.StatusInternalServerError, "openrouter_error", fmt.Sprintf("act %s: %v", act.Key, err))
 			return
 		}
 		md := actToMarkdown(act, obj)
 		mdBytes := []byte(md)
 		beatBytes, _ := json.MarshalIndent(obj, "", "  ")
 		if err := a.store.Write(slug, act.Slug+"/script/act.md", mdBytes); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to store act script: "+err.Error())
 			return
 		}
 		_ = a.store.Write(slug, act.Slug+"/script/beats.json", beatBytes)
@@ -167,7 +167,7 @@ func (a *App) loadOutlineMap(slug string) map[string]string {
 func (a *App) getScript(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	if _, err := a.loadProject(slug); err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
 	result := map[string]string{}

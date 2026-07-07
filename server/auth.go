@@ -12,11 +12,11 @@ type loginReq struct {
 func (a *App) login(w http.ResponseWriter, r *http.Request) {
 	var req loginReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, "bad_request", "invalid request body")
 		return
 	}
 	if req.Password == "" || req.Password != a.cfg.AdminPassword {
-		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+		writeError(w, r, http.StatusUnauthorized, "invalid_credentials", "invalid password")
 		return
 	}
 	tok := a.cfg.MakeToken()

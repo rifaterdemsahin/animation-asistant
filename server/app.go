@@ -6,7 +6,6 @@ import (
 	"animation-assistant/server/storage"
 )
 
-// App holds shared dependencies for all HTTP handlers.
 type App struct {
 	cfg   *Config
 	store storage.Backend
@@ -15,12 +14,12 @@ type App struct {
 func (a *App) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	// public
 	mux.HandleFunc("GET /healthz", a.healthz)
 	mux.HandleFunc("POST /api/login", a.login)
 	mux.HandleFunc("POST /api/logout", a.logout)
 
-	// authed
+	mux.HandleFunc("GET /api/errors", a.listErrors)
+
 	mux.HandleFunc("GET /api/me", a.authed(a.me))
 	mux.HandleFunc("GET /api/projects", a.authed(a.listProjects))
 	mux.HandleFunc("POST /api/projects", a.authed(a.createProject))
@@ -31,18 +30,17 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /api/projects/{slug}/script", a.authed(a.generateScript))
 	mux.HandleFunc("GET /api/projects/{slug}/script", a.authed(a.getScript))
 
-	// static frontend (subtree catch-all; registered after API routes)
 	fs := http.FileServer(http.Dir(a.cfg.WebDir))
 	mux.Handle("GET /", fs)
-	return mux
+
+	return recoverMiddleware(mux)
 }
 
-// authed wraps a handler with cookie auth.
 func (a *App) authed(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("auth")
 		if err != nil || !a.cfg.ValidToken(cookie.Value) {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			writeError(w, r, http.StatusUnauthorized, "unauthorized", "invalid or missing auth cookie")
 			return
 		}
 		h(w, r)

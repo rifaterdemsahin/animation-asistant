@@ -124,7 +124,7 @@ func defaultStr(v, d string) string {
 func (a *App) listProjects(w http.ResponseWriter, r *http.Request) {
 	slugs, err := a.store.ListProjects()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to list projects: "+err.Error())
 		return
 	}
 	out := make([]*Project, 0, len(slugs))
@@ -140,12 +140,12 @@ func (a *App) createProject(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	var in projectIn
 	if err := json.Unmarshal(body, &in); err != nil || strings.TrimSpace(in.Title) == "" {
-		http.Error(w, "title is required", http.StatusBadRequest)
+		writeError(w, r, http.StatusBadRequest, "bad_request", "title is required")
 		return
 	}
 	p := a.newProject(in)
 	if err := a.saveProject(p); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to save project: "+err.Error())
 		return
 	}
 	writeJSON(w, http.StatusCreated, p)
@@ -154,7 +154,7 @@ func (a *App) createProject(w http.ResponseWriter, r *http.Request) {
 func (a *App) getProject(w http.ResponseWriter, r *http.Request) {
 	p, err := a.loadProject(r.PathValue("slug"))
 	if err != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
 	writeJSON(w, http.StatusOK, p)
@@ -162,7 +162,7 @@ func (a *App) getProject(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) deleteProject(w http.ResponseWriter, r *http.Request) {
 	if err := a.store.Delete(r.PathValue("slug")); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to delete project: "+err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})

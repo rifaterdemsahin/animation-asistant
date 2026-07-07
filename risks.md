@@ -18,12 +18,10 @@ Legend: 🔴 high · 🟡 medium · 🟢 low.
 - 🟢 **`./other` is gitignored.** Fresh clones have no data by design (Azure is
   the intended persistent store).
 
-## Spec consistency (Draft v2 has internal contradictions)
+## Spec consistency
 
-- 🟡 **§11/§10 are stale.** The Overview (§1) and Architecture (§4) call for a
-  **Go** backend + **Azure** storage, but §11 still says "Python (FastAPI)" and
-  §10 still lists `server/ # Python backend` and `other/`. **This build follows
-  the Overview/Architecture (Go).** Action: reconcile the SPEC text.
+- 🟢 **§11/§10 reconciled.** SPEC.md v3 clarifies Go backend + Azure storage.
+  Python scripts are CLI/local tools, not the server runtime.
 - 🟡 **Go vs Python generation duplication.** Outline/script prompts exist in
   both `server/script.go` and `shared/scriptgen.py`. They can drift. Action:
   pick one canonical generator (recommend Go, since it holds the secrets and
@@ -48,10 +46,14 @@ Legend: 🔴 high · 🟡 medium · 🟢 low.
 - 🟡 **Default model `google/gemini-2.5-flash`** verified available today; model
   ids change over time. Action: keep `OPENROUTER_MODEL` configurable; add a
   startup model-existence check.
-- 🟡 **No retry/backoff.** A single OpenRouter failure aborts the whole script
-  batch mid-way (some acts done, some not). Action: per-act retry + idempotent
-  resume (acts are independent, so partial progress is fine, but the handler
-  should not 500 the whole request).
+- 🟢 **Error handling + retry implemented.** Server has central error middleware
+  (`server/errors.go`) with panic recovery, structured JSON errors, and a ring
+  buffer exposed via `GET /api/errors`. Client has a debug bar (`debug.js`) that
+  captures JS errors, fetch failures, and unhandled rejections with copy-to-clipboard
+  for AI-agent feedback.
+- 🟡 **No retry/backoff in OpenRouter calls.** A single failure aborts the whole
+  script batch mid-way. Action: per-act retry + idempotent resume (acts are
+  independent, so partial progress is fine).
 - 🟢 **Prompt injection** from topic/title into LLM output — not security-critical
   for this tool, but outputs are untrusted text; sanitize before any reuse.
 
@@ -72,8 +74,8 @@ Legend: 🔴 high · 🟡 medium · 🟢 low.
 - 🟢 **Project-name prefix on items** (SPEC: "namings come with project name as
   prefix") is only partially applied (Python `shared/storage.py` notes it).
   Component files (Phase 3) must enforce `<slug>-<type>-<n>.<ext>`.
-- 🟢 **No automated tests** yet. Action: add Go table tests for slugify,
-  `extractJSON`, token sign/verify; Python tests for `extract_json`.
+- 🟢 **Tests in place.** `server/main_test.go` covers: page routes (all HTML pages
+  + API endpoints), healthz, login flow, project CRUD, error endpoint, slugify.
 
 ## Functional gaps (expected — later phases)
 
