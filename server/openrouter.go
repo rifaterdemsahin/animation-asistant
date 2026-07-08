@@ -20,16 +20,31 @@ type orMessage struct {
 // orClient wraps OpenRouter with multi-key rotation so an expired/limited
 // token can fall through to the next one.
 type orClient struct {
-	keys       []string
-	textModel  string
-	imageModel string
-	base       string
-	mu         sync.Mutex
-	idx        int
+	keys                 []string
+	textModel            string
+	imageModel           string
+	storyboardImageModel string
+	base                 string
+	mu                   sync.Mutex
+	idx                  int
 }
 
-func newORClient(keys []string, textModel, imageModel, base string) *orClient {
-	return &orClient{keys: keys, textModel: textModel, imageModel: imageModel, base: base}
+func newORClient(keys []string, textModel, imageModel, storyboardImageModel, base string) *orClient {
+	if storyboardImageModel == "" {
+		storyboardImageModel = imageModel
+	}
+	return &orClient{keys: keys, textModel: textModel, imageModel: imageModel, storyboardImageModel: storyboardImageModel, base: base}
+}
+
+// storyboardImageModel returns the model used for the storyboard image step.
+func (a *App) storyboardImageModel() string {
+	if a.or != nil && a.or.storyboardImageModel != "" {
+		return a.or.storyboardImageModel
+	}
+	if a.or != nil {
+		return a.or.imageModel
+	}
+	return a.cfg.OpenRouterImageModel
 }
 
 func (c *orClient) nextKey() string {
@@ -108,11 +123,17 @@ func pickContent(obj map[string]any) (string, map[string]any) {
 
 // generateImage returns image bytes (PNG) from the configured image model.
 func (a *App) generateImage(prompt string) ([]byte, error) {
-	if a.or.imageModel == "" {
+	return a.generateImageWith(prompt, a.or.imageModel)
+}
+
+// generateImageWith returns image bytes (PNG) from a specific model. The
+// storyboard step uses this with the nanobanana image model.
+func (a *App) generateImageWith(prompt, model string) ([]byte, error) {
+	if model == "" {
 		return nil, fmt.Errorf("no image model configured")
 	}
 	res, err := a.or.call(map[string]any{
-		"model":    a.or.imageModel,
+		"model":    model,
 		"messages": []orMessage{{Role: "user", Content: prompt}},
 	})
 	if err != nil {

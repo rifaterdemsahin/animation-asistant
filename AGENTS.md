@@ -47,11 +47,21 @@ fly.toml/Dockerfile/.dockerignore   fly.io deploy (Go+Python image)
 
 ## 4. Run / deploy
 
+When asked to "open local" or "run locally":
 ```bash
 go run ./server                                   # local: http://localhost:8080
+open -a "Google Chrome" "http://localhost:8080"   # always open in Chrome, not default browser
+```
+
+When asked to "deploy" or "ship to fly.io":
+```bash
 fly deploy                                        # fly.io (secrets already set)
 ```
-Models: text `google/gemini-2.5-flash`, image `google/gemini-2.5-flash-image`,
+
+When asked to do both ("open local + deploy"), run the server in background and
+deploy in parallel, then open Chrome once the server is ready.
+
+Models: text `google/gemini-2.5-flash`, image `google/gemini-3.5-flash-image`,
 TTS ElevenLabs `eleven_turbo_v2_5` / voice "George". Override via env.
 
 ## 5. Known gotchas

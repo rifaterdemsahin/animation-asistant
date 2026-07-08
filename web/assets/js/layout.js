@@ -4,7 +4,6 @@
 const PAGES = [
   { name: "🏠 Dashboard", url: "/" },
   { name: "📁 Projects", url: "/pages/projects.html" },
-  { name: "🔄 Process", url: "/pages/process.html" },
   { name: "📋 Storyboard", url: "/pages/storyboard.html" },
   { name: "📜 Script", url: "/pages/script-page.html" },
   { name: "🎛️ Media Manager", url: "/pages/media-manager.html" },

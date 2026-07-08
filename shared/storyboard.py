@@ -38,7 +38,12 @@ def generate_storyboard(slug: str) -> dict:
     ]
     obj = extract_json(chat_json(msgs))
     storage.write(slug, "storyboard/storyboard.json", json.dumps(obj, indent=2, ensure_ascii=False))
-    prompt = prompts.render(img_tmpl, {"topic": p["topic"]})
+    prompt = prompts.render(img_tmpl, {
+        "topic": p["topic"],
+        "question": p.get("question", ""),
+        "answer": p.get("answer", ""),
+        "why": p.get("why", ""),
+    })
     try:
         png = generate_image(prompt)
         storage.write(slug, "storyboard/storyboard.png", png)

@@ -12,6 +12,7 @@
 
   <main class="page">
     <h1>📋 Storyboard Creator</h1>
+    <p class="lede">Turn the project's <strong>Problem · Solution · Why</strong> into a 12-panel comic storyboard image via the Gemini <em>nanobanana</em> image model.</p>
 
     <div id="no-project" class="panel">
       <p>No project selected. <a href="/pages/projects.html">📁 Pick or create one</a> first.</p>
@@ -22,63 +23,66 @@
         <span id="sb-title" class="mm-title"></span>
       </div>
 
-      <!-- Q&A / Why metadata -->
-      <section id="qa-section" class="panel" style="margin-top:16px">
-        <h2>❓ Problem · Solution · Why</h2>
-        <div id="qa-content" class="muted">Loading project metadata...</div>
+      <!-- 1. Inputs: question / answer / why (from the project, editable) -->
+      <section class="panel" style="margin-top:16px">
+        <h2>1️⃣ Project Inputs — Problem · Solution · Why</h2>
+        <p class="muted">Taken from the project. Edit here; Execute Prompt saves them back to the project.</p>
+        <label>1. Question (Problem)
+          <textarea id="qa-question" rows="2" placeholder="The central question the animation answers"></textarea>
+        </label>
+        <label>2. Answer (Solution)
+          <textarea id="qa-answer" rows="3" placeholder="The process / solution"></textarea>
+        </label>
+        <label>3. Why (pedagogical rationale)
+          <textarea id="qa-why" rows="3" placeholder="The core technical principle / why it matters"></textarea>
+        </label>
+        <div class="row" style="margin-top:8px">
+          <span class="badge" id="qa-topic">topic: …</span>
+        </div>
       </section>
 
-      <!-- Prompt template -->
+      <!-- 2. Prompt template (storyboard image prompt from Azure) -->
       <section class="panel">
-        <h2>📝 Prompt Template</h2>
-        <p class="muted">Uses problem, solution, and pedagogical rationale from the project Q&A above.</p>
+        <h2>2️⃣ Prompt Template <span class="muted" style="font-size:13px">(storyboard image prompt from Azure <code>prompts</code> store — <code>{{question}}/{{answer}}/{{why}}</code> filled by Generate Prompt)</span></h2>
+        <textarea id="prompt-system" rows="12" readonly style="font-size:12px;font-family:monospace"></textarea>
+        <p class="muted" style="font-size:12px;margin-top:6px">Edit the template at <a href="/pages/prompts.html">✏️ Prompt Editor</a> (id: <code>storyboard</code>).</p>
+      </section>
+
+      <!-- 3. Generate prompt -> image prompt text box -> execute -->
+      <section class="panel">
+        <h2>3️⃣ Image Prompt</h2>
         <div class="row" style="margin-bottom:10px">
           <button id="generate-prompt" class="btn primary">⚡ Generate Prompt</button>
-          <button id="execute-prompt" class="btn">🚀 Execute Prompt</button>
           <span class="muted" id="prompt-status"></span>
         </div>
-        <label>System Prompt
-          <textarea id="prompt-system" rows="4" readonly style="font-size:12px;font-family:monospace"></textarea>
+        <label>Image Prompt (editable — sent to the image model)
+          <textarea id="prompt-image" rows="9" style="font-size:12px;font-family:monospace" placeholder="Click 'Generate Prompt' to build this from the inputs above, then edit freely."></textarea>
         </label>
-        <label>User Prompt (text, Gemini)
-          <textarea id="prompt-user" rows="6" readonly style="font-size:12px;font-family:monospace"></textarea>
-        </label>
-        <label>Image Prompt (infographic)
-          <textarea id="prompt-image" rows="3" readonly style="font-size:12px;font-family:monospace"></textarea>
-        </label>
+        <div class="row" style="margin-top:10px">
+          <button id="execute-prompt" class="btn primary">🚀 Execute Prompt</button>
+          <span class="muted" id="execute-status"></span>
+        </div>
       </section>
 
-      <!-- Image output -->
+      <!-- 4. Image output -->
       <section class="panel">
-        <h2>🖼️ Overview</h2>
-        <img id="sb-image" class="hidden" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">
+        <h2>🖼️ Storyboard Images <span id="sb-count" class="muted" style="font-size:13px"></span></h2>
+        <div id="sb-image-wrap">
+          <p class="muted">No images yet — Generate Prompt then Execute Prompt above. Each generation is saved as a new version (none are overwritten).</p>
+        </div>
         <div id="mm-link" class="row hidden" style="margin-top:8px">
           <a href="/pages/media-manager.html" class="btn primary">🎛️ Continue to Media Manager</a>
         </div>
       </section>
 
-      <!-- Scenes output -->
-      <section class="panel">
-        <h2>🎬 Scenes by act</h2>
-        <div id="sb-out"><p class="muted">No storyboard yet — generate above.</p></div>
-      </section>
-
       <!-- Model info -->
       <section class="panel" style="border-left:3px solid var(--accent);margin-top:20px">
-        <h2>🤖 AI Models Triggered</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px">
-          <div style="background:var(--panel-2);padding:10px;border-radius:6px">
-            <strong>Provider:</strong> OpenRouter<br>
-            <strong>Text Model:</strong> Gemini 2.5 Flash<br>
-            <span class="muted" style="font-size:12px">google/gemini-2.5-flash</span>
-          </div>
-          <div style="background:var(--panel-2);padding:10px;border-radius:6px">
-            <strong>Provider:</strong> OpenRouter<br>
-            <strong>Image Model:</strong> Gemini 2.5 Flash Image<br>
-            <span class="muted" style="font-size:12px">google/gemini-2.5-flash-image</span>
-          </div>
+        <h2>🤖 Model</h2>
+        <div style="background:var(--panel-2);padding:10px;border-radius:6px;font-size:14px">
+          <strong>Image model (nanobanana):</strong> <span id="model-name">loading…</span><br>
+          <span class="muted" style="font-size:12px">Configurable via <code>STORYBOARD_IMAGE_MODEL</code> env (defaults to <code>OPENROUTER_IMAGE_MODEL</code>).</span>
         </div>
-        <p class="muted" style="margin-top:8px;font-size:13px">Storyboard generation calls both models: text for scene assembly (JSON) and image for the 4-frame infographic.</p>
+        <p class="muted" style="margin-top:8px;font-size:13px">Execute Prompt renders the 12-panel comic storyboard image. Scene assembly also runs (text model) to populate the acts below.</p>
       </section>
     </div>
   </main>

@@ -12,11 +12,12 @@ func (a *App) healthz(w http.ResponseWriter, r *http.Request) {
 			"elevenlabs":      boolToInt(a.cfg.ElevenLabsKey != ""),
 			"azure":           boolToInt(a.cfg.AzureConnString != ""),
 		},
-		"storage":     a.store.Name(),
-		"text_model":  a.cfg.OpenRouterTextModel,
-		"image_model": a.cfg.OpenRouterImageModel,
-		"started_at":  a.startedAt,
-		"commit":      buildCommit,
+		"storage":                a.store.Name(),
+		"text_model":             a.cfg.OpenRouterTextModel,
+		"image_model":            a.cfg.OpenRouterImageModel,
+		"storyboard_image_model": a.storyboardImageModel(),
+		"started_at":             a.startedAt,
+		"commit":                 buildCommit,
 	})
 }
 

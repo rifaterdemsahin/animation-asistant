@@ -18,10 +18,20 @@ async function loadStoryboardImg() {
   var s = slug();
   try {
     var sb = await j(api + "/projects/" + s + "/storyboard");
-    if (sb.storyboard) {
+    var file = "";
+    if (sb.versions && sb.versions.length) {
+      var latest = sb.versions[sb.versions.length - 1];
+      for (var i = 0; i < sb.versions.length; i++) {
+        if (!latest || (sb.versions[i].id || 0) > (latest.id || 0)) latest = sb.versions[i];
+      }
+      file = latest ? latest.file : "";
+    } else if (sb.storyboard) {
+      file = "storyboard/storyboard.png";
+    }
+    if (file) {
       document.getElementById("storyboard-preview").classList.remove("hidden");
       var img = document.getElementById("sb-preview-img");
-      img.src = api + "/projects/" + s + "/raw/storyboard/storyboard.png";
+      img.src = api + "/projects/" + s + "/raw/" + file;
       img.onerror = function () { document.getElementById("storyboard-preview").classList.add("hidden"); };
     }
   } catch {}
@@ -228,7 +238,7 @@ document.addEventListener("layout:ready", function () {
     "Write only this act. Return JSON with shape:\n{\"narration\":\"1-3 paragraphs\",\"beats\":[{\"id\":\"beat-1\",\"text\":\"one concrete beat\"}]}\n3 to 6 beats. JSON only.");
 
   togglePrompt("show-comp-prompt", "comp-prompt",
-    "Image model: google/gemini-2.5-flash-image\nPrompt per type:\n• background: 'wide 16:9 background scene illustration, clean flat vector style, no text. Illustrate this idea: <beat>. Topic: " + cur.title + ". Flat vector, clean.'\n• lower-third: 'lower-third banner overlay graphic with space for a short caption, flat vector, minimal.'\n• speech-bubble: 'speech bubble graphic with space for a short quote, flat vector, clean.'\n• infographic: 'clean infographic with simple data visualization using icons and numbers, flat vector.'\nDefaults: 4 types × 3 acts = 12 images.");
+    "Image model: google/gemini-3.5-flash-image\nPrompt per type:\n• background: 'wide 16:9 background scene illustration, clean flat vector style, no text. Illustrate this idea: <beat>. Topic: " + cur.title + ". Flat vector, clean.'\n• lower-third: 'lower-third banner overlay graphic with space for a short caption, flat vector, minimal.'\n• speech-bubble: 'speech bubble graphic with space for a short quote, flat vector, clean.'\n• infographic: 'clean infographic with simple data visualization using icons and numbers, flat vector.'\nDefaults: 4 types × 3 acts = 12 images.");
 
   togglePrompt("show-audio-prompt", "audio-prompt",
     "ElevenLabs TTS\nVoice: George (warm storyteller)\nModel: eleven_turbo_v2_5\nInput: act narration text from script generation.");

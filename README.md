@@ -35,7 +35,7 @@ typed images → audio → storyboard) on a fixed **3-act** structure
 ## 🤖 Models (good quality + good rate)
 
 - Text / outline / script / storyboard: `google/gemini-2.5-flash` (OpenRouter)
-- Images (components, infographics): `google/gemini-2.5-flash-image` (OpenRouter)
+- Images (components, infographics): `google/gemini-3.5-flash-image` (OpenRouter)
 - TTS (voiceover): ElevenLabs `eleven_turbo_v2_5`, voice "George"
 - Music: fal.ai `fal-ai/mmaudio-v2`
 - Sound effects: fal.ai `fal-ai/stable-audio`

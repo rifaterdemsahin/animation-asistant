@@ -5,10 +5,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/joho/godotenv"
+
 	"animation-assistant/server/storage"
 )
 
 func main() {
+	_ = godotenv.Load()
 	cfg := LoadConfig()
 	store, err := storage.New(cfg.OtherDir, cfg.AzureConnString, cfg.AzureContainer)
 	if err != nil {
@@ -17,7 +20,7 @@ func main() {
 	app := &App{
 		cfg:       cfg,
 		store:     store,
-		or:        newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.OpenRouterBase),
+		or:        newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.StoryboardImageModel, cfg.OpenRouterBase),
 		startedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 

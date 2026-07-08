@@ -467,7 +467,7 @@ Items planned but not yet implemented:
 
 Answered during implementation:
 
-- ✅ **Image provider**: OpenRouter → `google/gemini-2.5-flash-image` (not a separate `IMAGE_API_KEY`)
+- ✅ **Image provider**: OpenRouter → `google/gemini-3.5-flash-image` (not a separate `IMAGE_API_KEY`)
 - ✅ **TTS provider**: ElevenLabs `eleven_turbo_v2_5`, voice "George" (`TTS_API_KEY`)
 - ✅ **Default Gemini model**: `google/gemini-2.5-flash` for text/script/storyboard
 - ✅ **Music + SFX**: fal.ai (`fal-ai/mmaudio-v2` for music, `fal-ai/stable-audio` for SFX, `FAL_KEY`)
@@ -475,7 +475,7 @@ Answered during implementation:
 
 Still open:
 
-- ❓ Best model for image generation if `gemini-2.5-flash-image` is deprecated
+- ❓ Best model for image generation if `gemini-3.5-flash-image` is deprecated
 - ❓ Which fal.ai model for SFX when `stable-audio` is deprecated
 
 ## 15. Lessons Learned 📝

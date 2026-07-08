@@ -17,10 +17,22 @@ function getTopic() {
 }
 
 async function createProject() {
-  if (!el("cq").value.trim()) return;
+  var q = el("cq").value.trim();
+  if (!q) return;
+  var a = el("ca").value.trim();
+  var w = el("cw").value.trim();
+  var cl = el("cl").value.trim();
   var p = await json(api + "/projects", {
     method: "POST",
-    body: JSON.stringify({ title: el("cq").value.trim(), topic: getTopic(), component_type: el("ct").value.trim() || "explainer" })
+    body: JSON.stringify({
+      title: q,
+      topic: getTopic(),
+      component_type: el("ct").value.trim() || "explainer",
+      question: q,
+      answer: a,
+      why: w,
+      canva_link: cl
+    })
   });
   slug = p.slug;
   localStorage.setItem("current_project", JSON.stringify({ slug: p.slug, title: p.title }));

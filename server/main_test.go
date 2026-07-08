@@ -22,7 +22,7 @@ func newTestApp(t *testing.T) *App {
 		AuthSecret:           "testpass",
 		OpenRouterKeys:       []string{},
 		OpenRouterTextModel:  "google/gemini-2.5-flash",
-		OpenRouterImageModel: "google/gemini-2.5-flash-image",
+		OpenRouterImageModel: "google/gemini-3-pro-image",
 		OpenRouterBase:       "https://openrouter.ai/api/v1",
 		WebDir:               filepath.Join("..", "web"),
 		OtherDir:             dir,
@@ -32,7 +32,7 @@ func newTestApp(t *testing.T) *App {
 	if err != nil {
 		t.Fatalf("storage.New: %v", err)
 	}
-	return &App{cfg: cfg, store: store, or: newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.OpenRouterBase)}
+	return &App{cfg: cfg, store: store, or: newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.StoryboardImageModel, cfg.OpenRouterBase)}
 }
 
 func authCookie(cfg *Config) *http.Cookie {

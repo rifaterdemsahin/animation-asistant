@@ -73,7 +73,7 @@ var promptDescriptors = []PromptDescriptor{
 	{ID: "script", Title: "Script (per act)", Description: "Writes one act's narration + visual beats.", Variables: []string{"topic", "act_key", "act_role", "summary", "purpose"}},
 	{ID: "components", Title: "Components (typed images)", Description: "Per-act component images. Edit default_types, the styles map, and image_prompt.", Variables: []string{"style", "beat", "topic"}},
 	{ID: "audio", Title: "Audio (music + SFX)", Description: "fal.ai background music + sound-effect prompts.", Variables: []string{"genre", "mood", "act_role", "topic", "desc"}},
-	{ID: "storyboard", Title: "Storyboard (assembly + image)", Description: "Assembles scenes (JSON) and the 4-frame infographic image.", Variables: []string{"context", "topic"}},
+	{ID: "storyboard", Title: "Storyboard (assembly + image)", Description: "Assembles scenes (JSON) and the 12-panel comic storyboard image.", Variables: []string{"context", "topic", "question", "answer", "why"}},
 }
 
 func descriptorByID(id string) (PromptDescriptor, bool) {
@@ -149,14 +149,56 @@ Rules: stay focused on the act role ({{purpose}}); 3 to 6 beats; each beat must 
 
 Return JSON: {"acts":{"act-1":{"scenes":[{"scene_id":"s1","beat_ref":"beat-1","component_ids":[],"duration":4,"description":"..."}]},"act-2":{"scenes":[]},"act-3":{"scenes":[]}}}
 Each scene may reference an existing component_id. Durations are seconds (2-8). JSON only.`,
-			ImagePrompt: `A 4-frame storyboard infographic for a 3-act explainer video about: {{topic}}. ` +
-				`Arrange four horizontal frames in a 2x2 grid. ` +
-				`Frame 1 (top-left): Problem setup — show the pain point visually. ` +
-				`Frame 2 (top-right): Solution approach — introduce the key idea. ` +
-				`Frame 3 (bottom-left): Implementation — show how it works step by step. ` +
-				`Frame 4 (bottom-right): Lesson/takeaway — the insight the audience leaves with. ` +
-				`Each frame has a short label below it. Clean flat vector style, ` +
-				`modern explainer video aesthetic, consistent colors, no text inside frames.`,
+			ImagePrompt: `You are an expert AI instructional designer and technical illustrator. Create a detailed 3-act infographic storyboard (with 4 scenes per act) using a sequential comic strip format to visually explain a technical question and answer regarding system/LLM architecture.
+
+Here is the architectural concept to explain:
+- **Question:** {{question}}
+- **Correct Answer:** {{answer}}
+- **The "Why" / Core Technical Principle:** {{why}}
+
+---
+
+### Strict Style & Layout Guidelines:
+
+1. **Format and Layout:**
+   - **Comic Strip Narrative:** Structure each Act into a sequential four-panel grid layout numbered 1 through 4 to tell a clear, step-by-step technical story.
+   - **Speech Bubbles:** Rely on classic, rounded comic book dialogue bubbles with pointers directed at the speaking characters to convey the technical narrative and dialogue naturally.
+
+2. **Art & Illustration Style:**
+   - **Vector-Style Line Art:** All characters and environments must be drawn with clean, bold, and consistent black outlines.
+   - **Corporate Tech Cartoonism:** The robots/agents must be designed to look friendly, rounded, and approachable—reminiscent of modern tech mascots or UI illustrations rather than gritty, industrial sci-fi.
+   - **Cel Shading:** Shading must be flat with simple, distinct highlights and smooth gradient fills to add a sense of depth and dimension without becoming overly realistic.
+
+3. **Color Palette:**
+   - **Tech-Centric Color Scheme:** The background and standard sub-agent palette must heavily rely on shades of blue, cyan, and teal to represent technology, data, and artificial intelligence.
+   - **High Contrast / Focal Accent:** Use bright orange for the central "Coordinator" robot to create a strong visual contrast, immediately establishing hierarchy and drawing the viewer's eye to the main character driving the orchestration. (Introduce a third distinct accent color, like purple, only for highly specialized processing agents like Synthesis.)
+
+---
+
+### Storyboard Outline to Fill:
+
+#### Act 1: The Agents Report
+*Establish the initial state of the system, the relationship between the entities, and the work being performed in isolation.*
+- **Panel 1 (The Setup):** The Coordinator (Orange) issues a command or sets up the workflow.
+- **Panel 2 (Sub-Agent A Action):** The first friendly blue sub-agent executes its specific technical task.
+- **Panel 3 (Sub-Agent B Action):** The second friendly blue sub-agent works in isolation on a different dataset.
+- **Panel 4 (The Handoff/Completion):** Both blue sub-agents finish and report back to the orange coordinator.
+
+#### Act 2: The Coordinator's Dilemma
+*Illustrate the exact friction point, bottleneck, or structural problem that the correct answer solves. Explicitly contrast the right way with the wrong way.*
+- **Panel 1 (Receiving Data):** The coordinator takes the separate data packages from the sub-agents.
+- **Panel 2 (The Dilemma):** The orange coordinator holds separate, messy datasets, pondering how to make them one coherent output.
+- **Panel 3 (The Failure Mode / Wrong Way):** Visually demonstrate a naive approach, like raw text concatenation, resulting in a messy, redundant pile of papers/data marked with a big red cartoon 'X'.
+- **Panel 4 (The Architectural Plan):** The orange coordinator identifies the correct, structured pathway according to the architecture model.
+
+#### Act 3: The Synthesis Solution
+*Provide the explicit answer to the question by showing the correct architectural process and the successful final state.*
+- **Panel 1 (Targeted Delegation):** The orange coordinator passes the data to the correct specialized agent (e.g., a purple Synthesis robot).
+- **Panel 2 (Specialized Intelligence):** The specialized agent executes its unique logic, like reconciling and cross-referencing data.
+- **Panel 3 (The Integration Metaphor):** Use a fun corporate-tech visual metaphor, like an intelligent blender or a data refining funnel, merging the streams cleanly.
+- **Panel 4 (Final State):** The final, clean, non-redundant integrated research output is handed back to a satisfied coordinator.
+
+For each panel, provide clear directions on character actions, expressions, explicit text for the speech bubbles, and any relevant UI/diagram labels.`,
 		},
 	}
 }
@@ -194,7 +236,12 @@ func NewPromptStore(otherDir, connString, container string) (PromptStore, error)
 	root := filepath.Join(otherDir, "_prompts")
 	_ = os.MkdirAll(root, 0o755)
 	if connString == "" {
-		return seedStore(&LocalPrompts{root: root})
+		s, err := seedStore(&LocalPrompts{root: root})
+		if err != nil {
+			return nil, err
+		}
+		migrateStoryboardPrompt(s)
+		return s, nil
 	}
 	client, err := azblob.NewClientFromConnectionString(connString, nil)
 	if err != nil {
@@ -204,7 +251,12 @@ func NewPromptStore(otherDir, connString, container string) (PromptStore, error)
 	if _, err := client.CreateContainer(ctx, container, nil); err != nil && !isAlreadyExistsErr(err) {
 		return nil, fmt.Errorf("azure prompts create container: %w", err)
 	}
-	return seedStore(&AzurePrompts{client: client, container: container})
+	s, err := seedStore(&AzurePrompts{client: client, container: container})
+	if err != nil {
+		return nil, err
+	}
+	migrateStoryboardPrompt(s)
+	return s, nil
 }
 
 // seedStore writes any missing default prompts so the store is never empty.
@@ -217,6 +269,25 @@ func seedStore(s PromptStore) (PromptStore, error) {
 		}
 	}
 	return s, nil
+}
+
+// migrateStoryboardPrompt upgrades a legacy seeded storyboard prompt (the old
+// 4-frame {{topic}}-only image template) to the current default. It only fires
+// when the stored image_prompt still contains the legacy marker, so any prompt
+// the user has edited is left untouched. Runs once at boot.
+func migrateStoryboardPrompt(s PromptStore) {
+	raw, err := s.Read("storyboard")
+	if err != nil {
+		return
+	}
+	var v storyboardPrompt
+	if json.Unmarshal([]byte(raw), &v) != nil {
+		return
+	}
+	if !strings.Contains(v.ImagePrompt, "4-frame storyboard infographic") {
+		return
+	}
+	_ = s.Write("storyboard", defaultPromptJSON()["storyboard"])
 }
 
 func isAlreadyExistsErr(err error) bool {

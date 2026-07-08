@@ -41,7 +41,7 @@ Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
   returns a clear message. Mitigates the token validation-date / usage-limit
   concern.
 - ✅ **Model selection = good quality + good rate.** Text & storyboard:
-  `google/gemini-2.5-flash`. Images: `google/gemini-2.5-flash-image`. All on
+  `google/gemini-2.5-flash`. Images: `google/gemini-3.5-flash-image`. All on
   OpenRouter (one bill). TTS: ElevenLabs (`eleven_turbo_v2_5`, voice "George").
   All configurable via env.
 - 🟡 **No per-call retry/backoff.** A generation failure aborts the batch

@@ -44,7 +44,7 @@ document.addEventListener("layout:ready", function () {
       pre.textContent = [
         "📝 Outline: System → You design short 3-act outlines. User → Topic: <project>. Produce JSON.",
         "📜 Script: System → Scriptwriter for ONE act, strict JSON. User → Act: act-1..3, 3-6 beats.",
-        "🖼️ Components: Image model (gemini-2.5-flash-image). 4 types × 3 acts = 12 images. Prompt: <style>. Illustrate <beat>. Flat vector.",
+        "🖼️ Components: Image model (gemini-3.5-flash-image). 4 types × 3 acts = 12 images. Prompt: <style>. Illustrate <beat>. Flat vector.",
         "🎙️ Voiceover: ElevenLabs TTS, voice=George, model=eleven_turbo_v2_5. Input = act narration.",
         "🎵 Music: fal.ai mmaudio-v2. Prompt: '<genre> <mood> bg music for <role> act. 30s loop.'",
         "🔉 SFX: fal.ai stable-audio. 3 effects/act: whoosh, ding, reveal.",

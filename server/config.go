@@ -19,6 +19,7 @@ type Config struct {
 	OpenRouterKeys       []string
 	OpenRouterTextModel  string
 	OpenRouterImageModel string
+	StoryboardImageModel string
 	OpenRouterBase       string
 
 	// ElevenLabs TTS
@@ -43,7 +44,8 @@ func LoadConfig() *Config {
 		AuthSecret:            os.Getenv("AUTH_SECRET"),
 		OpenRouterKeys:        splitCSV(os.Getenv("OPENROUTER_API_KEY")),
 		OpenRouterTextModel:   getenvDefault("OPENROUTER_TEXT_MODEL", getenvDefault("OPENROUTER_MODEL", "google/gemini-2.5-flash")),
-		OpenRouterImageModel:  getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-2.5-flash-image"),
+		OpenRouterImageModel:  getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-3-pro-image"),
+		StoryboardImageModel:  getenvDefault("STORYBOARD_IMAGE_MODEL", ""),
 		OpenRouterBase:        getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
 		ElevenLabsKey:         os.Getenv("TTS_API_KEY"),
 		ElevenLabsVoice:       getenvDefault("TTS_VOICE", "JBFqnCBsd6RMkjVDRZzb"), // George — Warm Storyteller
