@@ -21,6 +21,14 @@ func main() {
 		startedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
+	pstore, perr := NewPromptStore(cfg.OtherDir, cfg.AzureConnString, cfg.AzurePromptsContainer)
+	if perr != nil {
+		log.Printf("WARNING: prompts store init failed (%v); using in-memory defaults (edits will not persist)", perr)
+		pstore = NewMemoryPrompts()
+	}
+	app.prompts = pstore
+	log.Printf("prompts store: %s", pstore.Name())
+
 	if cfg.AdminPassword == "" {
 		log.Print("WARNING: ADMIN_PASSWORD not set — login disabled effectively")
 	}

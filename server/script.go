@@ -25,13 +25,13 @@ func (a *App) generateOutline(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
 
+	sys, usr := a.outlineTmpl()
 	msgs := []orMessage{
-		{Role: "system", Content: "You design short animated explainer video outlines using a STRICT 3-act structure: Act 1 = Problem, Act 2 = Solution, Act 3 = Lesson. You return JSON only, no markdown."},
-		{Role: "user", Content: fmt.Sprintf(
-			"Topic: %s\nComponent type: %s\n\nProduce a JSON object with this exact shape:\n"+
-				`{"title":"short title","logline":"one sentence","acts":{"act-1":{"summary":"..."},"act-2":{"summary":"..."},"act-3":{"summary":"..."}}}`+"\n"+
-				"Each act summary must be 1-2 sentences fitting the act's role. JSON only.",
-			p.Topic, p.ComponentType)},
+		{Role: "system", Content: sys},
+		{Role: "user", Content: renderTmpl(usr, map[string]string{
+			"topic":          p.Topic,
+			"component_type": p.ComponentType,
+		})},
 	}
 	a.savePromptMsg(slug, "outline", "outline", msgs)
 	raw, err := a.chatText(msgs)
@@ -127,14 +127,16 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 	if summary == "" {
 		summary = act.Purpose
 	}
+	sys, usr := a.scriptTmpl()
 	msgs := []orMessage{
-		{Role: "system", Content: "You are a scriptwriter for short animated explainer videos. You write ONE act and return STRICT JSON only, no markdown."},
-		{Role: "user", Content: fmt.Sprintf(
-			"Topic: %s\nAct: %s (%s)\nOutline summary for this act: %s\n\n"+
-				"Write only this act. Return JSON with this exact shape:\n"+
-				`{"narration":"1-3 paragraphs of voiceover","beats":[{"id":"beat-1","text":"one concrete, visualizable story beat"}]}`+"\n"+
-				"Rules: stay focused on the act role (%s); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only.",
-			p.Topic, act.Key, act.Role, summary, act.Purpose)},
+		{Role: "system", Content: sys},
+		{Role: "user", Content: renderTmpl(usr, map[string]string{
+			"topic":    p.Topic,
+			"act_key":  act.Key,
+			"act_role": act.Role,
+			"summary":  summary,
+			"purpose":  act.Purpose,
+		})},
 	}
 	a.savePromptMsg(p.Slug, act.Key, "script", msgs)
 	raw, err := a.chatText(msgs)

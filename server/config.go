@@ -29,30 +29,32 @@ type Config struct {
 	// fal.ai (music + sound effects)
 	FalKey string
 
-	AzureConnString string
-	AzureContainer  string
-	WebDir          string
-	OtherDir        string
-	Port            string
+	AzureConnString       string
+	AzureContainer        string
+	AzurePromptsContainer string
+	WebDir                string
+	OtherDir              string
+	Port                  string
 }
 
 func LoadConfig() *Config {
 	c := &Config{
-		AdminPassword:        os.Getenv("ADMIN_PASSWORD"),
-		AuthSecret:           os.Getenv("AUTH_SECRET"),
-		OpenRouterKeys:       splitCSV(os.Getenv("OPENROUTER_API_KEY")),
-		OpenRouterTextModel:  getenvDefault("OPENROUTER_TEXT_MODEL", getenvDefault("OPENROUTER_MODEL", "google/gemini-2.5-flash")),
-		OpenRouterImageModel: getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-2.5-flash-image"),
-		OpenRouterBase:       getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
-		ElevenLabsKey:        os.Getenv("TTS_API_KEY"),
-		ElevenLabsVoice:      getenvDefault("TTS_VOICE", "JBFqnCBsd6RMkjVDRZzb"), // George — Warm Storyteller
-		ElevenLabsModel:      getenvDefault("TTS_MODEL", "eleven_turbo_v2_5"),    // good rate + quality
-		FalKey:               os.Getenv("FAL_KEY"),
-		AzureConnString:      os.Getenv("AZURE_STORAGE_CONNECTION_STRING"),
-		AzureContainer:       getenvDefault("AZURE_CONTAINER", "projects"),
-		WebDir:               getenvDefault("WEB_DIR", "web"),
-		OtherDir:             getenvDefault("OTHER_DIR", "other"),
-		Port:                 getenvDefault("PORT", "8080"),
+		AdminPassword:         os.Getenv("ADMIN_PASSWORD"),
+		AuthSecret:            os.Getenv("AUTH_SECRET"),
+		OpenRouterKeys:        splitCSV(os.Getenv("OPENROUTER_API_KEY")),
+		OpenRouterTextModel:   getenvDefault("OPENROUTER_TEXT_MODEL", getenvDefault("OPENROUTER_MODEL", "google/gemini-2.5-flash")),
+		OpenRouterImageModel:  getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-2.5-flash-image"),
+		OpenRouterBase:        getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
+		ElevenLabsKey:         os.Getenv("TTS_API_KEY"),
+		ElevenLabsVoice:       getenvDefault("TTS_VOICE", "JBFqnCBsd6RMkjVDRZzb"), // George — Warm Storyteller
+		ElevenLabsModel:       getenvDefault("TTS_MODEL", "eleven_turbo_v2_5"),    // good rate + quality
+		FalKey:                os.Getenv("FAL_KEY"),
+		AzureConnString:       os.Getenv("AZURE_STORAGE_CONNECTION_STRING"),
+		AzureContainer:        getenvDefault("AZURE_CONTAINER", "projects"),
+		AzurePromptsContainer: getenvDefault("AZURE_PROMPTS_CONTAINER", "prompts"),
+		WebDir:                getenvDefault("WEB_DIR", "web"),
+		OtherDir:              getenvDefault("OTHER_DIR", "other"),
+		Port:                  getenvDefault("PORT", "8080"),
 	}
 	if c.AuthSecret == "" {
 		c.AuthSecret = c.AdminPassword

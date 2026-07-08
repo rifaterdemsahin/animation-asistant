@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Prompts</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .pm-layout { display: grid; grid-template-columns: 240px 1fr; gap: 16px; margin-top: 16px; }
+    @media (max-width: 720px) { .pm-layout { grid-template-columns: 1fr; } }
+    .pm-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+    .pm-list li { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+    .pm-list li:hover { border-color: var(--accent); }
+    .pm-list li.active { border-color: var(--accent); background: var(--panel-2); }
+    .pm-list .pm-dirty { color: var(--accent-2); font-size: 12px; }
+    .pm-editor textarea { width: 100%; min-height: 340px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; resize: vertical; }
+    .pm-vars { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+    .pm-vars code { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px; color: var(--accent-2); font-size: 12px; }
+    .pm-status { font-size: 13px; }
+    .pm-preview { background: #0b0d12; border: 1px solid var(--border); border-radius: 6px; padding: 12px; white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>✏️ Prompt Editor</h1>
+    <p class="lede">All generation prompts are stored in the Azure <code>prompts</code> container and edited live here. Use <code>{{variables}}</code> shown for each prompt.</p>
+    <div class="row">
+      <span id="pm-store" class="badge">store: …</span>
+      <span id="pm-status" class="pm-status muted"></span>
+    </div>
+
+    <div class="pm-layout">
+      <ul id="pm-list" class="pm-list"></ul>
+      <section id="pm-editor" class="panel hidden">
+        <div class="row" style="justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h2 id="pm-title" style="margin-bottom:2px"></h2>
+            <p class="muted" id="pm-desc" style="margin:0"></p>
+          </div>
+          <div class="row">
+            <button id="pm-preview-btn" class="btn">👁️ Preview</button>
+            <button id="pm-reset-btn" class="btn">↺ Reset to default</button>
+            <button id="pm-save-btn" class="btn primary">💾 Save</button>
+          </div>
+        </div>
+        <div class="pm-vars" id="pm-vars"></div>
+        <textarea id="pm-textarea" spellcheck="false"></textarea>
+        <div id="pm-preview-wrap" class="hidden" style="margin-top:12px">
+          <h3 style="font-size:14px;margin:0 0 6px">Preview (rendered with sample values)</h3>
+          <pre id="pm-preview" class="pm-preview"></pre>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
+  <script src="/assets/js/prompts.js"></script>
+</body>
+</html>

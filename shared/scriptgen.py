@@ -2,21 +2,18 @@
 from __future__ import annotations
 import json
 from .acts import ACTS, ACT_BY_KEY
-from . import storage
+from . import storage, prompts
 from .openrouter import chat_json, extract_json
 
 
 def generate_outline(slug: str) -> dict:
     p = storage.read_project(slug)
+    sys, usr = prompts.outline()
     msgs = [
-        {"role": "system",
-         "content": "You design short animated explainer video outlines using a STRICT 3-act structure: "
-                    "Act 1 = Problem, Act 2 = Solution, Act 3 = Lesson. Return JSON only, no markdown."},
+        {"role": "system", "content": sys},
         {"role": "user",
-         "content": (f"Topic: {p['topic']}\nComponent type: {p.get('component_type','explainer')}\n\n"
-                     'Produce JSON: {"title":"short title","logline":"one sentence",'
-                     '"acts":{"act-1":{"summary":"..."},"act-2":{"summary":"..."},"act-3":{"summary":"..."}}}. '
-                     "Each summary 1-2 sentences. JSON only.")},
+         "content": prompts.render(usr, {"topic": p["topic"],
+                                        "component_type": p.get("component_type", "explainer")})},
     ]
     obj = extract_json(chat_json(msgs))
     storage.write(slug, "outline.json", json.dumps(obj, indent=2, ensure_ascii=False))
@@ -44,16 +41,15 @@ def generate_script(slug: str, acts=None) -> dict:
     for key in keys:
         act = ACT_BY_KEY[key]
         summary = omap.get(key) or act["purpose"]
+        sys, usr = prompts.script()
         msgs = [
-            {"role": "system",
-             "content": "You are a scriptwriter for short animated explainer videos. "
-                        "Write ONE act and return STRICT JSON only, no markdown."},
+            {"role": "system", "content": sys},
             {"role": "user",
-             "content": (f"Topic: {p['topic']}\nAct: {act['key']} ({act['role']})\n"
-                         f"Outline summary for this act: {summary}\n\n"
-                         'Write only this act. Return JSON: {"narration":"1-3 paragraphs",'
-                         '"beats":[{"id":"beat-1","text":"one concrete, visualizable beat"}]}. '
-                         f"3-6 beats, focused on the role ({act['role']}). JSON only.")},
+             "content": prompts.render(usr, {"topic": p["topic"],
+                                            "act_key": act["key"],
+                                            "act_role": act["role"],
+                                            "summary": summary,
+                                            "purpose": act["purpose"]})},
         ]
         obj = extract_json(chat_json(msgs))
         md = to_markdown(act, obj)

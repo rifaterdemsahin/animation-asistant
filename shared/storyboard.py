@@ -2,7 +2,7 @@
 from __future__ import annotations
 import json
 from .acts import ACTS
-from . import storage
+from . import storage, prompts
 from .openrouter import chat_json, extract_json, generate_image, OpenRouterError
 
 
@@ -31,20 +31,14 @@ def _context(slug: str, p: dict) -> str:
 def generate_storyboard(slug: str) -> dict:
     p = storage.read_project(slug)
     context = _context(slug, p)
+    sys, usr, img_tmpl = prompts.storyboard()
     msgs = [
-        {"role": "system",
-         "content": "You assemble a 3-act storyboard for an explainer video. Return STRICT JSON only, no markdown."},
-        {"role": "user",
-         "content": (f"Build a scene-by-scene storyboard from this project material:\n\n{context}\n\n"
-                     'Return JSON: {"acts":{"act-1":{"scenes":[{"scene_id":"s1","beat_ref":"beat-1",'
-                     '"component_ids":[],"duration":4,"description":"..."}]},"act-2":{"scenes":[]},'
-                     '"act-3":{"scenes":[]}}}. Each scene may reference an existing component_id. '
-                     "Durations are seconds (2-8). JSON only.")},
+        {"role": "system", "content": sys},
+        {"role": "user", "content": prompts.render(usr, {"context": context})},
     ]
     obj = extract_json(chat_json(msgs))
     storage.write(slug, "storyboard/storyboard.json", json.dumps(obj, indent=2, ensure_ascii=False))
-    prompt = (f"an infographic storyboard overview for a 3-act explainer video about: {p['topic']}. "
-              "Three labeled sections: Problem, Solution, Lesson. Clean flat vector, modern.")
+    prompt = prompts.render(img_tmpl, {"topic": p["topic"]})
     try:
         png = generate_image(prompt)
         storage.write(slug, "storyboard/storyboard.png", png)

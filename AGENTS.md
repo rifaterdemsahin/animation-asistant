@@ -33,7 +33,8 @@ Flow per project: **outline → script → components → audio → storyboard**
 ```
 server/           Go backend (main): app, config, auth, openrouter (rotation+
                   image), elevenlabs, components, audio, storyboard, projects,
-                  script, acts, healthz, util, errors (+ main_test.go)
+                  script, acts, healthz, util, errors, prompts (+ editable
+                  store/api) (+ main_test.go)
 server/storage/   Backend interface + Local + Azure (azblob SDK)
 web/              static frontend; assets/js/{layout,auth,media-manager,
                   storyboard,projects,dashboard}.js ; pages/
@@ -62,6 +63,9 @@ TTS ElevenLabs `eleven_turbo_v2_5` / voice "George". Override via env.
 - OpenRouter 401/402/429 rotates to the next comma-separated key; if all fail,
   the error explains the token is likely expired/over-limit.
 - Go + Python prompts are intentionally parallel (dual-mode); keep both in sync.
+  Both now read editable templates from a `prompts` store (Azure container
+  `prompts` on fly.io, local `other/_prompts` otherwise), seeded with the
+  compiled defaults. Edit live at `/pages/prompts.html` (API `/api/prompts`).
 
 ## 6. When in doubt
 Re-read SPEC.md + risks.md. Ask before expanding scope.

@@ -2,21 +2,9 @@
 from __future__ import annotations
 import json
 from .acts import ACTS, ACT_BY_KEY
-from . import storage
+from . import storage, prompts
 from .openrouter import generate_image, OpenRouterError
 
-DEFAULT_TYPES = ["background", "lower-third", "speech-bubble", "infographic"]
-
-STYLE = {
-    "background": "wide 16:9 background scene illustration, clean flat vector style, no text",
-    "lower-third": "lower-third banner overlay graphic with space for a short caption, flat vector, minimal",
-    "speech-bubble": "speech bubble graphic with space for a short quote, flat vector, clean",
-    "infographic": "clean infographic with simple data visualization using icons and numbers, flat vector",
-    "character": "single character or mascot illustration, flat vector, centered, plain background",
-    "icon": "simple minimal flat icon on a plain background",
-    "title-card": "full-screen title card graphic with space for a heading, bold flat vector",
-    "transition": "abstract motion-transition graphic, flat vector",
-}
 
 
 def _load_beats(slug: str, act: dict):
@@ -46,17 +34,17 @@ def _beat_id(beats, i):
 def generate_components(slug: str, acts=None, types=None) -> dict:
     p = storage.read_project(slug)
     keys = acts or [a["key"] for a in ACTS]
-    types = types or DEFAULT_TYPES
+    styles, default_types, img_tmpl = prompts.components()
+    types = types or default_types
     manifest = {}
     for key in keys:
         act = ACT_BY_KEY[key]
         beats = _load_beats(slug, act)
         items = []
         for i, t in enumerate(types):
-            style = STYLE.get(t, t)
+            style = styles.get(t, t)
             beat = _beat_at(beats, i) or p["topic"]
-            prompt = (f"{style}. Illustrate this idea: {beat}. "
-                      f"Topic: {p['topic']}. Flat vector, clean, consistent style.")
+            prompt = prompts.render(img_tmpl, {"style": style, "beat": beat, "topic": p["topic"]})
             img = generate_image(prompt)
             fname = f"{slug}-{t}-{i + 1:02d}.png"
             rel = f"{act['slug']}/components/{fname}"

@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"strings"
+	"sync"
 
 	"animation-assistant/server/storage"
 )
@@ -12,6 +13,9 @@ type App struct {
 	cfg       *Config
 	store     storage.Backend
 	or        *orClient
+	prompts   PromptStore
+	pcache    map[string]string
+	pcacheMu  sync.Mutex
 	startedAt string
 }
 
@@ -47,6 +51,12 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/audio/sfx", a.authed(a.getSFXStatus))
 	mux.HandleFunc("POST /api/projects/{slug}/storyboard", a.authed(a.generateStoryboard))
 	mux.HandleFunc("GET /api/projects/{slug}/storyboard", a.authed(a.getStoryboard))
+
+	// editable prompt templates (Azure "prompts" container)
+	mux.HandleFunc("GET /api/prompts", a.authed(a.listPrompts))
+	mux.HandleFunc("GET /api/prompts/{id}", a.authed(a.getPrompt))
+	mux.HandleFunc("PUT /api/prompts/{id}", a.authed(a.updatePrompt))
+	mux.HandleFunc("POST /api/prompts/{id}/reset", a.authed(a.resetPrompt))
 
 	// raw asset serving (images/audio) from storage
 	mux.HandleFunc("GET /api/projects/{slug}/browse", a.authed(a.browseFiles))

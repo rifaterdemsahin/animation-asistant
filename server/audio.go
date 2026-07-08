@@ -119,13 +119,14 @@ func (a *App) generateMusic(w http.ResponseWriter, r *http.Request) {
 	if len(keys) == 0 {
 		keys = allActKeys()
 	}
+	musicTmpl, defGenre, defMood := a.musicTmpl()
 	genre := req.Genre
 	if genre == "" {
-		genre = "cinematic"
+		genre = defGenre
 	}
 	mood := req.Mood
 	if mood == "" {
-		mood = "inspiring and uplifting"
+		mood = defMood
 	}
 
 	out := map[string]string{}
@@ -134,7 +135,12 @@ func (a *App) generateMusic(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			continue
 		}
-		prompt := fmt.Sprintf("%s %s background music for a %s act in an explainer video about: %s. 30 seconds, seamless loop.", genre, mood, act.Role, p.Topic)
+		prompt := renderTmpl(musicTmpl, map[string]string{
+			"genre":    genre,
+			"mood":     mood,
+			"act_role": act.Role,
+			"topic":    p.Topic,
+		})
 		a.savePrompt(slug, act.Key, "music", prompt)
 		music, err := a.falMusic(prompt)
 		if err != nil {
@@ -176,14 +182,7 @@ func (a *App) generateSFX(w http.ResponseWriter, r *http.Request) {
 		File string `json:"file"`
 		Type string `json:"type"`
 	}
-	sfxTypes := []struct {
-		name string
-		desc string
-	}{
-		{"whoosh", "a quick whoosh transition sound effect"},
-		{"ding", "a bright notification ding sound effect"},
-		{"reveal", "a dramatic reveal sound effect"},
-	}
+	sfxTmpl, sfxTypes := a.sfxTmpl()
 	out := map[string][]sfxResult{}
 	for _, key := range keys {
 		act, ok := actByKey(key)
@@ -192,20 +191,20 @@ func (a *App) generateSFX(w http.ResponseWriter, r *http.Request) {
 		}
 		var results []sfxResult
 		for i, st := range sfxTypes {
-			prompt := fmt.Sprintf("%s. Short, clean, game-quality sound effect.", st.desc)
-			a.savePrompt(slug, act.Key, fmt.Sprintf("sfx-%s", st.name), prompt)
+			prompt := renderTmpl(sfxTmpl, map[string]string{"desc": st.Desc})
+			a.savePrompt(slug, act.Key, fmt.Sprintf("sfx-%s", st.Name), prompt)
 			audio, err := a.falSFX(prompt)
 			if err != nil {
-				writeError(w, r, http.StatusInternalServerError, "fal_error", fmt.Sprintf("sfx %s/%s: %v", act.Key, st.name, err))
+				writeError(w, r, http.StatusInternalServerError, "fal_error", fmt.Sprintf("sfx %s/%s: %v", act.Key, st.Name, err))
 				return
 			}
-			fname := fmt.Sprintf("sfx-%s-%02d.mp3", st.name, i+1)
+			fname := fmt.Sprintf("sfx-%s-%02d.mp3", st.Name, i+1)
 			rel := act.Slug + "/audio/" + fname
 			if err := a.store.Write(slug, rel, audio); err != nil {
 				writeError(w, r, http.StatusInternalServerError, "storage_error", err.Error())
 				return
 			}
-			results = append(results, sfxResult{Name: st.name, File: rel, Type: "sound_effect"})
+			results = append(results, sfxResult{Name: st.Name, File: rel, Type: "sound_effect"})
 		}
 		out[key] = results
 	}

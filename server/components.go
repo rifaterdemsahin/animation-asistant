@@ -12,19 +12,6 @@ type compReq struct {
 	Types []string `json:"types"`
 }
 
-var defaultCompTypes = []string{"background", "lower-third", "speech-bubble", "infographic"}
-
-var compStyle = map[string]string{
-	"background":    "wide 16:9 background scene illustration, clean flat vector style, no text",
-	"lower-third":   "lower-third banner overlay graphic with space for a short caption, flat vector, minimal",
-	"speech-bubble": "speech bubble graphic with space for a short quote, flat vector, clean",
-	"infographic":   "clean infographic with simple data visualization using icons and numbers, flat vector",
-	"character":     "single character or mascot illustration, flat vector, centered, plain background",
-	"icon":          "simple minimal flat icon on a plain background",
-	"title-card":    "full-screen title card graphic with space for a heading, bold flat vector",
-	"transition":    "abstract motion-transition graphic, flat vector",
-}
-
 func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	p, err := a.loadProject(slug)
@@ -41,9 +28,10 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 	}
 	types := req.Types
 	if len(types) == 0 {
-		types = defaultCompTypes
+		_, types, _ = a.componentsTmpl()
 	}
 
+	styles, _, imgTmpl := a.componentsTmpl()
 	manifest := map[string][]map[string]any{}
 	for _, key := range keys {
 		act, ok := actByKey(key)
@@ -53,7 +41,7 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 		beats := a.loadBeats(slug, act)
 		var list []map[string]any
 		for i, t := range types {
-			style := compStyle[t]
+			style := styles[t]
 			if style == "" {
 				style = t
 			}
@@ -61,8 +49,11 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 			if beatText == "" {
 				beatText = p.Topic
 			}
-			prompt := fmt.Sprintf("%s. Illustrate this idea: %s. Topic: %s. Flat vector, clean, consistent style.",
-				style, beatText, p.Topic)
+			prompt := renderTmpl(imgTmpl, map[string]string{
+				"style": style,
+				"beat":  beatText,
+				"topic": p.Topic,
+			})
 			a.savePrompt(slug, act.Key, "component-"+t, prompt)
 			img, err := a.generateImage(prompt)
 			if err != nil {
