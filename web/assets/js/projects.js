@@ -42,7 +42,7 @@ async function loadProjects() {
     const open = document.createElement("button");
     open.className = "btn primary";
     open.innerHTML = "&#128193;";
-    open.title = "Open project";
+    open.title = "Open and select project";
     open.addEventListener("click", () => selectProject(p));
 
     const del = document.createElement("button");

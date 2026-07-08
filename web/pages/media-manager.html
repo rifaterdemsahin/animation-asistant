@@ -23,6 +23,19 @@
         <span id="mm-status" class="badge"></span>
       </div>
 
+      <section class="panel" style="border-left:4px solid var(--accent)">
+        <h2>🚀 Prompt Pipeline</h2>
+        <p class="muted">Related to the current project — view, generate, and execute prompts across all steps.</p>
+        <div class="row" style="margin-bottom:12px">
+          <button id="prompt-view-btn" class="btn">👁️ 1. Prompt View</button>
+          <button id="prompt-gen-btn" class="btn">⚡ 2. Prompt Generate</button>
+          <button id="prompt-exec-btn" class="btn primary">🚀 3. Prompt Execute</button>
+          <span id="prompt-status" class="muted" style="font-size:13px"></span>
+        </div>
+        <div id="prompt-context" class="muted" style="font-size:13px;margin-bottom:8px"></div>
+        <pre id="prompt-output" class="out hidden muted" style="font-size:11px;max-height:200px;overflow:auto"></pre>
+      </section>
+
       <section id="storyboard-preview" class="panel hidden">
         <h2>📋 Storyboard Overview</h2>
         <img id="sb-preview-img" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">

@@ -87,6 +87,137 @@ document.addEventListener("layout:ready", function () {
   document.getElementById("mm-title").textContent = cur.title + " (" + s + ")";
   document.getElementById("mm-status").textContent = cur.slug;
 
+  var allPrompts = null;
+
+  async function loadProjectQA() {
+    try {
+      var p = await j(api + "/projects/" + s);
+      var ctx = [];
+      if (p.question_id) ctx.push("Question ID: " + p.question_id);
+      if (p.type) ctx.push("Type: " + p.type);
+      if (p.question) ctx.push("Problem: " + p.question);
+      if (p.answer) ctx.push("Solution: " + p.answer);
+      if (p.why) ctx.push("Why: " + p.why);
+      document.getElementById("prompt-context").textContent = ctx.length ? ctx.join(" | ") : "No Q&A metadata — edit on Projects page.";
+      return p;
+    } catch { return null; }
+  }
+
+  async function loadAllPrompts() {
+    if (allPrompts) return allPrompts;
+    var ids = ["outline", "script", "components", "storyboard"];
+    allPrompts = {};
+    for (var i = 0; i < ids.length; i++) {
+      try {
+        var r = await j(api + "/prompts/" + ids[i]);
+        allPrompts[ids[i]] = JSON.parse(r.raw);
+      } catch {}
+    }
+    return allPrompts;
+  }
+
+  document.getElementById("prompt-view-btn").addEventListener("click", async function () {
+    var pre = document.getElementById("prompt-output");
+    var status = document.getElementById("prompt-status");
+    if (!pre.classList.contains("hidden")) {
+      pre.classList.add("hidden");
+      status.textContent = "";
+      return;
+    }
+    status.textContent = "Loading prompts...";
+    try {
+      var prompts = await loadAllPrompts();
+      var text = "";
+      for (var id in prompts) {
+        var p = prompts[id];
+        text += "=== " + id.toUpperCase() + " ===\n";
+        if (p.system) text += "[System]\n" + p.system + "\n\n";
+        if (p.user) text += "[User]\n" + p.user + "\n\n";
+        if (p.image_prompt) text += "[Image]\n" + p.image_prompt + "\n\n";
+      }
+      pre.textContent = text || "No prompts loaded.";
+      pre.classList.remove("hidden");
+      status.textContent = "All prompt templates viewed.";
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+    }
+  });
+
+  document.getElementById("prompt-gen-btn").addEventListener("click", async function () {
+    var status = document.getElementById("prompt-status");
+    status.textContent = "Fetching project data...";
+    try {
+      var proj = await loadProjectQA();
+      var prompts = await loadAllPrompts();
+      if (!proj) { status.textContent = "Could not load project."; return; }
+      var q = proj.question || "(no question set)";
+      var a = proj.answer || "(no answer set)";
+      var w = proj.why || "";
+      var context = "Problem: " + q + "\nSolution: " + a + "\nWhy: " + w + "\nTitle: " + (proj.title || cur.title) + "\nTopic: " + (proj.topic || cur.title);
+
+      var fill = function (s) {
+        return (s || "")
+          .replace(/\{\{topic\}\}/g, proj.topic || cur.title)
+          .replace(/\{\{context\}\}/g, context)
+          .replace(/\{\{component_type\}\}/g, proj.component_type || "explainer")
+          .replace(/\{\{summary\}\}/g, q)
+          .replace(/\{\{purpose\}\}/g, w)
+          .replace(/\{\{act_key\}\}/g, "act-1")
+          .replace(/\{\{act_role\}\}/g, "problem");
+      };
+
+      var text = "";
+      for (var id in prompts) {
+        var p = prompts[id];
+        text += "=== " + id.toUpperCase() + " ===\n";
+        if (p.system) text += "[System]\n" + fill(p.system) + "\n\n";
+        if (p.user) text += "[User]\n" + fill(p.user) + "\n\n";
+        if (p.image_prompt) text += "[Image]\n" + fill(p.image_prompt) + "\n\n";
+      }
+      document.getElementById("prompt-output").textContent = text;
+      document.getElementById("prompt-output").classList.remove("hidden");
+      status.textContent = "Prompts filled with project Q&A.";
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+    }
+  });
+
+  document.getElementById("prompt-exec-btn").addEventListener("click", async function (e) {
+    var btn = e.currentTarget;
+    var status = document.getElementById("prompt-status");
+    loading(btn, true);
+
+    async function step(name, fn) { status.textContent = "Running: " + name + "..."; await fn(); status.textContent = name + " done."; }
+
+    try {
+      await step("outline", async function () {
+        await j(api + "/projects/" + s + "/outline", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        document.getElementById("outline-out").classList.remove("hidden");
+        loadOutline();
+      });
+      await step("script (3 acts)", async function () {
+        await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: ["act-1","act-2","act-3"] }) });
+        loadScript();
+      });
+      await step("components (3 acts)", async function () {
+        await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: ["act-1","act-2","act-3"] }) });
+        loadComponents();
+      });
+      await step("audio (3 acts)", async function () {
+        await j(api + "/projects/" + s + "/audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: ["act-1","act-2","act-3"] }) });
+        loadAudio();
+      });
+      status.textContent = "Full pipeline complete.";
+      loadBrowse();
+    } catch (err) {
+      status.textContent = "Error: " + err.message;
+    } finally {
+      loading(btn, false);
+    }
+  });
+
+  loadProjectQA();
+
   togglePrompt("show-outline-prompt", "outline-prompt",
     "System: You design short animated explainer video outlines using a STRICT 3-act structure: Act 1 = Problem, Act 2 = Solution, Act 3 = Lesson. You return JSON only, no markdown.\n\n" +
     "User: Topic: " + cur.title + "\nComponent type: explainer\n\nProduce a JSON object with this exact shape:\n{\"title\":\"short title\",\"logline\":\"one sentence\",\"acts\":{\"act-1\":{\"summary\":\"...\"},\"act-2\":{\"summary\":\"...\"},\"act-3\":{\"summary\":\"...\"}}}\nEach act summary must be 1-2 sentences fitting the act's role. JSON only.");

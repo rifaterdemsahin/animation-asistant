@@ -62,6 +62,24 @@
         <h2>🎬 Scenes by act</h2>
         <div id="sb-out"><p class="muted">No storyboard yet — generate above.</p></div>
       </section>
+
+      <!-- Model info -->
+      <section class="panel" style="border-left:3px solid var(--accent);margin-top:20px">
+        <h2>🤖 AI Models Triggered</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px">
+          <div style="background:var(--panel-2);padding:10px;border-radius:6px">
+            <strong>Provider:</strong> OpenRouter<br>
+            <strong>Text Model:</strong> Gemini 2.5 Flash<br>
+            <span class="muted" style="font-size:12px">google/gemini-2.5-flash</span>
+          </div>
+          <div style="background:var(--panel-2);padding:10px;border-radius:6px">
+            <strong>Provider:</strong> OpenRouter<br>
+            <strong>Image Model:</strong> Gemini 2.5 Flash Image<br>
+            <span class="muted" style="font-size:12px">google/gemini-2.5-flash-image</span>
+          </div>
+        </div>
+        <p class="muted" style="margin-top:8px;font-size:13px">Storyboard generation calls both models: text for scene assembly (JSON) and image for the 4-frame infographic.</p>
+      </section>
     </div>
   </main>
 
