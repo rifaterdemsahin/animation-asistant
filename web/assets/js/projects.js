@@ -35,24 +35,42 @@ async function loadProjects() {
 
     const edit = document.createElement("button");
     edit.className = "btn";
-    edit.textContent = "Edit";
+    edit.innerHTML = "&#9999;&#65039;";
+    edit.title = "Edit project";
     edit.addEventListener("click", () => editProject(p));
 
     const open = document.createElement("button");
     open.className = "btn primary";
-    open.textContent = "Open";
+    open.innerHTML = "&#128193;";
+    open.title = "Open project";
     open.addEventListener("click", () => selectProject(p));
 
     const del = document.createElement("button");
     del.className = "btn";
-    del.textContent = "Delete";
+    del.innerHTML = "&#128465;&#65039;";
+    del.title = "Delete project";
     del.addEventListener("click", () => deleteProject(p));
 
     if (current && current.slug === p.slug) {
-      open.textContent = "Selected";
+      open.innerHTML = "&#9989;";
+      open.title = "Currently selected";
       open.disabled = true;
     }
-    right.append(edit, open, del);
+
+    const btns = [edit, open, del];
+
+    if (p.canva_link) {
+      const canva = document.createElement("a");
+      canva.className = "btn";
+      canva.innerHTML = "&#127912;";
+      canva.title = "Open Canva design";
+      canva.href = p.canva_link;
+      canva.target = "_blank";
+      canva.rel = "noopener";
+      btns.push(canva);
+    }
+
+    right.append(...btns);
     li.append(left, right);
     list.append(li);
   }
