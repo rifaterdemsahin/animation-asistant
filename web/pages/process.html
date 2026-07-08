@@ -14,6 +14,13 @@
     <h1>🔄 Production Process</h1>
     <p class="lede">End-to-end asset production pipeline for Canva animation components. Built for self-learning through creation.</p>
 
+    <div class="panel" style="margin-top:16px">
+      <div class="row">
+        <a href="/pages/projects.html" class="btn primary">📁 Select Project</a>
+        <span id="current-project-display" class="muted" style="font-size:14px"></span>
+      </div>
+    </div>
+
     <div style="display:grid;gap:20px;margin-top:20px">
 
       <section class="panel" style="border-left:4px solid var(--accent)">
@@ -103,5 +110,16 @@
   <script src="/assets/js/layout.js"></script>
   <script src="/assets/js/auth.js"></script>
   <script src="/assets/js/debug.js"></script>
+  <script>
+    document.addEventListener("layout:ready", () => {
+      const cur = window.currentProject && window.currentProject();
+      const el = document.getElementById("current-project-display");
+      if (cur) {
+        el.innerHTML = 'Current: <strong>' + (cur.title || cur.slug) + '</strong> (' + cur.slug + ')';
+      } else {
+        el.textContent = 'No project selected — pick one above.';
+      }
+    });
+  </script>
 </body>
 </html>
