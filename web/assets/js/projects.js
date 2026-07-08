@@ -10,6 +10,11 @@ async function loadProjects() {
   const list = document.getElementById("project-list");
   const empty = document.getElementById("empty-state");
   const data = await json(api + "/projects");
+  data.projects.sort((a, b) => {
+    const aNum = parseInt((a.question_id || "").replace(/^q/i, "")) || 0;
+    const bNum = parseInt((b.question_id || "").replace(/^q/i, "")) || 0;
+    return aNum - bNum;
+  });
   list.innerHTML = "";
   if (!data.projects.length) {
     empty.classList.remove("hidden");
