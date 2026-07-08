@@ -21,21 +21,43 @@
       <div class="toolbar">
         <span id="sb-title" class="mm-title"></span>
       </div>
-      <div class="row" style="margin-top:12px">
-        <button id="show-sb-prompt" class="btn">👁️ Show Prompt</button>
-        <button id="gen-storyboard" class="btn primary">📋 Generate storyboard</button>
-        <span class="muted">combines outline + scripts + components (Gemini)</span>
-      </div>
-      <pre id="sb-prompt" class="out hidden muted" style="font-size:12px;max-height:150px;overflow:auto"></pre>
-      <div id="mm-link" class="row hidden" style="margin-top:4px">
-        <a href="/pages/media-manager.html" class="btn primary">🎛️ Continue to Media Manager</a>
-      </div>
 
+      <!-- Q&A / Why metadata -->
+      <section id="qa-section" class="panel" style="margin-top:16px">
+        <h2>❓ Problem · Solution · Why</h2>
+        <div id="qa-content" class="muted">Loading project metadata...</div>
+      </section>
+
+      <!-- Prompt template -->
+      <section class="panel">
+        <h2>📝 Prompt Template</h2>
+        <p class="muted">Uses problem, solution, and pedagogical rationale from the project Q&A above.</p>
+        <div class="row" style="margin-bottom:10px">
+          <button id="generate-prompt" class="btn primary">⚡ Generate Prompt</button>
+          <button id="execute-prompt" class="btn">🚀 Execute Prompt</button>
+          <span class="muted" id="prompt-status"></span>
+        </div>
+        <label>System Prompt
+          <textarea id="prompt-system" rows="4" readonly style="font-size:12px;font-family:monospace"></textarea>
+        </label>
+        <label>User Prompt (text, Gemini)
+          <textarea id="prompt-user" rows="6" readonly style="font-size:12px;font-family:monospace"></textarea>
+        </label>
+        <label>Image Prompt (infographic)
+          <textarea id="prompt-image" rows="3" readonly style="font-size:12px;font-family:monospace"></textarea>
+        </label>
+      </section>
+
+      <!-- Image output -->
       <section class="panel">
         <h2>🖼️ Overview</h2>
         <img id="sb-image" class="hidden" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">
+        <div id="mm-link" class="row hidden" style="margin-top:8px">
+          <a href="/pages/media-manager.html" class="btn primary">🎛️ Continue to Media Manager</a>
+        </div>
       </section>
 
+      <!-- Scenes output -->
       <section class="panel">
         <h2>🎬 Scenes by act</h2>
         <div id="sb-out"><p class="muted">No storyboard yet — generate above.</p></div>

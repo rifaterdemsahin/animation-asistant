@@ -57,7 +57,97 @@ async function loadStoryboard() {
   } catch {}
 }
 
-document.addEventListener("layout:ready", () => {
+let projectQA = {};
+let promptTemplate = null;
+
+async function loadProjectMeta() {
+  try {
+    const p = await json(`${api}/projects/${slug()}`);
+    projectQA = { question: p.question || "", answer: p.answer || "", why: p.why || "", topic: p.topic || "", title: p.title || "" };
+    const qa = document.getElementById("qa-content");
+    if (projectQA.question || projectQA.answer || projectQA.why) {
+      let html = "";
+      if (projectQA.question) html += `<div style="margin-bottom:8px"><strong>Problem:</strong> ${escapeHtml(projectQA.question)}</div>`;
+      if (projectQA.answer) html += `<div style="margin-bottom:8px"><strong>Solution:</strong> ${escapeHtml(projectQA.answer)}</div>`;
+      if (projectQA.why) html += `<div><strong>Why (pedagogical rationale):</strong> ${escapeHtml(projectQA.why)}</div>`;
+      qa.innerHTML = html || "<span class=\"muted\">No Q&A metadata set — edit on Projects page.</span>";
+    } else {
+      qa.innerHTML = "<span class=\"muted\">No Q&A metadata set — edit on Projects page.</span>";
+    }
+    return p;
+  } catch {
+    document.getElementById("qa-content").innerHTML = "<span class=\"error\">Failed to load project metadata.</span>";
+  }
+}
+
+async function loadPromptTemplate() {
+  try {
+    const p = await json(`${api}/prompts/storyboard`);
+    const obj = JSON.parse(p.raw);
+    promptTemplate = {
+      system: obj.system || "",
+      user: obj.user || "",
+      image_prompt: obj.image_prompt || "",
+    };
+    return promptTemplate;
+  } catch (err) {
+    document.getElementById("prompt-status").textContent = "Failed to load prompt template: " + err.message;
+    return null;
+  }
+}
+
+function renderPrompt(vars) {
+  if (!promptTemplate) return;
+  const r = (s) => {
+    return (s || "")
+      .replace(/\{\{context\}\}/g, vars.context || "")
+      .replace(/\{\{topic\}\}/g, vars.topic || "");
+  };
+  document.getElementById("prompt-system").value = r(promptTemplate.system);
+  document.getElementById("prompt-user").value = r(promptTemplate.user);
+  document.getElementById("prompt-image").value = r(promptTemplate.image_prompt);
+}
+
+function generatePrompt() {
+  if (!promptTemplate) {
+    document.getElementById("prompt-status").textContent = "Prompt template not loaded yet.";
+    return;
+  }
+  const q = projectQA.question || "(no question set)";
+  const a = projectQA.answer || "(no answer set)";
+  const w = projectQA.why || "";
+  const t = projectQA.topic || projectQA.title || "(untitled)";
+
+  const context = `Problem: ${q}
+Solution: ${a}
+Why (pedagogical rationale): ${w}
+Title: ${projectQA.title || t}
+Topic: ${t}`;
+
+  renderPrompt({ context, topic: t });
+  document.getElementById("prompt-status").textContent = "Prompt built from project Q&A.";
+}
+
+async function executePrompt() {
+  const s = slug();
+  if (!s) return;
+  const btn = document.getElementById("execute-prompt");
+  const status = document.getElementById("prompt-status");
+  setLoading(btn, true);
+  status.textContent = "Generating storyboard...";
+  try {
+    await json(`${api}/projects/${s}/storyboard`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    await loadStoryboard();
+    document.getElementById("mm-link").classList.remove("hidden");
+    status.textContent = "Storyboard generated.";
+  } catch (err) {
+    status.textContent = "Error: " + err.message;
+  } finally {
+    setLoading(btn, false);
+  }
+}
+
+document.addEventListener("layout:ready", async () => {
   const s = slug();
   if (!s) return;
   document.getElementById("no-project").classList.add("hidden");
@@ -65,36 +155,12 @@ document.addEventListener("layout:ready", () => {
   const cur = window.currentProject();
   document.getElementById("sb-title").textContent = cur.title + " (" + s + ")";
 
-  document.getElementById("show-sb-prompt").addEventListener("click", function () {
-    var pre = document.getElementById("sb-prompt");
-    if (pre.classList.contains("hidden")) {
-      pre.textContent = "System: You are a storyboard director assembling a 3-act explainer video. " +
-        "You frame the topic as a Problem→Solution→Lesson arc and produce scene-by-scene breakdowns.\n\n" +
-        "User: Topic: " + cur.title + "\n" +
-        "Project: " + s + "\n\n" +
-        "## Text prompt (Gemini):\n" +
-        "Build a scene-by-scene storyboard from this project material. " +
-        "Return JSON with acts → scenes (id, beat_ref, component_ids, duration, description). " +
-        "4-6 scenes across all acts, 2-8 seconds each.\n\n" +
-        "## Infographic prompt (image model):\n" +
-        "A 4-frame storyboard infographic for: " + cur.title + ". " +
-        "Four horizontal frames arranged in a grid, each showing one key scene: " +
-        "Frame 1=Problem setup, Frame 2=Solution approach, " +
-        "Frame 3=Implementation, Frame 4=Lesson/takeaway. " +
-        "Clean flat vector style, modern explainer video aesthetic, " +
-        "labels under each frame.";
-      pre.classList.remove("hidden");
-    } else { pre.classList.add("hidden"); }
-  });
+  await loadProjectMeta();
+  await loadPromptTemplate();
 
-  document.getElementById("gen-storyboard").addEventListener("click", async (e) => {
-    const btn = e.currentTarget; setLoading(btn, true);
-    try {
-      await json(`${api}/projects/${s}/storyboard`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      await loadStoryboard();
-      document.getElementById("mm-link").classList.remove("hidden");
-    } catch (err) { alert(err.message); } finally { setLoading(btn, false); }
-  });
+  document.getElementById("generate-prompt").addEventListener("click", generatePrompt);
+  document.getElementById("execute-prompt").addEventListener("click", executePrompt);
+
   loadStoryboard().then(() => {
     document.getElementById("mm-link").classList.remove("hidden");
   });

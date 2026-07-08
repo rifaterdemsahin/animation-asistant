@@ -15,13 +15,10 @@ func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	context := a.storyboardContext(slug, p)
+	sys, usr, imgTmpl := a.storyboardTmpl()
 	msgs := []orMessage{
-		{Role: "system", Content: "You assemble a 3-act storyboard for an explainer video. Return STRICT JSON only, no markdown."},
-		{Role: "user", Content: fmt.Sprintf(
-			"Build a scene-by-scene storyboard from this project material:\n\n%s\n\n"+
-				`Return JSON: {"acts":{"act-1":{"scenes":[{"scene_id":"s1","beat_ref":"beat-1","component_ids":[],"duration":4,"description":"..."}]},"act-2":{"scenes":[]},"act-3":{"scenes":[]}}}`+"\n"+
-				"Each scene may reference an existing component_id. Durations are seconds (2-8). JSON only.",
-			context)},
+		{Role: "system", Content: sys},
+		{Role: "user", Content: renderTmpl(usr, map[string]string{"context": context})},
 	}
 	a.savePromptMsg(slug, "storyboard", "storyboard", msgs)
 	raw, err := a.chatText(msgs)
@@ -38,16 +35,7 @@ func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
 	_ = a.store.Write(slug, "storyboard/storyboard.json", buf)
 
 	// 4-frame storyboard infographic image
-	pngPrompt := fmt.Sprintf(
-		"A 4-frame storyboard infographic for a 3-act explainer video about: %s. "+
-			"Arrange four horizontal frames in a 2x2 grid. "+
-			"Frame 1 (top-left): Problem setup — show the pain point visually. "+
-			"Frame 2 (top-right): Solution approach — introduce the key idea. "+
-			"Frame 3 (bottom-left): Implementation — show how it works step by step. "+
-			"Frame 4 (bottom-right): Lesson/takeaway — the insight the audience leaves with. "+
-			"Each frame has a short label below it. Clean flat vector style, "+
-			"modern explainer video aesthetic, consistent colors, no text inside frames.",
-		p.Topic)
+	pngPrompt := renderTmpl(imgTmpl, map[string]string{"topic": p.Topic})
 	if png, err := a.generateImage(pngPrompt); err == nil {
 		_ = a.store.Write(slug, "storyboard/storyboard.png", png)
 	}
@@ -71,7 +59,17 @@ func (a *App) getStoryboard(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) storyboardContext(slug string, p *Project) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Title: %s\nTopic: %s\n\n", p.Title, p.Topic)
+	fmt.Fprintf(&b, "Title: %s\nTopic: %s\n", p.Title, p.Topic)
+	if p.Question != "" {
+		fmt.Fprintf(&b, "Problem: %s\n", p.Question)
+	}
+	if p.Answer != "" {
+		fmt.Fprintf(&b, "Solution: %s\n", p.Answer)
+	}
+	if p.Why != "" {
+		fmt.Fprintf(&b, "Why (pedagogical rationale): %s\n", p.Why)
+	}
+	b.WriteString("\n")
 	if ob, err := a.store.Read(slug, "outline.json"); err == nil {
 		fmt.Fprintf(&b, "OUTLINE:\n%s\n\n", string(ob))
 	}
