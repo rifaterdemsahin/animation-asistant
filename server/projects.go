@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -24,6 +25,8 @@ type Project struct {
 	Topic         string               `json:"topic"`
 	ComponentType string               `json:"component_type"`
 	CanvaLink     string               `json:"canva_link"`
+	QuestionID    string               `json:"question_id,omitempty"`
+	Type          string               `json:"type,omitempty"`
 	Question      string               `json:"question,omitempty"`
 	Answer        string               `json:"answer,omitempty"`
 	Why           string               `json:"why,omitempty"`
@@ -49,10 +52,26 @@ type projectIn struct {
 	Title         string `json:"title"`
 	Topic         string `json:"topic"`
 	ComponentType string `json:"component_type"`
+	QuestionID    string `json:"question_id"`
+	Type          string `json:"type"`
 	Question      string `json:"question"`
 	Answer        string `json:"answer"`
 	Why           string `json:"why"`
 	CanvaLink     string `json:"canva_link"`
+}
+
+type projectUpdate struct {
+	Title         *string            `json:"title"`
+	Topic         *string            `json:"topic"`
+	ComponentType *string            `json:"component_type"`
+	CanvaLink     *string            `json:"canva_link"`
+	QuestionID    *string            `json:"question_id"`
+	Type          *string            `json:"type"`
+	Question      *string            `json:"question"`
+	Answer        *string            `json:"answer"`
+	Why           *string            `json:"why"`
+	Tasks         *[]TaskItem        `json:"tasks"`
+	ActNotes      *map[string]string `json:"act_notes"`
 }
 
 func defaultTasks() []TaskItem {
@@ -68,6 +87,28 @@ func defaultTasks() []TaskItem {
 		{ID: "t9", Label: "Run a collaborative workshop to polish final details and answer outstanding questions.", Group: "evaluate", Done: false},
 		{ID: "t10", Label: "Have a do apply demo with interactive application and code samples.", Group: "evaluate", Done: false},
 	}
+}
+
+var knownTypes = []string{"multi-agent-research", "code-generation", "customer-resolution-agent", "claude-ci"}
+
+var qPattern = regexp.MustCompile(`^(q\d+)-(.+)$`)
+
+func parseQuestionMeta(slug string) (qid, typ, title string) {
+	m := qPattern.FindStringSubmatch(slug)
+	if m == nil {
+		return "", "", ""
+	}
+	qid = m[1]
+	rest := m[2]
+	for _, kt := range knownTypes {
+		if strings.HasPrefix(rest, kt+"-") {
+			typ = kt
+			title = strings.ReplaceAll(strings.TrimPrefix(rest, kt+"-"), "-", " ")
+			return
+		}
+	}
+	title = strings.ReplaceAll(rest, "-", " ")
+	return qid, "", title
 }
 
 func slugify(s string) string {
@@ -111,6 +152,12 @@ func (a *App) loadProject(slug string) (*Project, error) {
 	if p.Acts == nil {
 		p.Acts = map[string]ActStatus{}
 	}
+	if p.ActNotes == nil {
+		p.ActNotes = map[string]string{}
+	}
+	if p.Tasks == nil {
+		p.Tasks = []TaskItem{}
+	}
 	return &p, nil
 }
 
@@ -125,11 +172,25 @@ func (a *App) saveProject(p *Project) error {
 
 func (a *App) newProject(in projectIn) *Project {
 	now := time.Now().UTC().Format(time.RFC3339)
+	title := strings.TrimSpace(in.Title)
+	slug := a.uniqueSlug(slugify(title))
+	qid, qtype, qtitle := parseQuestionMeta(slug)
+	if strings.TrimSpace(in.QuestionID) == "" {
+		in.QuestionID = qid
+	}
+	if strings.TrimSpace(in.Type) == "" {
+		in.Type = qtype
+	}
+	if strings.TrimSpace(in.Question) == "" && qtitle != "" {
+		in.Question = qtitle
+	}
 	p := &Project{
-		Slug:          a.uniqueSlug(slugify(in.Title)),
-		Title:         strings.TrimSpace(in.Title),
+		Slug:          slug,
+		Title:         title,
 		Topic:         strings.TrimSpace(in.Topic),
 		ComponentType: defaultStr(in.ComponentType, "explainer"),
+		QuestionID:    strings.TrimSpace(in.QuestionID),
+		Type:          strings.TrimSpace(in.Type),
 		Question:      strings.TrimSpace(in.Question),
 		Answer:        strings.TrimSpace(in.Answer),
 		Why:           strings.TrimSpace(in.Why),
@@ -214,34 +275,46 @@ func (a *App) updateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body, _ := io.ReadAll(r.Body)
-	var in Project
+	var in projectUpdate
 	if err := json.Unmarshal(body, &in); err != nil {
 		writeError(w, r, http.StatusBadRequest, "bad_request", "invalid JSON: "+err.Error())
 		return
 	}
-	if strings.TrimSpace(in.Title) != "" {
-		existing.Title = strings.TrimSpace(in.Title)
+	if in.Title != nil {
+		existing.Title = strings.TrimSpace(*in.Title)
 	}
-	if strings.TrimSpace(in.Topic) != "" {
-		existing.Topic = strings.TrimSpace(in.Topic)
+	if in.Topic != nil {
+		existing.Topic = strings.TrimSpace(*in.Topic)
 	}
-	if strings.TrimSpace(in.ComponentType) != "" {
-		existing.ComponentType = strings.TrimSpace(in.ComponentType)
+	if in.ComponentType != nil {
+		existing.ComponentType = strings.TrimSpace(*in.ComponentType)
 	}
-	if strings.TrimSpace(in.CanvaLink) != "" {
-		existing.CanvaLink = strings.TrimSpace(in.CanvaLink)
+	if in.CanvaLink != nil {
+		existing.CanvaLink = strings.TrimSpace(*in.CanvaLink)
 	}
-	existing.Question = strings.TrimSpace(in.Question)
-	existing.Answer = strings.TrimSpace(in.Answer)
-	existing.Why = strings.TrimSpace(in.Why)
+	if in.QuestionID != nil {
+		existing.QuestionID = strings.TrimSpace(*in.QuestionID)
+	}
+	if in.Type != nil {
+		existing.Type = strings.TrimSpace(*in.Type)
+	}
+	if in.Question != nil {
+		existing.Question = strings.TrimSpace(*in.Question)
+	}
+	if in.Answer != nil {
+		existing.Answer = strings.TrimSpace(*in.Answer)
+	}
+	if in.Why != nil {
+		existing.Why = strings.TrimSpace(*in.Why)
+	}
 	if in.Tasks != nil {
-		existing.Tasks = in.Tasks
+		existing.Tasks = *in.Tasks
 	}
 	if in.ActNotes != nil {
 		if existing.ActNotes == nil {
 			existing.ActNotes = map[string]string{}
 		}
-		for k, v := range in.ActNotes {
+		for k, v := range *in.ActNotes {
 			existing.ActNotes[k] = v
 		}
 	}

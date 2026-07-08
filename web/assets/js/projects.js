@@ -20,8 +20,11 @@ async function loadProjects() {
   for (const p of data.projects) {
     const li = document.createElement("li");
     const left = document.createElement("div");
+    const metaParts = [p.slug, p.component_type, p.status];
+    if (p.question_id) metaParts.unshift(p.question_id);
+    if (p.type) metaParts.splice(1, 0, p.type);
     left.innerHTML = `<strong>${escapeHtml(p.title)}</strong>
-      <div class="meta">${escapeHtml(p.slug)} · ${escapeHtml(p.component_type)} · ${p.status}</div>`;
+      <div class="meta">${metaParts.map(escapeHtml).join(" · ")}</div>`;
     const right = document.createElement("div");
     right.className = "row";
 
@@ -112,6 +115,17 @@ function buildEditModal(p) {
     </div>
     <div class="modal-body">
       <div class="section">
+        <h3>Metadata</h3>
+        <div class="row">
+          <label>Question ID
+            <input type="text" name="question_id" placeholder="q1" value="${escapeHtml(p.question_id || "")}">
+          </label>
+          <label>Type
+            <input type="text" name="type" placeholder="multi-agent-research" value="${escapeHtml(p.type || "")}">
+          </label>
+        </div>
+      </div>
+      <div class="section">
         <h3>Q&A / Why</h3>
         <label>Question
           <textarea name="question" rows="2" placeholder="e.g. How does machine learning work?">${escapeHtml(p.question || "")}</textarea>
@@ -165,6 +179,8 @@ async function editProject(p) {
     saveBtn.disabled = true;
     saveBtn.textContent = "Saving...";
 
+    const questionId = modal.querySelector('[name="question_id"]').value.trim();
+    const qtype = modal.querySelector('[name="type"]').value.trim();
     const question = modal.querySelector('[name="question"]').value;
     const answer = modal.querySelector('[name="answer"]').value;
     const why = modal.querySelector('[name="why"]').value;
@@ -190,12 +206,14 @@ async function editProject(p) {
     }
 
     try {
-      const updated = await json(`${api}/projects/${encodeURIComponent(p.slug)}`, {
+      await json(`${api}/projects/${encodeURIComponent(p.slug)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          question_id: questionId || null,
+          type: qtype || null,
           question, answer, why,
-          canva_link: canvaLink,
+          canva_link: canvaLink || null,
           tasks, act_notes: actNotes,
         }),
       });
