@@ -175,5 +175,6 @@ input:focus { outline: none; border-color: var(--accent); }
 .bloom-note { font-size: 14px; color: var(--muted); max-width: 640px; margin: 0 auto;
   line-height: 1.7; }
 .bloom-svg { width: 100%; margin: 12px 0 8px; display: block; }
+.bloom-infographic { width: 100%; margin: 16px 0 20px; display: block; border-radius: 12px; }
 .bloom-story { font-size: 14px; line-height: 1.7; margin: 8px 0 6px; color: var(--ink); }
 .bloom-story em { color: var(--accent); font-style: normal; }
