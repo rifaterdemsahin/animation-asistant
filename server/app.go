@@ -29,6 +29,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects", a.authed(a.listProjects))
 	mux.HandleFunc("POST /api/projects", a.authed(a.createProject))
 	mux.HandleFunc("GET /api/projects/{slug}", a.authed(a.getProject))
+	mux.HandleFunc("PUT /api/projects/{slug}", a.authed(a.updateProject))
 	mux.HandleFunc("DELETE /api/projects/{slug}", a.authed(a.deleteProject))
 
 	mux.HandleFunc("POST /api/projects/{slug}/outline", a.authed(a.generateOutline))
