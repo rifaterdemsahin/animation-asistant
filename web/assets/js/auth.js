@@ -1,6 +1,7 @@
 // Auth: gate protected pages, handle login form.
 
 const isLoginPage = location.pathname.endsWith("/login.html") || location.pathname === "/pages/login.html";
+const isPublicPage = isLoginPage || location.pathname.endsWith("/self_learning.html");
 
 async function requireAuth() {
   try {
@@ -37,10 +38,12 @@ function handleLoginForm() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (isLoginPage) {
-    handleLoginForm();
-  } else {
-    const ok = await requireAuth();
-    if (!ok) return;
+  if (isPublicPage) {
+    if (isLoginPage) {
+      handleLoginForm();
+    }
+    return;
   }
+  const ok = await requireAuth();
+  if (!ok) return;
 });

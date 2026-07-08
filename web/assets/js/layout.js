@@ -11,7 +11,7 @@ const PAGES = [
   { name: "🆕 Create", url: "/pages/create.html" },
   { name: "🧪 Test", url: "/pages/test.html" },
   { name: "🛠️ Tools", url: "/pages/tools.html" },
-  { name: "🔐 Login", url: "/pages/login.html" },
+  { name: "🎓 Self Learning", url: "/pages/self_learning.html" },
 ];
 
 const REPO = "https://github.com/rifaterdemsahin/animation-asistant";
@@ -28,20 +28,37 @@ function currentProject() {
   catch { return null; }
 }
 
-function renderNav() {
+let isAuthenticated = false;
+
+async function checkAuth() {
+  try {
+    const r = await fetch("/api/me", { credentials: "same-origin" });
+    isAuthenticated = r.ok;
+  } catch {
+    isAuthenticated = false;
+  }
+}
+
+async function renderNav() {
   const nav = document.getElementById("topnav");
   if (!nav) return;
-  const links = PAGES.filter(p => p.url).map(p =>
+  await checkAuth();
+  const pageLinks = PAGES.filter(p => p.url).map(p =>
     `<a href="${p.url}">${p.name}</a>`).join(" <span class=\"nav-sep\">&gt;</span> ");
+  const authItem = isAuthenticated
+    ? `<span class="logged-in-badge">👤 Logged in</span>`
+    : `<a href="/pages/login.html">🔐 Login</a>`;
+  const logoutBtn = isAuthenticated ? `<button id="logout-btn">Log out</button>` : "";
   nav.innerHTML = `
     <div class="navbar">
       <a class="brand" href="/">🎬 Animation Assistant</a>
-      <nav class="nav-links">${links}</nav>
+      <nav class="nav-links">${pageLinks}</nav>
       <div class="search">
         <input id="nav-search" type="search" placeholder="Search pages…" autocomplete="off">
         <div id="search-results" class="search-results"></div>
       </div>
-      <button id="logout-btn">Log out</button>
+      ${authItem}
+      ${logoutBtn}
     </div>`;
   wireSearch();
   const btn = document.getElementById("logout-btn");

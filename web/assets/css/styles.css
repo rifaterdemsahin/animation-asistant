@@ -30,6 +30,10 @@ body {
 .nav-links a:hover { background: var(--panel-2); }
 .nav-links a.disabled { color: var(--muted); pointer-events: none; }
 .nav-sep { color: var(--border); margin: 0 -4px; }
+.logged-in-badge { color: var(--accent-2); padding: 6px 8px; border-radius: 6px; font-weight: 600; }
+#logout-btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+  padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+#logout-btn:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 .search { position: relative; margin-left: auto; }
 .search input { background: var(--panel-2); border: 1px solid var(--border); color: var(--ink);
   padding: 6px 10px; border-radius: 6px; width: 200px; }
@@ -145,3 +149,31 @@ input:focus { outline: none; border-color: var(--accent); }
 .file-card .file-meta a { color: var(--muted); font-size: 12px; word-break: break-all; }
 .file-card .file-icon { padding: 16px; text-align: center; font-size: 28px; }
 .file-card .file-meta a:hover { color: var(--accent); }
+
+/* Bloom's Taxonomy self-learning section */
+.bloom-section { margin-top: 40px; }
+.bloom-section h2 { font-size: 20px; margin-bottom: 4px; }
+.bloom-stages { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
+.bloom-stage { display: flex; gap: 16px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; align-items: flex-start; }
+.bloom-icon { font-size: 36px; flex-shrink: 0; width: 52px; text-align: center; line-height: 1; }
+.bloom-content { flex: 1; }
+.bloom-content h3 { margin: 0 0 6px; font-size: 16px; }
+.bloom-level { color: var(--muted); font-weight: 400; font-size: 14px; }
+.bloom-content p { margin: 0 0 6px; font-size: 14px; line-height: 1.6; }
+.bloom-action { color: var(--accent-2); background: var(--panel-2); padding: 6px 12px; border-radius: 6px;
+  display: inline-block; font-size: 13px; margin-top: 4px; }
+.highlight { color: var(--accent); font-weight: 600; }
+.bloom-summary { margin-top: 28px; background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; text-align: center; }
+.bloom-summary h3 { margin: 0 0 16px; font-size: 18px; }
+.bloom-loop { display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 16px; }
+.loop-item { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; text-align: center; font-size: 13px; line-height: 1.5; min-width: 90px; }
+.loop-arrow { color: var(--accent); font-size: 20px; font-weight: 700; }
+.bloom-note { font-size: 14px; color: var(--muted); max-width: 640px; margin: 0 auto;
+  line-height: 1.7; }
+.bloom-svg { width: 100%; margin: 12px 0 8px; display: block; }
+.bloom-story { font-size: 14px; line-height: 1.7; margin: 8px 0 6px; color: var(--ink); }
+.bloom-story em { color: var(--accent); font-style: normal; }

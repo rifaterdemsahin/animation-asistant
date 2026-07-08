@@ -213,6 +213,22 @@ Full pipeline documented at `/pages/process.html`:
 | 4. 📥 Download | Media Manager + Azure | Browse images/audio, download individually or via Azure Portal blob access. |
 | 5. 🎨 Canva | canva.com | Place components into Canva video timeline. Arranging creates the self-learning loop. |
 
+### 5.6 Self Learning & Bloom's Taxonomy 🎓
+A dedicated page at **`/pages/self_learning.html`** (linked from Tools page + nav)
+maps the AI animation production pipeline to Bloom's five cognitive levels:
+
+| Level | Bloom's Taxonomy | Pipeline Activity | AI vs. Human |
+|-------|-----------------|-------------------|--------------|
+| 1. 🧠 Remember | Recall facts & concepts | Review AI-generated **images + infographics** | AI generates, you encode memory visually |
+| 2. 📖 Understand | Explain ideas in own words | Read **script** + listen to **voiceover** | AI narrates, you internalize the message |
+| 3. 🔍 Analyze | Break into parts | Decide **component types** (background, lower-third, etc.) per script beat | You decompose the narrative structure |
+| 4. ⚖️ Evaluate | Judge, justify, arrange | Place components on the **Canva timeline** | You judge order, pacing, visual impact |
+| 5. 🎨 Create | Produce new, polished work | **Mix** audio, transitions, effects + **polish** timing | You synthesize everything into a final animation |
+
+> **The self-learning loop:** AI handles lower-order thinking (remember + understand)
+> while the user owns higher-order thinking (analyze → evaluate → create). The Canva
+> timeline becomes a playground for mastery — each arrangement decision deepens expertise.
+
 > This project is focused on **production of assets** for Canva. It is NOT a
 > video editor — Canva handles final post-production. The self-learning process
 > happens when generated content is arranged in Canva to create an aesthetic
@@ -301,6 +317,10 @@ read by the backend only.
 
 Every page reuses:
 - **Top menu** — links to Dashboard, Media Manager, Storyboard Creator, etc.
+  plus a search bar. The Login link / Logout button is **conditional**: when
+  not authenticated, a "🔐 Login" link appears; when authenticated, a
+  "👤 Logged in" badge + a "Log out" button are shown. Auth status is
+  determined by calling `/api/me` on page load.
 - **Bottom footer** — project info / links / github build link/ commits link/ fly.io link and local link
 
 Implemented with a small shared component (JS layout injection + shared CSS),

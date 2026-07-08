@@ -104,3 +104,17 @@ Status: ✅ mitigated · 🟡 partial / accepted · 🟢 low.
 - ✅ Audio tools page (`/pages/audio.html`) with voiceover, music, and SFX panels.
 - ✅ OpenRouter logs link in footer; distinct `X-Title: animation-assistant-fly`.
 - 🟢 All verified live + locally.
+
+## UI / layout
+
+- 🟢 **Login link now conditional.** `layout.js` calls `/api/me` on page load.
+  If authenticated, nav shows "👤 Logged in" badge + "Log out" button instead
+  of "🔐 Login" link. The async check runs before nav render, so there is no
+  flash of incorrect state. If `/api/me` is unreachable (server down), the
+  login link is shown as fallback.
+- 🟢 **Bloom's Taxonomy self-learning page** (`/pages/self_learning.html`).
+  Standalone page linked from Tools page card + top nav. Maps the 5-level
+  cognitive model (Remember → Understand → Analyze → Evaluate → Create) to
+  the AI animation pipeline. AI handles lower-order stages (generation), user
+  owns higher-order stages (arranging, judging, creating in Canva). No
+  operational risk — purely pedagogical documentation.
