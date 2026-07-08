@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Script</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>📜 Script Writer</h1>
+    <p class="lede">Generate per-act narration and visual beats from the project Q&A and storyboard outline.</p>
+
+    <div id="no-project" class="panel">
+      <p>No project selected. <a href="/pages/projects.html">📁 Pick or create one</a> first.</p>
+    </div>
+
+    <div id="manager" class="hidden">
+      <div class="toolbar">
+        <span id="sc-title" class="mm-title"></span>
+      </div>
+
+      <!-- 1. Project Inputs -->
+      <section class="panel" style="margin-top:16px">
+        <h2>1️⃣ Project Inputs — Problem · Solution · Why</h2>
+        <p class="muted">Taken from the project. Edit here; Execute Prompt saves them back to the project.</p>
+        <label>Question (Problem)
+          <textarea id="qa-question" rows="2" placeholder="The central question the animation answers"></textarea>
+        </label>
+        <label>Answer (Solution)
+          <textarea id="qa-answer" rows="3" placeholder="The process / solution"></textarea>
+        </label>
+        <label>Why (pedagogical rationale)
+          <textarea id="qa-why" rows="3" placeholder="The core technical principle / why it matters"></textarea>
+        </label>
+        <div class="row" style="margin-top:8px">
+          <span class="badge" id="qa-topic">topic: …</span>
+          <span class="badge" id="qa-outline">outline: …</span>
+        </div>
+      </section>
+
+      <!-- 2. Act selection -->
+      <section class="panel">
+        <h2>2️⃣ Acts to Generate</h2>
+        <div class="row">
+          <label class="row"><input type="checkbox" id="sc-act-1" checked> Act 1 — 😱 Problem</label>
+          <label class="row"><input type="checkbox" id="sc-act-2" checked> Act 2 — 💡 Solution</label>
+          <label class="row"><input type="checkbox" id="sc-act-3" checked> Act 3 — 🎓 Lesson</label>
+        </div>
+      </section>
+
+      <!-- 3. Prompt template -->
+      <section class="panel">
+        <h2>3️⃣ Prompt Template <span class="muted" style="font-size:13px">(script prompt from Azure <code>prompts</code> store)</span></h2>
+        <label>System Prompt
+          <textarea id="prompt-system" rows="4" readonly style="font-size:12px;font-family:monospace"></textarea>
+        </label>
+        <label>User Prompt Template
+          <textarea id="prompt-user" rows="6" readonly style="font-size:12px;font-family:monospace"></textarea>
+        </label>
+        <p class="muted" style="font-size:12px;margin-top:4px">Edit the template at <a href="/pages/prompts.html">✏️ Prompt Editor</a> (id: <code>script</code>). Variables: <code>{{topic}}</code> <code>{{act_key}}</code> <code>{{act_role}}</code> <code>{{summary}}</code> <code>{{purpose}}</code></p>
+      </section>
+
+      <!-- 4. Preview/Generate/Execute -->
+      <section class="panel">
+        <h2>4️⃣ Generate &amp; Execute</h2>
+        <div class="row" style="margin-bottom:10px">
+          <button id="preview-prompt" class="btn">👁️ Preview Prompt</button>
+          <button id="generate-prompt" class="btn primary">⚡ Generate Prompt</button>
+          <button id="execute-prompt" class="btn">🚀 Execute Prompt</button>
+          <span class="muted" id="sc-status"></span>
+        </div>
+        <label>Generated User Prompt (per act, editable)
+          <textarea id="prompt-preview" rows="10" style="font-size:12px;font-family:monospace" placeholder="Click 'Generate Prompt' to fill the template with project Q&A and outline summaries."></textarea>
+        </label>
+      </section>
+
+      <!-- 5. Output -->
+      <section class="panel">
+        <h2>📜 Generated Script</h2>
+        <div id="script-out" class="acts"><p class="muted">No script yet — generate above.</p></div>
+      </section>
+
+      <!-- Model info -->
+      <section class="panel" style="border-left:3px solid var(--accent);margin-top:20px">
+        <h2>🤖 AI Model</h2>
+        <div style="background:var(--panel-2);padding:10px;border-radius:6px;font-size:14px">
+          <strong>Text model:</strong> <span id="model-name">loading…</span><br>
+          <span class="muted" style="font-size:12px">Configurable via <code>OPENROUTER_TEXT_MODEL</code> env (default: <code>google/gemini-2.5-flash</code>).</span>
+        </div>
+        <p class="muted" style="margin-top:8px;font-size:13px">Saves to Azure: <code>{slug}/act-1-problem/script/</code> etc.</p>
+      </section>
+    </div>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
+  <script src="/assets/js/script-page.js"></script>
+</body>
+</html>

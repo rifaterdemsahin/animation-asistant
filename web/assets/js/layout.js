@@ -6,6 +6,7 @@ const PAGES = [
   { name: "📁 Projects", url: "/pages/projects.html" },
   { name: "🔄 Process", url: "/pages/process.html" },
   { name: "📋 Storyboard", url: "/pages/storyboard.html" },
+  { name: "📜 Script", url: "/pages/script-page.html" },
   { name: "🎛️ Media Manager", url: "/pages/media-manager.html" },
   { name: "🎧 Audio", url: "/pages/audio.html" },
   { name: "🆕 Create", url: "/pages/create.html" },
@@ -24,8 +25,28 @@ function el(html) {
 }
 
 function currentProject() {
+  // Deep-link support: ?project=<slug> (or ?slug=<slug>) selects the project.
+  try {
+    const params = new URLSearchParams(location.search);
+    const qs = params.get("project") || params.get("slug");
+    if (qs) {
+      const cur = JSON.parse(localStorage.getItem("current_project") || "null");
+      if (!cur || cur.slug !== qs) {
+        localStorage.setItem("current_project", JSON.stringify({
+          slug: qs,
+          title: (cur && cur.slug === qs && cur.title) ? cur.title : qs,
+        }));
+      }
+    }
+  } catch {}
   try { return JSON.parse(localStorage.getItem("current_project") || "null"); }
   catch { return null; }
+}
+
+// setCurrentProject updates the active project and refreshes the header.
+function setCurrentProject(slug, title) {
+  localStorage.setItem("current_project", JSON.stringify({ slug, title: title || slug }));
+  renderHeader();
 }
 
 let isAuthenticated = false;
@@ -141,3 +162,4 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 window.currentProject = currentProject;
+window.setCurrentProject = setCurrentProject;

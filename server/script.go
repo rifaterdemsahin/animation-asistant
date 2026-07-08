@@ -74,7 +74,10 @@ func (a *App) getOutline(w http.ResponseWriter, r *http.Request) {
 // --- Script (per act) ---
 
 type scriptReq struct {
-	Acts []string `json:"acts"`
+	Acts     []string `json:"acts"`
+	Question string   `json:"question"`
+	Answer   string   `json:"answer"`
+	Why      string   `json:"why"`
 }
 
 func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +93,13 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 	keys := req.Acts
 	if len(keys) == 0 {
 		keys = allActKeys()
+	}
+
+	if req.Question != "" || req.Answer != "" || req.Why != "" {
+		p.Question = strings.TrimSpace(req.Question)
+		p.Answer = strings.TrimSpace(req.Answer)
+		p.Why = strings.TrimSpace(req.Why)
+		_ = a.saveProject(p)
 	}
 
 	outline := a.loadOutlineMap(slug)
