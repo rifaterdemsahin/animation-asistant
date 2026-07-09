@@ -68,6 +68,9 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/browse", a.authed(a.browseFiles))
 	mux.HandleFunc("GET /api/projects/{slug}/raw/{path...}", a.authed(a.serveRaw))
 
+	// backup: download all project data as a zip archive
+	mux.HandleFunc("GET /api/backup", a.authed(a.backupAllProjects))
+
 	// favicon (shared SVG, served for both .ico and .svg so every page gets a
 	// tab icon without per-page <link> tags and without a 404 on /favicon.ico)
 	mux.HandleFunc("GET /favicon.ico", a.favicon)
