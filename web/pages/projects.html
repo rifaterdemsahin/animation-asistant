@@ -33,6 +33,32 @@
       <button type="button" class="btn" id="clear-cache" title="Wipe the local cache">&#x1F5D1;&#xFE0F; Clear cache</button>
     </div>
 
+    <div class="search-bar row">
+      <div class="view-toggle" id="view-toggle">
+        <button type="button" data-view="table" title="Table view">▦ Table</button>
+        <button type="button" data-view="list" title="List view">☰ List</button>
+      </div>
+      <input type="search" id="project-search" placeholder="🔍 Search by title, slug, type, question, status…" autocomplete="off">
+      <span id="search-count" class="muted"></span>
+    </div>
+
+    <div id="project-table-wrap" class="table-wrap hidden">
+      <table id="project-table" class="proj-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-sort="question_id">Q.ID <span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="title">Title <span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="question">Question <span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="answer">Answer <span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="type">Category <span class="sort-arrow"></span></th>
+            <th class="sortable" data-sort="status">Status <span class="sort-arrow"></span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="project-table-body"></tbody>
+      </table>
+    </div>
+
     <ul id="project-list" class="list"></ul>
     <p id="empty-state" class="muted">No projects yet.</p>
   </main>

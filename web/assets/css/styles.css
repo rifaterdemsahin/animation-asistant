@@ -111,6 +111,37 @@ input:focus { outline: none; border-color: var(--accent); }
 .cache-bar { margin-top: 14px; align-items: center; }
 .cache-bar #cache-status { margin-right: auto; font-size: 13px; }
 
+/* projects search bar */
+.search-bar { margin-top: 12px; }
+.search-bar input { flex: 1; min-width: 220px; }
+.search-bar #search-count { font-size: 13px; white-space: nowrap; }
+
+/* projects view toggle (list/table) */
+.view-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.view-toggle button { background: var(--panel-2); border: none; border-right: 1px solid var(--border); color: var(--muted); padding: 7px 12px; cursor: pointer; font: inherit; }
+.view-toggle button:last-child { border-right: none; }
+.view-toggle button:hover { color: var(--ink); }
+.view-toggle button.active { background: var(--accent); color: #0b1020; font-weight: 600; }
+
+/* projects table view */
+.table-wrap { margin-top: 16px; max-height: 72vh; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.proj-table { width: 100%; border-collapse: collapse; min-width: 920px; }
+.proj-table th, .proj-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.proj-table thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); font-size: 13px; color: var(--muted); white-space: nowrap; }
+.proj-table th.sortable { cursor: pointer; user-select: none; }
+.proj-table th.sortable:hover { color: var(--ink); }
+.proj-table th.active { color: var(--accent); }
+.proj-table .sort-arrow { font-size: 11px; margin-left: 2px; }
+.proj-table tbody tr:hover { background: var(--panel-2); }
+.proj-table tbody tr.current { background: rgba(108,140,255,.10); }
+.proj-table .cell-qid { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; color: var(--accent-2); font-size: 13px; }
+.proj-table .cell-title { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.proj-table .cell-cat { white-space: nowrap; color: var(--muted); font-size: 13px; }
+.proj-table .cell-clamp { max-width: 300px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; line-height: 1.4; }
+.proj-table .cell-actions { white-space: nowrap; }
+.proj-table .cell-actions .btn { padding: 4px 8px; font-size: 13px; }
+.proj-table .cell-status .status-select { padding: 4px 6px; font-size: 12px; }
+
 /* project status dropdown */
 .status-select {
   background: var(--panel-2); color: var(--ink);

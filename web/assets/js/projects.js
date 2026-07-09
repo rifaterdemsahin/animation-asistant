@@ -69,20 +69,85 @@ async function json(url, opts) {
   return r.json();
 }
 
+// allProjects holds the most recent full list; searchTerm is the live filter.
+// renderProjects always filters allProjects by searchTerm so a search survives
+// background revalidation refreshes.
+let allProjects = [];
+let searchTerm = "";
+
+// view + sort state (persisted so the chosen layout/order survives reloads).
+let viewMode = "table";
+let sortKey = "question_id";
+let sortDir = "asc";
+try {
+  const v = localStorage.getItem("projects_view_v1");
+  if (v === "list" || v === "table") viewMode = v;
+  const s = JSON.parse(localStorage.getItem("projects_sort_v1") || "null");
+  if (s && s.key) { sortKey = s.key; sortDir = s.dir === "desc" ? "desc" : "asc"; }
+} catch {}
+
+// projectSearchText joins the searchable text fields of a project for filtering.
+function projectSearchText(p) {
+  const fields = ["title", "slug", "topic", "component_type", "question_id",
+    "type", "status", "question", "answer", "why", "canva_link"];
+  return fields.map(f => (p && p[f]) || "").join(" ").toLowerCase();
+}
+
+// filterProjects returns the subset matching term (case-insensitive, across all
+// searchable fields). An empty term returns everything.
+function filterProjects(projects, term) {
+  const q = (term || "").trim().toLowerCase();
+  if (!q) return projects;
+  return projects.filter(p => projectSearchText(p).includes(q));
+}
+
 function renderProjects(projects) {
-  const list = document.getElementById("project-list");
+  allProjects = Array.isArray(projects) ? projects : [];
+  const listEl = document.getElementById("project-list");
+  const tableWrap = document.getElementById("project-table-wrap");
   const empty = document.getElementById("empty-state");
-  projects.sort((a, b) => {
-    const aNum = parseInt((a.question_id || "").replace(/^q/i, "")) || 0;
-    const bNum = parseInt((b.question_id || "").replace(/^q/i, "")) || 0;
-    return aNum - bNum;
-  });
-  list.innerHTML = "";
-  if (!projects.length) {
+  const count = document.getElementById("search-count");
+
+  const filtered = filterProjects(allProjects, searchTerm);
+  const sorted = applySort(filtered);
+
+  if (count) {
+    if (!allProjects.length) count.textContent = "";
+    else if (searchTerm.trim()) count.textContent = filtered.length + " of " + allProjects.length + " shown";
+    else count.textContent = allProjects.length + (allProjects.length === 1 ? " project" : " projects");
+  }
+
+  if (!allProjects.length) {
+    listEl.classList.add("hidden");
+    tableWrap.classList.add("hidden");
     empty.classList.remove("hidden");
+    empty.textContent = "No projects yet.";
+    return;
+  }
+  if (!sorted.length) {
+    listEl.classList.add("hidden");
+    tableWrap.classList.add("hidden");
+    empty.classList.remove("hidden");
+    empty.textContent = 'No matches for "' + searchTerm.trim() + '".';
     return;
   }
   empty.classList.add("hidden");
+
+  if (viewMode === "table") {
+    listEl.classList.add("hidden");
+    tableWrap.classList.remove("hidden");
+    renderTable(sorted);
+  } else {
+    tableWrap.classList.add("hidden");
+    listEl.classList.remove("hidden");
+    renderList(sorted);
+  }
+}
+
+// renderList paints the compact card/list view (one row per project).
+function renderList(projects) {
+  const list = document.getElementById("project-list");
+  list.innerHTML = "";
   const current = window.currentProject && window.currentProject();
   for (const p of projects) {
     const li = document.createElement("li");
@@ -94,49 +159,147 @@ function renderProjects(projects) {
       <div class="meta">${metaParts.map(escapeHtml).join(" · ")}</div>`;
     const right = document.createElement("div");
     right.className = "row";
-
-    const status = buildStatusSelect(p);
-    const edit = document.createElement("button");
-    edit.className = "btn";
-    edit.innerHTML = "&#9999;&#65039;";
-    edit.title = "Edit project";
-    edit.addEventListener("click", () => editProject(p));
-
-    const open = document.createElement("button");
-    open.className = "btn primary";
-    open.innerHTML = "&#128193;";
-    open.title = "Open and select project";
-    open.addEventListener("click", () => selectProject(p));
-
-    const del = document.createElement("button");
-    del.className = "btn";
-    del.innerHTML = "&#128465;&#65039;";
-    del.title = "Delete project";
-    del.addEventListener("click", () => deleteProject(p));
-
-    if (current && current.slug === p.slug) {
-      open.innerHTML = "&#9989;";
-      open.title = "Currently selected";
-      open.disabled = true;
-    }
-
-    const btns = [status, edit, open, del];
-
-    if (p.canva_link) {
-      const canva = document.createElement("a");
-      canva.className = "btn";
-      canva.innerHTML = "&#127912;";
-      canva.title = "Open Canva design";
-      canva.href = p.canva_link;
-      canva.target = "_blank";
-      canva.rel = "noopener";
-      btns.push(canva);
-    }
-
+    const btns = [buildStatusSelect(p), makeEditButton(p), makeOpenButton(p, current), makeDeleteButton(p)];
+    const canva = makeCanvaLink(p);
+    if (canva) btns.push(canva);
     right.append(...btns);
     li.append(left, right);
     list.append(li);
   }
+}
+
+// renderTable paints the data-table view with Question / Answer / Category /
+// Question ID columns plus Title, Status and Actions.
+function renderTable(projects) {
+  const tbody = document.getElementById("project-table-body");
+  tbody.innerHTML = "";
+  const current = window.currentProject && window.currentProject();
+  for (const p of projects) {
+    const tr = document.createElement("tr");
+    if (current && current.slug === p.slug) tr.classList.add("current");
+    tr.innerHTML =
+      `<td class="cell-qid">${escapeHtml(p.question_id || "—")}</td>` +
+      `<td class="cell-title"><strong>${escapeHtml(p.title || "")}</strong></td>` +
+      `<td class="cell-clamp" title="${escapeHtml(p.question || "")}">${escapeHtml(p.question || "—")}</td>` +
+      `<td class="cell-clamp" title="${escapeHtml(p.answer || "")}">${escapeHtml(p.answer || "—")}</td>` +
+      `<td class="cell-cat">${escapeHtml(p.type || "—")}</td>` +
+      `<td class="cell-status"></td>` +
+      `<td class="cell-actions"></td>`;
+    tr.querySelector(".cell-status").appendChild(buildStatusSelect(p));
+    const actions = tr.querySelector(".cell-actions");
+    const buttons = [makeEditButton(p), makeOpenButton(p, current), makeDeleteButton(p), makeCanvaLink(p)].filter(Boolean);
+    actions.append(...buttons);
+    tbody.appendChild(tr);
+  }
+}
+
+// --- sorting ---------------------------------------------------------------
+
+// sortValue extracts a comparable value for a column key.
+function sortValue(p, key) {
+  switch (key) {
+    case "question_id": return parseInt((p.question_id || "").replace(/^q/i, "")) || 0;
+    case "status": return STATUSES.indexOf(validStatus(p.status));
+    default: return String(p[key] || "").toLowerCase();
+  }
+}
+
+// applySort returns a sorted copy (never mutates the source) using the current
+// sortKey/sortDir. Defaults to question_id ascending.
+function applySort(projects) {
+  const arr = projects.slice();
+  const dir = sortDir === "desc" ? -1 : 1;
+  arr.sort((a, b) => {
+    const av = sortValue(a, sortKey);
+    const bv = sortValue(b, sortKey);
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+  return arr;
+}
+
+// setSort toggles asc/desc on the same column, or switches to a new column asc.
+function setSort(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === "asc" ? "desc" : "asc";
+  } else {
+    sortKey = key;
+    sortDir = "asc";
+  }
+  try { localStorage.setItem("projects_sort_v1", JSON.stringify({ key: sortKey, dir: sortDir })); } catch {}
+  updateSortArrows();
+  renderProjects(allProjects);
+}
+
+function updateSortArrows() {
+  document.querySelectorAll("#project-table th[data-sort]").forEach(th => {
+    const active = th.dataset.sort === sortKey;
+    th.classList.toggle("active", active);
+    const arrow = th.querySelector(".sort-arrow");
+    if (arrow) arrow.textContent = active ? (sortDir === "asc" ? "▲" : "▼") : "";
+  });
+}
+
+// --- view toggle -----------------------------------------------------------
+
+function setView(mode) {
+  if (mode !== "list" && mode !== "table") mode = "table";
+  viewMode = mode;
+  try { localStorage.setItem("projects_view_v1", mode); } catch {}
+  updateViewToggle();
+  renderProjects(allProjects);
+}
+
+function updateViewToggle() {
+  document.querySelectorAll("#view-toggle button[data-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === viewMode);
+  });
+}
+
+// --- shared action buttons (used by both views) ----------------------------
+
+function makeEditButton(p) {
+  const b = document.createElement("button");
+  b.className = "btn";
+  b.innerHTML = "&#9999;&#65039;";
+  b.title = "Edit project";
+  b.addEventListener("click", () => editProject(p));
+  return b;
+}
+
+function makeOpenButton(p, current) {
+  const b = document.createElement("button");
+  b.className = "btn primary";
+  b.innerHTML = "&#128193;";
+  b.title = "Open and select project";
+  if (current && current.slug === p.slug) {
+    b.innerHTML = "&#9989;";
+    b.title = "Currently selected";
+    b.disabled = true;
+  }
+  b.addEventListener("click", () => selectProject(p));
+  return b;
+}
+
+function makeDeleteButton(p) {
+  const b = document.createElement("button");
+  b.className = "btn";
+  b.innerHTML = "&#128465;&#65039;";
+  b.title = "Delete project";
+  b.addEventListener("click", () => deleteProject(p));
+  return b;
+}
+
+function makeCanvaLink(p) {
+  if (!p.canva_link) return null;
+  const a = document.createElement("a");
+  a.className = "btn";
+  a.innerHTML = "&#127912;";
+  a.title = "Open Canva design";
+  a.href = p.canva_link;
+  a.target = "_blank";
+  a.rel = "noopener";
+  return a;
 }
 
 // loadProjects: stale-while-revalidate. Paints from cache first (unless a hard
@@ -412,6 +575,29 @@ document.addEventListener("layout:ready", () => {
     clearCache();
     loadProjects({ refresh: true });
   });
+
+  // live client-side search: re-render the cached list as the user types.
+  const searchInput = document.getElementById("project-search");
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      searchTerm = searchInput.value;
+      renderProjects(allProjects);
+    });
+  }
+
+  // view toggle (table/list) + column sorting.
+  const viewToggle = document.getElementById("view-toggle");
+  if (viewToggle) {
+    viewToggle.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-view]");
+      if (btn) setView(btn.dataset.view);
+    });
+  }
+  document.querySelectorAll("#project-table th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => setSort(th.dataset.sort));
+  });
+  updateViewToggle();
+  updateSortArrows();
 
   loadProjects();
 });
