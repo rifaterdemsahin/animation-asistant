@@ -1,8 +1,16 @@
-// Storyboard Creator: turn the project's Question/Answer/Why into 12-panel
-// comic storyboard images via the Gemini nanobanana image model. Each
-// generation is saved as a new version (never overwritten); all are shown.
+// Storyboard Creator: turn the project's Question/Answer/Why into per-act
+// storyboard images via the Gemini nanobanana image model. Each Execute
+// generates 3 images — one per act (act-1/act-2/act-3). Each generation is
+// saved as a new version (never overwritten); all are shown grouped by act.
 const api = "/api";
 const slug = () => (window.currentProject && window.currentProject() || {}).slug;
+
+// Fixed 3-act structure (mirrors server/acts.go).
+const ACTS = [
+  {key: "act-1", title: "Act 1 — Problem",  role: "problem"},
+  {key: "act-2", title: "Act 2 — Solution", role: "solution"},
+  {key: "act-3", title: "Act 3 — Lesson",   role: "lesson"},
+];
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => (
@@ -23,36 +31,103 @@ function setLoading(btn, on) {
 let promptTemplate = null;
 let modelName = "";
 
-// Render every generated version as a gallery (newest first).
+// One version card (image + prompt details). Used for every act's gallery.
+function versionCard(v, actTitle) {
+  const rawUrl = `${api}/projects/${slug()}/raw/${v.file}`;
+  const bust = rawUrl + (rawUrl.includes("?") ? "&" : "?") + "_t=" + encodeURIComponent(v.created_at || ("v" + v.id));
+  const actKey = v.act || "storyboard";
+  const downloadName = `${actKey}-v${v.id}.png`;
+
+  const card = document.createElement("div");
+  card.className = "panel";
+  card.style.marginTop = "12px";
+  card.innerHTML = `
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <strong>${escapeHtml(actTitle || "")} · v${v.id}</strong>
+      <span class="muted" style="font-size:12px">${escapeHtml(v.created_at || "")}${v.image_model ? " · " + escapeHtml(v.image_model) : ""}</span>
+    </div>
+    <img alt="storyboard ${escapeHtml(v.act || "")} v${v.id}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);margin-top:8px;display:block">
+    <div class="row" style="margin-top:8px;gap:8px;align-items:center">
+      <button class="btn sb-download-btn">⬇ Download</button>
+      <button class="btn sb-copy-btn">📋 Copy</button>
+      <span class="muted sb-status" style="font-size:12px;display:none"></span>
+    </div>
+    <details style="margin-top:6px"><summary class="muted" style="cursor:pointer;font-size:12px">Image prompt</summary>
+      <pre style="white-space:pre-wrap;word-break:break-word;font-size:11px;margin-top:6px;background:var(--panel-2);padding:8px;border-radius:6px;overflow:auto;max-height:240px">${escapeHtml(v.image_prompt || "")}</pre>
+    </details>`;
+
+  const img = card.querySelector("img");
+  img.src = bust;
+  img.onerror = () => { img.alt = "image not found"; img.removeAttribute("src"); img.style.border = "1px dashed var(--border)"; };
+
+  const statusEl = card.querySelector(".sb-status");
+  card.querySelector(".sb-download-btn").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = bust;
+    a.download = downloadName;
+    a.click();
+  });
+  card.querySelector(".sb-copy-btn").addEventListener("click", async () => {
+    try {
+      const resp = await fetch(bust);
+      if (!resp.ok) throw new Error("fetch failed");
+      const blob = await resp.blob();
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      statusEl.textContent = "Copied!";
+      statusEl.style.display = "";
+      setTimeout(() => { statusEl.style.display = "none"; }, 2000);
+    } catch (err) {
+      statusEl.textContent = "Copy failed: " + err.message;
+      statusEl.style.display = "";
+      setTimeout(() => { statusEl.style.display = "none"; }, 3000);
+    }
+  });
+
+  return card;
+}
+
+// Render every generated version grouped by act (newest first within each act).
 function renderVersions(versions) {
   const wrap = document.getElementById("sb-image-wrap");
   const count = document.getElementById("sb-count");
   if (count) count.textContent = versions && versions.length ? `(${versions.length})` : "";
-  if (!versions || !versions.length) {
-    wrap.innerHTML = `<p class="muted">No images yet — Generate Prompt then Execute Prompt above. Each generation is saved as a new version (none are overwritten).</p>`;
-    return;
+
+  const byAct = {"act-1": [], "act-2": [], "act-3": [], legacy: []};
+  for (const v of (versions || [])) {
+    const k = v.act && byAct[v.act] ? v.act : "legacy";
+    byAct[k].push(v);
   }
-  const sorted = [...versions].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+
   wrap.innerHTML = "";
-  for (const v of sorted) {
-    const url = `${api}/projects/${slug()}/raw/${v.file}`;
-    const bust = url + (url.includes("?") ? "&" : "?") + "_t=" + encodeURIComponent(v.created_at || ("v" + v.id));
-    const card = document.createElement("div");
-    card.className = "panel";
-    card.style.marginTop = "12px";
-    card.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <strong>Version ${v.id}</strong>
-        <span class="muted" style="font-size:12px">${escapeHtml(v.created_at || "")}${v.image_model ? " · " + escapeHtml(v.image_model) : ""}</span>
-      </div>
-      <img alt="storyboard v${v.id}" style="max-width:100%;border-radius:8px;border:1px solid var(--border);margin-top:8px;display:block">
-      <details style="margin-top:6px"><summary class="muted" style="cursor:pointer;font-size:12px">Image prompt</summary>
-        <pre style="white-space:pre-wrap;word-break:break-word;font-size:11px;margin-top:6px;background:var(--panel-2);padding:8px;border-radius:6px;overflow:auto;max-height:240px">${escapeHtml(v.image_prompt || "")}</pre>
-      </details>`;
-    const img = card.querySelector("img");
-    img.src = bust;
-    img.onerror = () => { img.alt = "image not found"; img.removeAttribute("src"); img.style.border = "1px dashed var(--border)"; };
-    wrap.append(card);
+  const sections = [
+    {key: "act-1", title: "Act 1 — Problem"},
+    {key: "act-2", title: "Act 2 — Solution"},
+    {key: "act-3", title: "Act 3 — Lesson"},
+    {key: "legacy", title: "Previous generations (legacy)"},
+  ];
+  let any = false;
+  for (const sec of sections) {
+    const list = byAct[sec.key];
+    if (!list.length) continue;
+    any = true;
+    const heading = document.createElement("h3");
+    heading.textContent = `${sec.title} (${list.length})`;
+    heading.style.marginTop = "16px";
+    wrap.append(heading);
+    const sorted = [...list].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+    for (const v of sorted) wrap.append(versionCard(v, sec.title));
+  }
+  if (!any) {
+    wrap.innerHTML = `<p class="muted">No images yet — Generate Prompts then Execute Prompt above. Each Execute generates 3 images (one per act).</p>`;
+  }
+}
+
+// Prefill the 3 editable per-act prompt boxes (only those still empty).
+function fillActPrompts(actPrompts) {
+  if (!actPrompts) return;
+  for (const act of ACTS) {
+    const el = document.getElementById(`prompt-image-${act.key}`);
+    if (el && !el.value && actPrompts[act.key]) el.value = actPrompts[act.key];
   }
 }
 
@@ -60,9 +135,7 @@ async function loadStoryboard() {
   try {
     const data = await json(`${api}/projects/${slug()}/storyboard`);
     renderVersions(data.versions || []);
-    if (data.image_prompt && !document.getElementById("prompt-image").value) {
-      document.getElementById("prompt-image").value = data.image_prompt;
-    }
+    fillActPrompts(data.act_prompts || {});
     if (data.image_model) {
       modelName = data.image_model;
       const el = document.getElementById("model-name");
@@ -75,13 +148,9 @@ async function loadProjectMeta() {
   try {
     const s = slug();
     const p = await json(`${api}/projects/${s}`);
-    // Adopt the project (refines the header title, e.g. when deep-linked via ?project=).
     if (window.setCurrentProject) window.setCurrentProject(s, p.title || s);
     const sbTitle = document.getElementById("sb-title");
     if (sbTitle) sbTitle.textContent = (p.title || s) + " (" + s + ")";
-    // Fill Question / Answer / Why from the project. Fall back to related
-    // fields for projects created before Q/A/Why were persisted: the title
-    // holds the question and the topic holds "question → answer".
     let question = p.question || p.title || "";
     let answer = p.answer || "";
     if (!answer && p.topic && p.topic.indexOf("→") >= 0) {
@@ -105,9 +174,12 @@ async function loadPromptTemplate() {
     promptTemplate = {
       system: obj.system || "",
       user: obj.user || "",
-      image_prompt: obj.image_prompt || "",
+      actPrompts: obj.act_prompts || {},
     };
-    document.getElementById("prompt-system").value = promptTemplate.image_prompt;
+    for (const act of ACTS) {
+      const el = document.getElementById(`prompt-template-${act.key}`);
+      if (el) el.value = promptTemplate.actPrompts[act.key] || "";
+    }
     return promptTemplate;
   } catch (err) {
     document.getElementById("prompt-status").textContent = "Failed to load prompt template: " + err.message;
@@ -126,8 +198,8 @@ async function loadModel() {
 }
 
 function generatePrompt() {
-  if (!promptTemplate) {
-    document.getElementById("prompt-status").textContent = "Prompt template not loaded yet.";
+  if (!promptTemplate || !promptTemplate.actPrompts) {
+    document.getElementById("prompt-status").textContent = "Prompt templates not loaded yet.";
     return;
   }
   const q = document.getElementById("qa-question").value.trim() || "(no question set)";
@@ -136,14 +208,19 @@ function generatePrompt() {
   const cur = window.currentProject() || {};
   const t = cur.topic || cur.title || "(untitled)";
 
-  const rendered = (promptTemplate.image_prompt || "")
-    .replace(/\{\{topic\}\}/g, t)
-    .replace(/\{\{question\}\}/g, q)
-    .replace(/\{\{answer\}\}/g, a)
-    .replace(/\{\{why\}\}/g, w);
-
-  document.getElementById("prompt-image").value = rendered;
-  document.getElementById("prompt-status").textContent = "Image prompt built from Question · Answer · Why.";
+  for (const act of ACTS) {
+    const rendered = (promptTemplate.actPrompts[act.key] || "")
+      .replace(/\{\{topic\}\}/g, t)
+      .replace(/\{\{question\}\}/g, q)
+      .replace(/\{\{answer\}\}/g, a)
+      .replace(/\{\{why\}\}/g, w)
+      .replace(/\{\{act_title\}\}/g, act.title)
+      .replace(/\{\{act_role\}\}/g, act.role);
+    const el = document.getElementById(`prompt-image-${act.key}`);
+    if (el) el.value = rendered;
+  }
+  document.getElementById("prompt-status").textContent =
+    "Per-act image prompts built from Question · Answer · Why. {{act_summary}}/{{act_script}} are filled from the project on Execute.";
 }
 
 async function executePrompt() {
@@ -151,19 +228,25 @@ async function executePrompt() {
   if (!s) return;
   const btn = document.getElementById("execute-prompt");
   const status = document.getElementById("execute-status");
-  const imagePrompt = document.getElementById("prompt-image").value.trim();
-  if (!imagePrompt) {
-    status.textContent = "Generate the image prompt first.";
+  const actPrompts = {};
+  let any = false;
+  for (const act of ACTS) {
+    const v = document.getElementById(`prompt-image-${act.key}`).value.trim();
+    actPrompts[act.key] = v;
+    if (v) any = true;
+  }
+  if (!any) {
+    status.textContent = "Generate the image prompts first.";
     return;
   }
   const body = {
-    image_prompt: imagePrompt,
+    act_prompts: actPrompts,
     question: document.getElementById("qa-question").value.trim(),
     answer: document.getElementById("qa-answer").value.trim(),
     why: document.getElementById("qa-why").value.trim(),
   };
   setLoading(btn, true);
-  status.textContent = "Generating storyboard image with " + (modelName || "the image model") + "…";
+  status.textContent = "Generating 3 storyboard images (one per act) with " + (modelName || "the image model") + "…";
   try {
     const res = await json(`${api}/projects/${s}/storyboard`, {
       method: "POST",
@@ -171,12 +254,17 @@ async function executePrompt() {
       body: JSON.stringify(body),
     });
     if (res && res.versions) renderVersions(res.versions);
+    if (res && res.act_prompts) fillActPrompts(res.act_prompts);
     if (res && res.image_model) {
       modelName = res.image_model;
       document.getElementById("model-name").textContent = modelName;
     }
     document.getElementById("mm-link").classList.remove("hidden");
-    status.textContent = res && res.image_error ? "Image error: " + res.image_error : "Done.";
+    if (res && res.image_error) {
+      status.textContent = "Done with errors: " + res.image_error;
+    } else {
+      status.textContent = "Done — 3 images generated (one per act).";
+    }
   } catch (err) {
     status.textContent = "Error: " + err.message;
   } finally {

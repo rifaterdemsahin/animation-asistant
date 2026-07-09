@@ -137,15 +137,27 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 	if summary == "" {
 		summary = act.Purpose
 	}
+	sbCtx := ""
+	if len(p.StoryboardPrompts) > 0 {
+		var b strings.Builder
+		b.WriteString("Storyboard image prompts (previously generated for this project):\n")
+		for _, a := range acts {
+			if prompt, ok := p.StoryboardPrompts[a.Key]; ok && prompt != "" {
+				fmt.Fprintf(&b, "=== %s (%s) ===\n%s\n\n", a.Key, a.Role, prompt)
+			}
+		}
+		sbCtx = b.String()
+	}
 	sys, usr := a.scriptTmpl()
 	msgs := []orMessage{
 		{Role: "system", Content: sys},
 		{Role: "user", Content: renderTmpl(usr, map[string]string{
-			"topic":    p.Topic,
-			"act_key":  act.Key,
-			"act_role": act.Role,
-			"summary":  summary,
-			"purpose":  act.Purpose,
+			"topic":               p.Topic,
+			"act_key":             act.Key,
+			"act_role":            act.Role,
+			"summary":             summary,
+			"purpose":             act.Purpose,
+			"storyboard_prompts":  sbCtx,
 		})},
 	}
 	a.savePromptMsg(p.Slug, act.Key, "script", msgs)

@@ -7,8 +7,9 @@ import (
 )
 
 // TestMigrateStoryboardPrompt verifies the boot-time migration upgrades a
-// legacy seeded storyboard prompt to the new default, while preserving any
-// prompt the user has edited.
+// legacy storyboard prompt (single image_prompt, one combined image) to the
+// new per-act structure (act_prompts with 3 entries), while preserving any
+// prompt the user has already edited to the new shape.
 func TestMigrateStoryboardPrompt(t *testing.T) {
 	dir := t.TempDir()
 	s, err := NewPromptStore(dir, "", "prompts")
@@ -16,13 +17,12 @@ func TestMigrateStoryboardPrompt(t *testing.T) {
 		t.Fatalf("NewPromptStore: %v", err)
 	}
 
-	// 1. A legacy 4-frame prompt must be upgraded to the new detailed template.
-	legacy := storyboardPrompt{
-		System:      "old system",
-		User:        "old user",
-		ImagePrompt: "A 4-frame storyboard infographic for a 3-act explainer video about: {{topic}}.",
-	}
-	lb, _ := json.Marshal(legacy)
+	// 1. A legacy single-image_prompt prompt must be upgraded to per-act.
+	lb, _ := json.Marshal(map[string]any{
+		"system":       "old system",
+		"user":         "old user",
+		"image_prompt": "A 4-frame storyboard infographic for a 3-act explainer video about: {{topic}}.",
+	})
 	if err := s.Write("storyboard", string(lb)); err != nil {
 		t.Fatalf("write legacy: %v", err)
 	}
@@ -36,20 +36,31 @@ func TestMigrateStoryboardPrompt(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &got); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if !strings.Contains(got.ImagePrompt, "expert AI instructional designer") {
-		t.Errorf("legacy prompt was not upgraded; image_prompt starts: %q", trunc(got.ImagePrompt, 80))
+	if len(got.ActPrompts) != 3 {
+		t.Fatalf("expected 3 act_prompts after migrate, got %d", len(got.ActPrompts))
 	}
-	for _, ph := range []string{"{{question}}", "{{answer}}", "{{why}}"} {
-		if !strings.Contains(got.ImagePrompt, ph) {
-			t.Errorf("upgraded prompt missing placeholder %s", ph)
+	for _, act := range []string{"act-1", "act-2", "act-3"} {
+		p, ok := got.ActPrompts[act]
+		if !ok || !strings.Contains(p, "expert AI instructional designer") {
+			t.Errorf("act %s prompt not upgraded; starts: %q", act, trunc(p, 80))
+		}
+		if !strings.Contains(got.ActPrompts[act], "{{question}}") || !strings.Contains(got.ActPrompts[act], "{{answer}}") || !strings.Contains(got.ActPrompts[act], "{{why}}") {
+			t.Errorf("act %s upgraded prompt missing Q/A/Why placeholders", act)
+		}
+		if !strings.Contains(got.ActPrompts[act], "{{act_script}}") {
+			t.Errorf("act %s upgraded prompt missing {{act_script}} placeholder", act)
 		}
 	}
 
-	// 2. A custom/edited prompt (no legacy marker) must be left untouched.
+	// 2. A custom prompt already in the new per-act shape must be left untouched.
 	custom := storyboardPrompt{
-		System:      "custom system",
-		User:        "custom user",
-		ImagePrompt: "My totally custom image prompt with no legacy marker.",
+		System: "custom system",
+		User:   "custom user",
+		ActPrompts: map[string]string{
+			"act-1": "My totally custom act-1 image prompt.",
+			"act-2": "My totally custom act-2 image prompt.",
+			"act-3": "My totally custom act-3 image prompt.",
+		},
 	}
 	cb, _ := json.Marshal(custom)
 	if err := s.Write("storyboard", string(cb)); err != nil {
@@ -62,8 +73,8 @@ func TestMigrateStoryboardPrompt(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw2), &got2); err != nil {
 		t.Fatalf("unmarshal custom: %v", err)
 	}
-	if got2.ImagePrompt != custom.ImagePrompt {
-		t.Errorf("custom prompt was modified by migration; got: %q", trunc(got2.ImagePrompt, 80))
+	if got2.ActPrompts["act-1"] != custom.ActPrompts["act-1"] {
+		t.Errorf("custom act-1 prompt was modified by migration; got: %q", trunc(got2.ActPrompts["act-1"], 80))
 	}
 }
 

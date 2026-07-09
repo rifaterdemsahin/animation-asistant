@@ -20,22 +20,23 @@ type TaskItem struct {
 
 // Project is the on-disk metadata for one animation project (project.json).
 type Project struct {
-	Slug          string               `json:"slug"`
-	Title         string               `json:"title"`
-	Topic         string               `json:"topic"`
-	ComponentType string               `json:"component_type"`
-	CanvaLink     string               `json:"canva_link"`
-	QuestionID    string               `json:"question_id,omitempty"`
-	Type          string               `json:"type,omitempty"`
-	Question      string               `json:"question,omitempty"`
-	Answer        string               `json:"answer,omitempty"`
-	Why           string               `json:"why,omitempty"`
-	Tasks         []TaskItem           `json:"tasks,omitempty"`
-	ActNotes      map[string]string    `json:"act_notes,omitempty"`
-	Status        string               `json:"status"`
-	CreatedAt     string               `json:"created_at"`
-	UpdatedAt     string               `json:"updated_at"`
-	Acts          map[string]ActStatus `json:"acts"`
+	Slug              string               `json:"slug"`
+	Title             string               `json:"title"`
+	Topic             string               `json:"topic"`
+	ComponentType     string               `json:"component_type"`
+	CanvaLink         string               `json:"canva_link"`
+	QuestionID        string               `json:"question_id,omitempty"`
+	Type              string               `json:"type,omitempty"`
+	Question          string               `json:"question,omitempty"`
+	Answer            string               `json:"answer,omitempty"`
+	Why               string               `json:"why,omitempty"`
+	Tasks             []TaskItem           `json:"tasks,omitempty"`
+	ActNotes          map[string]string    `json:"act_notes,omitempty"`
+	StoryboardPrompts map[string]string    `json:"storyboard_prompts,omitempty"`
+	Status            string               `json:"status"`
+	CreatedAt         string               `json:"created_at"`
+	UpdatedAt         string               `json:"updated_at"`
+	Acts              map[string]ActStatus `json:"acts"`
 }
 
 // ActStatus tracks per-act generation progress.

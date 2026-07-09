@@ -12,7 +12,7 @@
 
   <main class="page">
     <h1>📋 Storyboard Creator</h1>
-    <p class="lede">Turn the project's <strong>Problem · Solution · Why</strong> into a 12-panel comic storyboard image via the Gemini <em>nanobanana</em> image model.</p>
+    <p class="lede">Turn the project's <strong>Problem · Solution · Why</strong> into a storyboard image <strong>per act</strong> (3 images) via the Gemini <em>nanobanana</em> image model. Each Execute generates one image for Act 1, Act 2 and Act 3.</p>
 
     <div id="no-project" class="panel">
       <p>No project selected. <a href="/pages/projects.html">📁 Pick or create one</a> first.</p>
@@ -41,34 +41,52 @@
         </div>
       </section>
 
-      <!-- 2. Prompt template (storyboard image prompt from Azure) -->
+      <!-- 2. Per-act prompt templates (storyboard image prompts from Azure) -->
       <section class="panel">
-        <h2>2️⃣ Prompt Template <span class="muted" style="font-size:13px">(storyboard image prompt from Azure <code>prompts</code> store — <code>{{question}}/{{answer}}/{{why}}</code> filled by Generate Prompt)</span></h2>
-        <textarea id="prompt-system" rows="12" readonly style="font-size:12px;font-family:monospace"></textarea>
-        <p class="muted" style="font-size:12px;margin-top:6px">Edit the template at <a href="/pages/prompts.html">✏️ Prompt Editor</a> (id: <code>storyboard</code>).</p>
+        <h2>2️⃣ Prompt Templates <span class="muted" style="font-size:13px">(per-act image prompts from Azure <code>prompts</code> store)</span></h2>
+        <p class="muted" style="font-size:12px">One image-prompt template per act. Placeholders <code>{{topic}}/{{question}}/{{answer}}/{{why}}/{{act_title}}/{{act_role}}/{{act_summary}}/{{act_script}}</code> are filled by Generate/Execute. Edit the templates at <a href="/pages/prompts.html">✏️ Prompt Editor</a> (id: <code>storyboard</code>).</p>
+        <details open>
+          <summary><strong>Act 1 — Problem</strong> template</summary>
+          <textarea id="prompt-template-act-1" rows="9" readonly style="font-size:11px;font-family:monospace"></textarea>
+        </details>
+        <details>
+          <summary><strong>Act 2 — Solution</strong> template</summary>
+          <textarea id="prompt-template-act-2" rows="9" readonly style="font-size:11px;font-family:monospace"></textarea>
+        </details>
+        <details>
+          <summary><strong>Act 3 — Lesson</strong> template</summary>
+          <textarea id="prompt-template-act-3" rows="9" readonly style="font-size:11px;font-family:monospace"></textarea>
+        </details>
       </section>
 
-      <!-- 3. Generate prompt -> image prompt text box -> execute -->
+      <!-- 3. Generate prompts -> per-act image prompt boxes -> execute -->
       <section class="panel">
-        <h2>3️⃣ Image Prompt</h2>
+        <h2>3️⃣ Image Prompts (per act)</h2>
         <div class="row" style="margin-bottom:10px">
-          <button id="generate-prompt" class="btn primary">⚡ Generate Prompt</button>
+          <button id="generate-prompt" class="btn primary">⚡ Generate Prompts</button>
           <span class="muted" id="prompt-status"></span>
         </div>
-        <label>Image Prompt (editable — sent to the image model)
-          <textarea id="prompt-image" rows="9" style="font-size:12px;font-family:monospace" placeholder="Click 'Generate Prompt' to build this from the inputs above, then edit freely."></textarea>
+        <label>Act 1 — Problem (editable — sent to the image model)
+          <textarea id="prompt-image-act-1" rows="7" style="font-size:12px;font-family:monospace" placeholder="Click 'Generate Prompts' to build this from the inputs above, then edit freely."></textarea>
+        </label>
+        <label>Act 2 — Solution (editable — sent to the image model)
+          <textarea id="prompt-image-act-2" rows="7" style="font-size:12px;font-family:monospace" placeholder="Click 'Generate Prompts' to build this from the inputs above, then edit freely."></textarea>
+        </label>
+        <label>Act 3 — Lesson (editable — sent to the image model)
+          <textarea id="prompt-image-act-3" rows="7" style="font-size:12px;font-family:monospace" placeholder="Click 'Generate Prompts' to build this from the inputs above, then edit freely."></textarea>
         </label>
         <div class="row" style="margin-top:10px">
-          <button id="execute-prompt" class="btn primary">🚀 Execute Prompt</button>
+          <button id="execute-prompt" class="btn primary">🚀 Execute Prompt (3 images)</button>
           <span class="muted" id="execute-status"></span>
         </div>
       </section>
 
-      <!-- 4. Image output -->
+      <!-- 4. Image output (grouped by act) -->
       <section class="panel">
         <h2>🖼️ Storyboard Images <span id="sb-count" class="muted" style="font-size:13px"></span></h2>
+        <p class="muted" style="font-size:12px">One image per act (3 total) per Execute. Each generation is saved as a new version (none are overwritten).</p>
         <div id="sb-image-wrap">
-          <p class="muted">No images yet — Generate Prompt then Execute Prompt above. Each generation is saved as a new version (none are overwritten).</p>
+          <p class="muted">No images yet — Generate Prompts then Execute Prompt above.</p>
         </div>
         <div id="mm-link" class="row hidden" style="margin-top:8px">
           <a href="/pages/media-manager.html" class="btn primary">🎛️ Continue to Media Manager</a>
@@ -82,7 +100,7 @@
           <strong>Image model (nanobanana):</strong> <span id="model-name">loading…</span><br>
           <span class="muted" style="font-size:12px">Configurable via <code>STORYBOARD_IMAGE_MODEL</code> env (defaults to <code>OPENROUTER_IMAGE_MODEL</code>).</span>
         </div>
-        <p class="muted" style="margin-top:8px;font-size:13px">Execute Prompt renders the 12-panel comic storyboard image. Scene assembly also runs (text model) to populate the acts below.</p>
+        <p class="muted" style="margin-top:8px;font-size:13px">Execute Prompt renders 3 storyboard images — one per act. Scene assembly also runs (text model) to populate storyboard.json.</p>
       </section>
     </div>
   </main>

@@ -13,6 +13,10 @@ structure. Two generation surfaces, by design (not duplication):
   writes to local `./other`.
 
 Flow per project: **outline → script → components → audio → storyboard**.
+After storyboard, the executed image prompts are saved back to the project
+(`storyboard_prompts` field), which the script generator reads on subsequent
+runs to produce storyboard-aware scripts. This creates an optional feedback
+loop: **storyboard → script (re-generate with storyboard context)**.
 
 ## 2. Hard rules
 

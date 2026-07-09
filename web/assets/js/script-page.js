@@ -20,11 +20,13 @@ function setLoading(btn, on) {
 }
 
 function selectedActs() {
-  return ["act-1", "act-2", "act-3"].filter(k => document.getElementById("sc-act-" + k).checked);
+  // Checkbox ids are sc-act-1/2/3; keep k as act-1/2/3 (used downstream).
+  return ["act-1", "act-2", "act-3"].filter(k => document.getElementById("sc-" + k).checked);
 }
 
 let promptTemplate = null;
 let outlineSummaries = {};
+let storyboardPrompts = {};
 let modelName = "";
 
 async function loadProjectMeta() {
@@ -38,6 +40,7 @@ async function loadProjectMeta() {
     document.getElementById("qa-answer").value = p.answer || "";
     document.getElementById("qa-why").value = p.why || "";
     document.getElementById("qa-topic").textContent = "topic: " + (p.topic || p.title || "(untitled)");
+    storyboardPrompts = p.storyboard_prompts || {};
     return p;
   } catch (err) {
     document.getElementById("sc-status").textContent = "Failed to load project: " + err.message;
@@ -140,6 +143,15 @@ function generatePrompt() {
     "act-3": "The takeaway / moral / insight the audience should leave with.",
   };
 
+  let sbCtx = "";
+  if (storyboardPrompts && Object.keys(storyboardPrompts).length) {
+    const sbLines = ["Storyboard image prompts (previously generated for this project):"];
+    for (const ak of ["act-1", "act-2", "act-3"]) {
+      if (storyboardPrompts[ak]) sbLines.push("=== " + ak + " (" + (actRole[ak] || "") + ") ===\n" + storyboardPrompts[ak]);
+    }
+    sbCtx = sbLines.join("\n") + "\n\n";
+  }
+
   let text = "";
   for (const k of acts) {
     const summary = outlineSummaries[k] || q;
@@ -148,8 +160,9 @@ function generatePrompt() {
       .replace(/\{\{act_key\}\}/g, k)
       .replace(/\{\{act_role\}\}/g, actRole[k] || "")
       .replace(/\{\{summary\}\}/g, summary)
-      .replace(/\{\{purpose\}\}/g, actPurpose[k] || "");
-    text += "=== " + k + " (" + actRole[k] + ") ===\n" + filled + "\n\n";
+      .replace(/\{\{purpose\}\}/g, actPurpose[k] || "")
+      .replace(/\{\{storyboard_prompts\}\}/g, sbCtx);
+    text += "=== " + k + " (" + actRole[k] + ") ===\n" + sbCtx + filled + "\n\n";
   }
 
   document.getElementById("prompt-preview").value = text;
