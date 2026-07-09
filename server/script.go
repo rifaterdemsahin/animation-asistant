@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // --- Outline (project-level) ---
@@ -80,6 +81,45 @@ type scriptReq struct {
 	Why      string   `json:"why"`
 }
 
+// scriptVersion is one saved script generation. Versions are never overwritten.
+type scriptVersion struct {
+	ID         int    `json:"id"`
+	Act        string `json:"act"`
+	Markdown   string `json:"markdown_file"`
+	Beats      string `json:"beats_file"`
+	Voiceover  string `json:"voiceover_file"`
+	Model      string `json:"model"`
+	CreatedAt  string `json:"created_at"`
+}
+
+type scriptVersions struct {
+	Versions []scriptVersion `json:"versions"`
+}
+
+func (a *App) loadScriptVersions(slug string, actSlug string) []scriptVersion {
+	b, err := a.store.Read(slug, actSlug+"/script/versions.json")
+	if err != nil {
+		return nil
+	}
+	var v scriptVersions
+	if json.Unmarshal(b, &v) != nil {
+		return nil
+	}
+	return v.Versions
+}
+
+func (a *App) saveScriptVersions(slug string, actSlug string, versions []scriptVersion) {
+	buf, _ := json.MarshalIndent(scriptVersions{Versions: versions}, "", "  ")
+	_ = a.store.Write(slug, actSlug+"/script/versions.json", buf)
+}
+
+func scriptModelName(a *App) string {
+	if a.cfg.OpenRouterTextModel != "" {
+		return a.cfg.OpenRouterTextModel
+	}
+	return "google/gemini-2.5-flash"
+}
+
 func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	p, err := a.loadProject(slug)
@@ -103,6 +143,8 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 	}
 
 	outline := a.loadOutlineMap(slug)
+	model := scriptModelName(a)
+	ts := time.Now().UTC().Format(time.RFC3339)
 
 	done := []string{}
 	for _, k := range keys {
@@ -118,15 +160,47 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 		md := actToMarkdown(act, obj)
 		mdBytes := []byte(md)
 		beatBytes, _ := json.MarshalIndent(obj, "", "  ")
+		narration, _ := obj["narration"].(string)
+
+		// Latest (always overwritten, backward-compatible).
 		if err := a.store.Write(slug, act.Slug+"/script/act.md", mdBytes); err != nil {
 			writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to store act script: "+err.Error())
 			return
 		}
 		_ = a.store.Write(slug, act.Slug+"/script/beats.json", beatBytes)
-		narration, _ := obj["narration"].(string)
 		if narration != "" {
 			_ = a.store.Write(slug, act.Slug+"/script/voiceover.txt", []byte(strings.TrimSpace(narration)))
 		}
+
+		// Versioned: compute next ID and save versioned copies + update manifest.
+		versions := a.loadScriptVersions(slug, act.Slug)
+		nextID := 1
+		for _, v := range versions {
+			if v.ID >= nextID {
+				nextID = v.ID + 1
+			}
+		}
+		vSuffix := fmt.Sprintf("v%02d", nextID)
+		mdFile := vSuffix + "-act.md"
+		beatsFile := vSuffix + "-beats.json"
+		voFile := vSuffix + "-voiceover.txt"
+		_ = a.store.Write(slug, act.Slug+"/script/"+mdFile, mdBytes)
+		_ = a.store.Write(slug, act.Slug+"/script/"+beatsFile, beatBytes)
+		if narration != "" {
+			_ = a.store.Write(slug, act.Slug+"/script/"+voFile, []byte(strings.TrimSpace(narration)))
+		}
+
+		versions = append(versions, scriptVersion{
+			ID:        nextID,
+			Act:       act.Key,
+			Markdown:  mdFile,
+			Beats:     beatsFile,
+			Voiceover: voFile,
+			Model:     model,
+			CreatedAt: ts,
+		})
+		a.saveScriptVersions(slug, act.Slug, versions)
+
 		s := p.Acts[act.Key]
 		s.Script = "done"
 		p.Acts[act.Key] = s
@@ -203,6 +277,7 @@ func (a *App) getScript(w http.ResponseWriter, r *http.Request) {
 	}
 	result := map[string]string{}
 	voiceover := map[string]string{}
+	allVersions := map[string][]map[string]any{}
 	for _, act := range acts {
 		b, err := a.store.Read(slug, act.Slug+"/script/act.md")
 		if err == nil {
@@ -212,8 +287,35 @@ func (a *App) getScript(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			voiceover[act.Key] = string(b)
 		}
+		versions := a.loadScriptVersions(slug, act.Slug)
+		if len(versions) > 0 {
+			enriched := make([]map[string]any, 0, len(versions))
+			for _, v := range versions {
+				item := map[string]any{
+					"id":          v.ID,
+					"act":         v.Act,
+					"model":       v.Model,
+					"created_at":  v.CreatedAt,
+				}
+				if b, err := a.store.Read(slug, act.Slug+"/script/"+v.Markdown); err == nil {
+					item["markdown"] = string(b)
+				}
+				if b, err := a.store.Read(slug, act.Slug+"/script/"+v.Beats); err == nil {
+					item["beats"] = string(b)
+				}
+				if b, err := a.store.Read(slug, act.Slug+"/script/"+v.Voiceover); err == nil {
+					item["voiceover"] = string(b)
+				}
+				enriched = append(enriched, item)
+			}
+			allVersions[act.Key] = enriched
+		}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"acts": result, "voiceover": voiceover})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"acts":      result,
+		"voiceover": voiceover,
+		"versions":  allVersions,
+	})
 }
 
 func actToMarkdown(act Act, obj map[string]any) string {

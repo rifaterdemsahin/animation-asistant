@@ -98,13 +98,17 @@ async function loadExistingScript() {
     const data = await json(`${api}/projects/${slug()}/script`);
     const acts = data.acts || {};
     const voiceover = data.voiceover || {};
+    const versions = data.versions || {};
     const order = [["act-1", "Act 1 — 😱 Problem"], ["act-2", "Act 2 — 💡 Solution"], ["act-3", "Act 3 — 🎓 Lesson"]];
     const out = document.getElementById("script-out");
     const voOut = document.getElementById("voiceover-out");
+    const vOut = document.getElementById("versions-out");
     let any = false;
     let anyVo = false;
+    let anyVer = false;
     out.innerHTML = "";
     voOut.innerHTML = "";
+    vOut.innerHTML = "";
     for (const [key, title] of order) {
       if (acts[key]) {
         any = true;
@@ -120,10 +124,59 @@ async function loadExistingScript() {
         div.innerHTML = `<h3>${title}</h3><pre>${escapeHtml(voiceover[key])}</pre>`;
         voOut.append(div);
       }
+      if (versions[key] && versions[key].length) {
+        anyVer = true;
+        const heading = document.createElement("h3");
+        heading.textContent = `${title} (${versions[key].length})`;
+        heading.style.marginTop = "12px";
+        vOut.append(heading);
+        const sorted = [...versions[key]].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+        for (const v of sorted) vOut.append(versionCard(v, title));
+      }
     }
     if (!any) out.innerHTML = `<p class="muted">No script yet — generate above.</p>`;
     if (!anyVo) voOut.innerHTML = `<p class="muted">No voiceover yet — generate the script above first.</p>`;
+    if (!anyVer) vOut.innerHTML = `<p class="muted">No versions yet — generate the script above.</p>`;
   } catch {}
+}
+
+function versionCard(v, actTitle) {
+  const card = document.createElement("div");
+  card.className = "panel";
+  card.style.marginTop = "8px";
+  card.innerHTML = `
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <strong>${escapeHtml(actTitle || "")} · v${v.id}</strong>
+      <span class="muted" style="font-size:12px">${escapeHtml(v.created_at || "")}${v.model ? " · " + escapeHtml(v.model) : ""}</span>
+    </div>
+    <details style="margin-top:4px"><summary class="muted" style="cursor:pointer;font-size:12px">Markdown Script</summary>
+      <pre style="white-space:pre-wrap;word-break:break-word;font-size:11px;margin-top:6px;background:var(--panel-2);padding:8px;border-radius:6px;overflow:auto;max-height:240px">${escapeHtml(v.markdown || "(no markdown)")}</pre>
+    </details>
+    <details style="margin-top:4px"><summary class="muted" style="cursor:pointer;font-size:12px">Voiceover (TTS-ready)</summary>
+      <pre style="white-space:pre-wrap;word-break:break-word;font-size:11px;margin-top:6px;background:var(--panel-2);padding:8px;border-radius:6px;overflow:auto;max-height:240px">${escapeHtml(v.voiceover || "(no voiceover)")}</pre>
+    </details>
+    <div class="row" style="margin-top:8px;gap:8px">
+      <button class="btn sv-copy-btn">📋 Copy Voiceover</button>
+      <span class="muted sv-copy-status" style="font-size:12px;display:none"></span>
+    </div>`;
+
+  card.querySelector(".sv-copy-btn").addEventListener("click", async () => {
+    const text = v.voiceover || v.markdown || "";
+    const statusEl = card.querySelector(".sv-copy-status");
+    try {
+      const label = actTitle ? actTitle + " — v" + v.id : "v" + v.id;
+      await navigator.clipboard.writeText(label + "\n\n" + text);
+      statusEl.textContent = "Copied!";
+      statusEl.style.display = "";
+      setTimeout(() => { statusEl.style.display = "none"; }, 2000);
+    } catch (err) {
+      statusEl.textContent = "Copy failed.";
+      statusEl.style.display = "";
+      setTimeout(() => { statusEl.style.display = "none"; }, 3000);
+    }
+  });
+
+  return card;
 }
 
 function showPreview() {

@@ -261,9 +261,13 @@ script, a set of typed **components**, and audio.
     ├── project.json                # metadata: topic, animation_type, acts status
     ├── outline.json                # project-level 3-act outline
     ├── act-1-problem/              # Act 1 — Problem
-    │   ├── script/act.md           #   this act's script + beats
-    │   ├── script/beats.json       #   structured beat data
-    │   ├── script/voiceover.txt    #   clean narration (TTS-friendly, no markdown)
+    │   ├── script/act.md           #   latest script + beats (markdown, overwritten each run)
+    │   ├── script/beats.json       #   latest structured beat data (overwritten)
+    │   ├── script/voiceover.txt    #   latest clean narration, TTS-friendly (overwritten)
+    │   ├── script/versions.json    #   version manifest (never overwritten, append-only)
+    │   ├── script/v01-act.md       #   versioned script (v01, v02, …; never overwritten)
+    │   ├── script/v01-beats.json   #   versioned beat data
+    │   ├── script/v01-voiceover.txt#   versioned voiceover
     │   ├── components/
     │   │   ├── components.json     #   manifest of typed components
     │   │   ├── <slug>-bg-01.png    #   type: background
@@ -286,6 +290,11 @@ script, a set of typed **components**, and audio.
   `lesson`) and per-act status.
 - Each act is independent: you can generate/regenerate any single act
   (script, components, audio) without touching the others.
+- **Scripts are versioned**: each Execute Prompt creates a new version (`v01`, `v02`, …)
+  with its own `act.md`, `beats.json`, and `voiceover.txt`. The latest version
+  always overwrites the root `script/act.md` etc. for backward compatibility.
+  Versions are tracked in `script/versions.json` and displayed on the Script page
+  grouped by act (newest first), with copy buttons per version.
 - Storyboard `storyboard.json` references components by act + `id`, so the
   `type` and file are resolved through the component manifest.
 - Each project is fully self-contained and portable (copy the folder).
