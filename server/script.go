@@ -123,6 +123,10 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_ = a.store.Write(slug, act.Slug+"/script/beats.json", beatBytes)
+		narration, _ := obj["narration"].(string)
+		if narration != "" {
+			_ = a.store.Write(slug, act.Slug+"/script/voiceover.txt", []byte(strings.TrimSpace(narration)))
+		}
 		s := p.Acts[act.Key]
 		s.Script = "done"
 		p.Acts[act.Key] = s
@@ -197,13 +201,18 @@ func (a *App) getScript(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result := map[string]string{}
+	voiceover := map[string]string{}
 	for _, act := range acts {
 		b, err := a.store.Read(slug, act.Slug+"/script/act.md")
 		if err == nil {
 			result[act.Key] = string(b)
 		}
+		b, err = a.store.Read(slug, act.Slug+"/script/voiceover.txt")
+		if err == nil {
+			voiceover[act.Key] = string(b)
+		}
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"acts": result})
+	writeJSON(w, http.StatusOK, map[string]any{"acts": result, "voiceover": voiceover})
 }
 
 func actToMarkdown(act Act, obj map[string]any) string {

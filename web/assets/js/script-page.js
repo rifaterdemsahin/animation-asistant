@@ -97,19 +97,32 @@ async function loadExistingScript() {
   try {
     const data = await json(`${api}/projects/${slug()}/script`);
     const acts = data.acts || {};
+    const voiceover = data.voiceover || {};
     const order = [["act-1", "Act 1 — 😱 Problem"], ["act-2", "Act 2 — 💡 Solution"], ["act-3", "Act 3 — 🎓 Lesson"]];
     const out = document.getElementById("script-out");
+    const voOut = document.getElementById("voiceover-out");
     let any = false;
+    let anyVo = false;
     out.innerHTML = "";
+    voOut.innerHTML = "";
     for (const [key, title] of order) {
-      if (!acts[key]) continue;
-      any = true;
-      const div = document.createElement("div");
-      div.className = "act";
-      div.innerHTML = `<h3>${title}</h3><pre>${escapeHtml(acts[key])}</pre>`;
-      out.append(div);
+      if (acts[key]) {
+        any = true;
+        const div = document.createElement("div");
+        div.className = "act";
+        div.innerHTML = `<h3>${title}</h3><pre>${escapeHtml(acts[key])}</pre>`;
+        out.append(div);
+      }
+      if (voiceover[key]) {
+        anyVo = true;
+        const div = document.createElement("div");
+        div.className = "act";
+        div.innerHTML = `<h3>${title}</h3><pre>${escapeHtml(voiceover[key])}</pre>`;
+        voOut.append(div);
+      }
     }
     if (!any) out.innerHTML = `<p class="muted">No script yet — generate above.</p>`;
+    if (!anyVo) voOut.innerHTML = `<p class="muted">No voiceover yet — generate the script above first.</p>`;
   } catch {}
 }
 
@@ -207,6 +220,29 @@ async function executePrompt() {
   }
 }
 
+async function copyVoiceover() {
+  try {
+    const voOut = document.getElementById("voiceover-out");
+    const pres = voOut.querySelectorAll("pre");
+    if (!pres.length) {
+      document.getElementById("copy-status").textContent = "Nothing to copy.";
+      return;
+    }
+    const order = ["Act 1 — Problem", "Act 2 — Solution", "Act 3 — Lesson"];
+    let text = "";
+    let i = 0;
+    for (const pre of pres) {
+      text += (order[i] || "") + "\n\n" + pre.textContent.trim() + "\n\n";
+      i++;
+    }
+    await navigator.clipboard.writeText(text.trim());
+    document.getElementById("copy-status").textContent = "Copied!";
+    setTimeout(() => { document.getElementById("copy-status").textContent = ""; }, 2000);
+  } catch (err) {
+    document.getElementById("copy-status").textContent = "Copy failed.";
+  }
+}
+
 document.addEventListener("layout:ready", async () => {
   const s = slug();
   if (!s) return;
@@ -222,4 +258,5 @@ document.addEventListener("layout:ready", async () => {
   document.getElementById("preview-prompt").addEventListener("click", showPreview);
   document.getElementById("generate-prompt").addEventListener("click", generatePrompt);
   document.getElementById("execute-prompt").addEventListener("click", executePrompt);
+  document.getElementById("copy-voiceover").addEventListener("click", copyVoiceover);
 });

@@ -95,7 +95,10 @@ full pipeline.
 ### 5.1 Media Manager (the orchestrator) 🎛️
 The central tool that produces the raw materials for an animation. It generates:
 1. **Outline** — text/script for the storyboard via OpenRouter (Gemini models).
-1. **Script** — text/script produced via OpenRouter (Gemini models).
+1. **Script** — text/script produced via OpenRouter (Gemini models). Also saves a clean
+   **voiceover** version (`voiceover.txt`) per act — narration only, no markdown
+   formatting — ready for TTS. A **Copy Voiceover Script** button copies all
+   acts into clipboard.
 2. **Images** — visuals produced by the image generator (Python script).
 3. **Audio** — voiceover/sound produced by the audio generator (Python script).
 
@@ -247,6 +250,7 @@ script, a set of typed **components**, and audio.
     ├── act-1-problem/              # Act 1 — Problem
     │   ├── script/act.md           #   this act's script + beats
     │   ├── script/beats.json       #   structured beat data
+    │   ├── script/voiceover.txt    #   clean narration (TTS-friendly, no markdown)
     │   ├── components/
     │   │   ├── components.json     #   manifest of typed components
     │   │   ├── <slug>-bg-01.png    #   type: background
