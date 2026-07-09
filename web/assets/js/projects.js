@@ -152,6 +152,8 @@ function filterProjects(projects, term) {
 
 function renderProjects(projects) {
   allProjects = Array.isArray(projects) ? projects : [];
+  const topCount = document.getElementById("project-count");
+  if (topCount) topCount.textContent = allProjects.length;
   const listEl = document.getElementById("project-list");
   const tableWrap = document.getElementById("project-table-wrap");
   const empty = document.getElementById("empty-state");
