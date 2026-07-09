@@ -85,7 +85,7 @@ Both share:
 |-------|-----------|-----------|
 | Frontend | Vanilla HTML/CSS/JS | Simple tool screens, no heavy framework needed |
 | Backend | Go (stdlib + Azure SDK) | Single binary, secrets-safe, HTTP serve + API |
-| AI Text | OpenRouter → `google/gemini-2.5-flash` | Good quality + rate balance |
+| AI Text | OpenRouter → `google/gemini-3.5-flash` | Good quality + rate balance |
 | AI Images | OpenRouter → `google/gemini-3-pro-image` | Storyboard + component images |
 | TTS | ElevenLabs `eleven_turbo_v2_5` | Fast quality voice, voice "George" |
 | Music/SFX | fal.ai (`fal-ai/mmaudio-v2`, `fal-ai/stable-audio`) | Background music + sound effects |

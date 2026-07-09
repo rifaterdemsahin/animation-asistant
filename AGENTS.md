@@ -65,7 +65,7 @@ fly deploy                                        # fly.io (secrets already set)
 When asked to do both ("open local + deploy"), run the server in background and
 deploy in parallel, then open Chrome once the server is ready.
 
-Models: text `google/gemini-2.5-flash`, image `google/gemini-3.5-flash-image`,
+Models: text `google/gemini-3.5-flash`, image `google/gemini-3.5-flash-image`,
 TTS ElevenLabs `eleven_turbo_v2_5` / voice "George". Override via env.
 
 ## 5. Known gotchas

@@ -97,7 +97,7 @@ type Config struct {
     AdminPassword         string   // ADMIN_PASSWORD
     AuthSecret            string   // AUTH_SECRET (falls back to AdminPassword)
     OpenRouterKeys        []string // OPENROUTER_API_KEY, comma-separated
-    OpenRouterTextModel   string   // OPENROUTER_TEXT_MODEL (default: google/gemini-2.5-flash)
+    OpenRouterTextModel   string   // OPENROUTER_TEXT_MODEL (default: google/gemini-3.5-flash)
     OpenRouterImageModel  string   // OPENROUTER_IMAGE_MODEL (default: google/gemini-3-pro-image)
     StoryboardImageModel  string   // STORYBOARD_IMAGE_MODEL (optional override)
     OpenRouterBase        string   // OPENROUTER_BASE (default: https://openrouter.ai/api/v1)

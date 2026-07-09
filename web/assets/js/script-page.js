@@ -30,6 +30,7 @@ function selectedActs() {
 let promptTemplate = null;
 let outlineSummaries = {};
 let storyboardPrompts = {};
+let storyboardImages = {};
 let modelName = "";
 
 async function loadProjectMeta() {
@@ -90,6 +91,53 @@ async function loadModel() {
     document.getElementById("model-name").textContent = modelName;
   } catch {
     document.getElementById("model-name").textContent = "(unavailable)";
+  }
+}
+
+async function loadStoryboardContext() {
+  const wrap = document.getElementById("sb-context");
+  try {
+    const data = await json(`${api}/projects/${slug()}/storyboard`);
+    const versions = data.versions || [];
+    const actOrder = [
+      {key: "act-1", title: "Act 1 — Problem"},
+      {key: "act-2", title: "Act 2 — Solution"},
+      {key: "act-3", title: "Act 3 — Lesson"},
+    ];
+    // Pick latest version per act (highest ID).
+    const latestByAct = {};
+    for (const v of versions) {
+      if (!v.act) continue;
+      if (!latestByAct[v.act] || v.id > latestByAct[v.act].id) latestByAct[v.act] = v;
+    }
+    storyboardImages = {};
+    wrap.innerHTML = "";
+    let any = false;
+    for (const {key, title} of actOrder) {
+      const v = latestByAct[key];
+      if (!v) continue;
+      any = true;
+      const imgUrl = `${api}/projects/${slug()}/raw/${encodeURIComponent(v.file)}`;
+      storyboardImages[key] = {url: imgUrl, prompt: v.image_prompt || "", file: v.file};
+      const div = document.createElement("div");
+      div.style.cssText = "flex:1;min-width:180px;max-width:320px;text-align:center";
+      div.innerHTML = `
+        <p style="font-size:12px;margin-bottom:4px"><strong>${escapeHtml(title)}</strong></p>
+        <img src="${escapeHtml(imgUrl)}" alt="storyboard ${escapeHtml(key)}" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--border);cursor:pointer;display:block;margin:0 auto">
+        <details style="margin-top:4px"><summary class="muted" style="cursor:pointer;font-size:11px">Prompt</summary>
+          <pre style="white-space:pre-wrap;word-break:break-word;font-size:10px;margin-top:4px;background:var(--panel-2);padding:6px;border-radius:4px;overflow:auto;max-height:120px;text-align:left">${escapeHtml(v.image_prompt || "(no prompt)")}</pre>
+        </details>`;
+      div.querySelector("img").onerror = function() {
+        this.alt = "[image not found]";
+        this.removeAttribute("src");
+        this.style.border = "1px dashed var(--border)";
+        this.style.padding = "20px";
+      };
+      wrap.append(div);
+    }
+    if (!any) wrap.innerHTML = `<p class="muted" style="width:100%">No storyboard images yet — generate one at <a href="/pages/storyboard.html">📋 Storyboard</a> first, then use them as visual reference here.</p>`;
+  } catch {
+    wrap.innerHTML = `<p class="muted" style="width:100%">Storyboard not available.</p>`;
   }
 }
 
@@ -214,10 +262,14 @@ function generatePrompt() {
 
   let sbCtx = "";
   if (storyboardPrompts && Object.keys(storyboardPrompts).length) {
-    const sbLines = ["STORYBOARD CONSISTENCY: The narration must describe what the audience sees in the storyboard images below. Match visual elements, composition, and style precisely.", "", "Storyboard image prompts:"];
+    const sbLines = ["STORYBOARD CONSISTENCY: The narration must describe what the audience sees in the storyboard images below. Match visual elements, composition, and style precisely.", ""];
     for (const ak of ["act-1", "act-2", "act-3"]) {
-      if (storyboardPrompts[ak]) sbLines.push("=== " + ak + " (" + (actRole[ak] || "") + ") ===\n" + storyboardPrompts[ak]);
+      const lines = [];
+      if (storyboardPrompts[ak]) lines.push("Image prompt: " + storyboardPrompts[ak]);
+      if (storyboardImages[ak]) lines.push("Image file: " + storyboardImages[ak].file);
+      if (lines.length) sbLines.push("=== " + ak + " (" + (actRole[ak] || "") + ") ===\n" + lines.join("\n"));
     }
+    sbLines.push("", "The images described above are the storyboard visuals. Your narration MUST match what the audience will see in these images.");
     sbCtx = sbLines.join("\n") + "\n\n";
   }
 
@@ -304,6 +356,7 @@ document.addEventListener("layout:ready", async () => {
 
   await loadProjectMeta();
   await loadOutline();
+  await loadStoryboardContext();
   await loadPromptTemplate();
   loadModel();
   loadExistingScript();

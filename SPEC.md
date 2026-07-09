@@ -102,15 +102,20 @@ The central tool that produces the raw materials for an animation. It generates:
 
    #### Storyboard-Script Consistency 🔗
    When a **storyboard** has been generated before running the script step, the
-   per-act storyboard image prompts are injected into the script generation prompt
-   as **STORYBOARD CONSISTENCY** context. The AI is explicitly instructed to:
-   - Write narration that **matches the visual elements** in the storyboard images
-   - Reference the same **composition, style, and layout** described in the image prompts
-   - Ensure the voiceover text describes **what the audience sees** on screen
-   This feedback loop ensures the script and storyboard stay aligned: storyboard
-   images show what the script describes, and the script narrates what the storyboard
-   visualizes. Re-generating the script after a storyboard update picks up the
-   latest image prompts for consistency.
+   per-act storyboard **images** are loaded and displayed on the Script page as
+   a **Storyboard Context** section (above Act Selection). The AI is provided with:
+   - The per-act **image prompts** (what each storyboard image depicts)
+   - The per-act **image file references** (which images exist)
+   - An explicit **STORYBOARD CONSISTENCY header** instructing narration to match
+     the visual elements, composition, and style precisely
+   This cross-phase feedback loop ensures every downstream phase receives the
+   output of prior phases as input:
+   - **Storyboard → Script**: storyboard images + prompts injected as context
+   - **Outline → Script**: act summaries fill `{{summary}}` in the prompt
+   - **Q&A → Script**: question/answer/why passed as project metadata
+   The Script page displays the storyboard images so the user can visually verify
+   alignment. Re-generating the script picks up the latest storyboard images
+   automatically.
 2. **Images** — visuals produced by the image generator (Python script).
 3. **Audio** — voiceover/sound produced by the audio generator (Python script).
 
@@ -240,7 +245,7 @@ Full pipeline documented at `/pages/process.html`:
 | 1. 📝 Q&A | `/pages/create.html` | Frame topic as question + answer. Creates project. |
 | 2. 📋 Storyboard | `/pages/storyboard.html` | Generate 3 infographic images (4 frames each, 2×2 grid) per act. JSON scene plan. Image prompts saved back to project. |
 | 3. 🎛️ Assets | `/pages/media-manager.html` | Outline → Script → Typed Components → Voiceover → Music → SFX. All saved to Azure. |
-| 3b. 🔄 Script page | `/pages/script-page.html` | Re-generate script with **storyboard image prompts** injected as consistency context (see §5.1 → Storyboard-Script Consistency). |
+| 3b. 🔄 Script page | `/pages/script-page.html` | Re-generate script with **storyboard images displayed** and image prompts + file references injected as consistency context. Each phase feeds the next (see §5.1 → Storyboard-Script Consistency). |
 | 4. 📥 Download | Media Manager + Azure | Browse images/audio, download individually or via Azure Portal blob access. |
 | 5. 🎨 Canva | canva.com | Place components into Canva video timeline. Arranging creates the self-learning loop. |
 

@@ -14,7 +14,7 @@ Phase 1: Outline (project-level)
     │  POST /api/projects/{slug}/outline
     │  → Loads editable template from prompts store
     │  → Renders: {{topic}}, {{component_type}}
-    │  → Chat: OpenRouter → google/gemini-2.5-flash
+    │  → Chat: OpenRouter → google/gemini-3.5-flash
     │  → Extracts JSON: {acts: {act-1: {summary, title}, act-2: ..., act-3: ...}}
     │  → Stores: outline.json
     │  → Marks all acts: outline = "done"
@@ -31,7 +31,7 @@ Phase 2: Script (per act)
     │    → Reads storyboard_prompts if available (feedback loop)
     │    → Renders: {{topic}}, {{act_key}}, {{act_role}}, {{summary}}, {{purpose}},
     │               {{storyboard_prompts}}
-    │    → Chat: OpenRouter → google/gemini-2.5-flash
+    │    → Chat: OpenRouter → google/gemini-3.5-flash
     │    → Extracts JSON: {narration: "...", beats: [{id, text}]}
     │    → Stores: <act-slug>/script/act.md (markdown)
     │    → Stores: <act-slug>/script/beats.json (structured)
@@ -95,7 +95,7 @@ Phase 5: Storyboard (project-level)
     │  ┌─ JSON Scene Plan ────────────────────────────┐
     │  │  → Assembles context from all act scripts +    │
     │  │    components + outline                        │
-    │  │  → Chat: OpenRouter → google/gemini-2.5-flash │
+    │  │  → Chat: OpenRouter → google/gemini-3.5-flash │
     │  │  → Extracts scene-by-scene JSON               │
     │  │  → Stores: storyboard/storyboard.json          │
     │  └──────────────────────────────────────────────┘
@@ -193,7 +193,7 @@ renderTmpl(template, vars) → interpolated prompt string
 - Multi-key rotation: comma-separated `OPENROUTER_API_KEY`
 - Rotates on 401, 402, 429 — tries each key in order
 - Error on all keys exhausted: explains token likely expired/over-limit
-- Model defaults: text `google/gemini-2.5-flash`, image `google/gemini-3-pro-image`
+- Model defaults: text `google/gemini-3.5-flash`, image `google/gemini-3-pro-image`
 - Storyboard image model: `STORYBOARD_IMAGE_MODEL` env override (falls back to image model)
 
 ### ElevenLabs
