@@ -117,7 +117,7 @@ func scriptModelName(a *App) string {
 	if a.cfg.OpenRouterTextModel != "" {
 		return a.cfg.OpenRouterTextModel
 	}
-	return "google/gemini-2.5-flash"
+	return "google/gemini-3.5-flash"
 }
 
 func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {

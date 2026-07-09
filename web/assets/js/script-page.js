@@ -86,7 +86,7 @@ async function loadPromptTemplate() {
 async function loadModel() {
   try {
     const h = await json("/healthz");
-    modelName = h.text_model || "google/gemini-2.5-flash";
+    modelName = h.text_model || "google/gemini-3.5-flash";
     document.getElementById("model-name").textContent = modelName;
   } catch {
     document.getElementById("model-name").textContent = "(unavailable)";

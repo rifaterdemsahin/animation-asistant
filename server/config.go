@@ -43,7 +43,7 @@ func LoadConfig() *Config {
 		AdminPassword:         os.Getenv("ADMIN_PASSWORD"),
 		AuthSecret:            os.Getenv("AUTH_SECRET"),
 		OpenRouterKeys:        splitCSV(os.Getenv("OPENROUTER_API_KEY")),
-		OpenRouterTextModel:   getenvDefault("OPENROUTER_TEXT_MODEL", getenvDefault("OPENROUTER_MODEL", "google/gemini-2.5-flash")),
+		OpenRouterTextModel:   getenvDefault("OPENROUTER_TEXT_MODEL", getenvDefault("OPENROUTER_MODEL", "google/gemini-3.5-flash")),
 		OpenRouterImageModel:  getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-3-pro-image"),
 		StoryboardImageModel:  getenvDefault("STORYBOARD_IMAGE_MODEL", ""),
 		OpenRouterBase:        getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),

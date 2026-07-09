@@ -21,7 +21,7 @@ func newTestApp(t *testing.T) *App {
 		AdminPassword:        "testpass",
 		AuthSecret:           "testpass",
 		OpenRouterKeys:       []string{},
-		OpenRouterTextModel:  "google/gemini-2.5-flash",
+		OpenRouterTextModel:  "google/gemini-3.5-flash",
 		OpenRouterImageModel: "google/gemini-3-pro-image",
 		OpenRouterBase:       "https://openrouter.ai/api/v1",
 		WebDir:               filepath.Join("..", "web"),
