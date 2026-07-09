@@ -28,6 +28,15 @@ loop: **storyboard → script (re-generate with storyboard context)**.
 - **Shared shell on every page:** top nav (links+search+logout), current-project
   header, footer. Pages render into `#topnav`/`#app-header`/`#app-footer` and
   include `layout.js` + `auth.js`.
+- **Modals reuse the shared CSS** (`.modal-overlay` / `.modal` /
+  `.modal-header|body|footer` already in `styles.css`, see `projects.js`
+  `buildEditModal`). Don't invent a new overlay — build a `<div class="modal-overlay">`
+  and close on ✕ / backdrop / `Esc`. The Media Manager **📁 Generated Files**
+  browser uses this for its asset preview modal.
+- **Generated Files browser** (Media Manager `media-manager.js` `loadBrowse`):
+  every asset card has **⬇️ Download** (blob → real filename), **📋 Copy**
+  (context-aware: image data / text / URL, fallback URL), and **🔍 View**
+  (modal popup). Keep new asset surfaces consistent with these three actions.
 - **Secrets only via env** (`.env` local via KeyVault; `fly secrets` on fly.io).
   Never log secrets. Basic admin login (cookie auth) by design.
 - **Storage via the Backend interface** — handlers use `a.store`, never raw paths.

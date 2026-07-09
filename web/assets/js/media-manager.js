@@ -159,16 +159,149 @@ function renderAudio(audio) {
 }
 async function loadAudio() { try { var r = await j(api + "/projects/" + slug() + "/audio"); renderAudio(r.audio || {}); } catch {} }
 
+// --- Generated-file browser: download, copy-to-clipboard, modal preview ---
+
+function fileName(path) { var i = String(path).lastIndexOf("/"); return i >= 0 ? path.slice(i + 1) : path; }
+function fullUrl(u) { try { return new URL(u, window.location.origin).href; } catch { return u; } }
+function typeIcon(t) { return t === "image" ? "🖼️" : t === "audio" ? "🎧" : t === "json" ? "🔧" : t === "markdown" ? "📝" : "📄"; }
+function flash(btn, msg, ok) {
+  if (!btn) return;
+  var old = btn.textContent;
+  btn.textContent = ok ? "✅ " + msg : "❌ failed";
+  setTimeout(function () { btn.textContent = old; }, 1500);
+}
+
+async function fetchBlob(url) {
+  var r = await fetch(url, { credentials: "same-origin" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.blob();
+}
+
+async function downloadAsset(file) {
+  try {
+    var blob = await fetchBlob(file.url);
+    var obj = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = obj; a.download = fileName(file.path);
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(obj); }, 1500);
+  } catch (err) { alert("Download failed: " + err.message); }
+}
+
+// Context-aware copy: images -> image data in clipboard; text-like -> text; else -> URL.
+async function copyAsset(file, btn) {
+  try {
+    if (file.type === "image" && navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== "undefined") {
+      var blob = await fetchBlob(file.url);
+      var mime = (blob.type && blob.type.indexOf("image/") === 0) ? blob.type : "image/png";
+      var item = {}; item[mime] = blob;
+      await navigator.clipboard.write([new ClipboardItem(item)]);
+      flash(btn, "Image copied", true); return;
+    }
+    if (file.type === "json" || file.type === "markdown") {
+      var txt = await fetch(file.url, { credentials: "same-origin" }).then(function (r) { return r.text(); });
+      await navigator.clipboard.writeText(txt);
+      flash(btn, "Text copied", true); return;
+    }
+    await navigator.clipboard.writeText(fullUrl(file.url));
+    flash(btn, "URL copied", true);
+  } catch (err) {
+    // Fallback for everything (incl. audio, which has no clipboard format): copy the URL.
+    try { await navigator.clipboard.writeText(fullUrl(file.url)); flash(btn, "URL copied", true); }
+    catch (e2) { flash(btn, err.message || "failed", false); }
+  }
+}
+
+function openAssetModal(file) {
+  var existing = document.getElementById("asset-modal"); if (existing) existing.remove();
+  var overlay = document.createElement("div");
+  overlay.className = "modal-overlay"; overlay.id = "asset-modal";
+  var name = fileName(file.path);
+  var icon = typeIcon(file.type);
+
+  var preview = "";
+  if (file.type === "image") preview = "<img src='" + file.url + "' alt='" + esc(name) + "' style='max-width:100%;border-radius:8px;display:block;margin:0 auto'>";
+  else if (file.type === "audio") preview = "<audio controls src='" + file.url + "' style='width:100%'></audio>";
+  else if (file.type === "json" || file.type === "markdown") preview = "<pre id='am-text' class='out' style='max-height:50vh;overflow:auto'></pre>";
+  else preview = "<div style='text-align:center;font-size:56px;line-height:1.5'>" + icon + "</div>";
+
+  overlay.innerHTML =
+    "<div class='modal' style='max-width:780px'>" +
+      "<div class='modal-header'><h2>" + icon + " " + esc(name) + " <span class='badge'>" + esc(file.type) + "</span></h2>" +
+        "<button class='modal-close' id='am-close'>&times;</button></div>" +
+      "<div class='modal-body'>" +
+        "<div class='section' id='am-preview'>" + preview + "</div>" +
+        "<div class='section'><h3>Path</h3><code style='word-break:break-all;font-size:12px'>" + esc(file.path) + "</code></div>" +
+        "<div class='section'><h3>URL</h3><code style='word-break:break-all;font-size:12px'>" + esc(fullUrl(file.url)) + "</code></div>" +
+      "</div>" +
+      "<div class='modal-footer'>" +
+        "<button class='btn' id='am-copy-url'>🔗 Copy URL</button>" +
+        "<button class='btn' id='am-copy'>📋 Copy</button>" +
+        "<button class='btn primary' id='am-download'>⬇️ Download</button>" +
+      "</div>" +
+    "</div>";
+
+  document.body.appendChild(overlay);
+  var close = function () { overlay.remove(); };
+  overlay.querySelector("#am-close").addEventListener("click", close);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", function onEsc(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", onEsc); } });
+
+  overlay.querySelector("#am-download").addEventListener("click", function () { downloadAsset(file); });
+  overlay.querySelector("#am-copy").addEventListener("click", function (e) { copyAsset(file, e.currentTarget); });
+  overlay.querySelector("#am-copy-url").addEventListener("click", function (e) {
+    navigator.clipboard.writeText(fullUrl(file.url)).then(function () { flash(e.currentTarget, "Copied", true); }).catch(function (er) { flash(e.currentTarget, er.message, false); });
+  });
+
+  if (file.type === "json" || file.type === "markdown") {
+    fetch(file.url, { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (t) {
+      var el = overlay.querySelector("#am-text"); if (!el) return;
+      try { el.textContent = JSON.stringify(JSON.parse(t), null, 2); } catch (_) { el.textContent = t; }
+    }).catch(function () {});
+  }
+}
+
 async function loadBrowse() {
   var out = document.getElementById("files-out");
   try {
     var r = await j(api + "/projects/" + slug() + "/browse"); var f = r.files || [];
     if (!f.length) { out.innerHTML = "<p class='muted'>No files generated yet.</p>"; return; }
-    out.innerHTML = f.map(function (x) {
-      if (x.type === "image") return "<div class='file-card'><img loading='lazy' src='" + x.url + "' alt='" + x.path + "'><div class='file-meta'><a href='" + x.url + "' target='_blank'>🖼️ " + x.path + "</a></div></div>";
-      if (x.type === "audio") return "<div class='file-card'>🎧 <audio controls src='" + x.url + "'></audio><div class='file-meta'><a href='" + x.url + "' target='_blank'>🎵 " + x.path + "</a></div></div>";
-      return "<div class='file-card'><div class='file-icon'>📄</div><div class='file-meta'><a href='" + x.url + "' target='_blank'>" + x.path + "</a></div></div>";
-    }).join("");
+    out.innerHTML = "";
+    f.forEach(function (x) {
+      var card = document.createElement("div"); card.className = "file-card";
+      var icon = typeIcon(x.type);
+
+      var thumb = document.createElement("div"); thumb.className = "file-thumb";
+      if (x.type === "image") {
+        thumb.className = "file-thumb"; thumb.style.cursor = "zoom-in"; thumb.title = "Click to view";
+        var img = document.createElement("img"); img.loading = "lazy"; img.src = x.url; img.alt = x.path;
+        thumb.addEventListener("click", function () { openAssetModal(x); });
+        thumb.append(img);
+      } else if (x.type === "audio") {
+        var au = document.createElement("audio"); au.controls = true; au.src = x.url; thumb.append(au);
+      } else {
+        thumb.className = "file-icon"; thumb.textContent = icon; thumb.style.cursor = "pointer"; thumb.title = "Click to view";
+        thumb.addEventListener("click", function () { openAssetModal(x); });
+      }
+
+      var meta = document.createElement("div"); meta.className = "file-meta";
+      var link = document.createElement("a"); link.href = x.url; link.target = "_blank"; link.textContent = icon + " " + x.path;
+      meta.append(link);
+
+      var actions = document.createElement("div"); actions.className = "file-actions";
+      var dl = document.createElement("button"); dl.className = "btn"; dl.title = "Download"; dl.textContent = "⬇️";
+      dl.addEventListener("click", function () { downloadAsset(x); });
+      var cp = document.createElement("button"); cp.className = "btn";
+      cp.title = x.type === "image" ? "Copy image to clipboard" : x.type === "audio" ? "Copy URL" : "Copy content";
+      cp.textContent = "📋";
+      cp.addEventListener("click", function (e) { copyAsset(x, e.currentTarget); });
+      var vw = document.createElement("button"); vw.className = "btn"; vw.title = "View larger"; vw.textContent = "🔍";
+      vw.addEventListener("click", function () { openAssetModal(x); });
+      actions.append(dl, cp, vw);
+
+      card.append(thumb, meta, actions);
+      out.append(card);
+    });
   } catch { out.innerHTML = "<p class='muted'>Could not load files.</p>"; }
 }
 

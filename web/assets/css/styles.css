@@ -154,6 +154,10 @@ input:focus { outline: none; border-color: var(--accent); }
 .file-card .file-meta a { color: var(--muted); font-size: 12px; word-break: break-all; }
 .file-card .file-icon { padding: 16px; text-align: center; font-size: 28px; }
 .file-card .file-meta a:hover { color: var(--accent); }
+.file-card .file-thumb { cursor: zoom-in; }
+.file-card .file-actions { display: flex; gap: 6px; padding: 0 10px 10px; }
+.file-card .file-actions .btn { padding: 4px 8px; font-size: 13px; flex: 1; text-align: center; }
+.file-card .file-icon { cursor: pointer; }
 
 /* Bloom's Taxonomy self-learning section */
 .bloom-section { margin-top: 40px; }

@@ -180,6 +180,30 @@ how it demonstrates the act:
 - Components are the building blocks the Storyboard assembles into scenes.
 - Use json structures in Azure to hold the metadata and the data 
 
+### 5.1.3 Generated Files Browser 📁
+The Media Manager's **📁 Generated Files** section browses every asset the
+project has produced (images, audio, JSON manifests, markdown). Each file is a
+**card** with three actions, plus a **modal popup** for full-visibility review:
+
+- **⬇️ Download** — fetches the blob and saves it under its real filename
+  (so `act-1-problem/components/<slug>-bg-01.png` downloads as `...bg-01.png`).
+- **📋 Copy** — context-aware clipboard copy:
+  - **images** → the actual image data is written to the clipboard
+    (`navigator.clipboard.write` + `ClipboardItem`), ready to paste straight
+    into Canva/docs;
+  - **JSON / markdown** → the file's text content is copied;
+  - **audio / other** → the asset's full URL is copied (audio has no clipboard
+    binary format). Any failure falls back to copying the URL.
+- **🔍 View** (and clicking the thumbnail) → opens a **modal popup** showing a
+  large preview of the asset (full-size image, audio player, or pretty-printed
+  JSON/text), its storage path, and its URL, with the same Download / Copy /
+  Copy-URL actions. The modal reuses the shared `.modal-overlay` / `.modal` CSS
+  and closes on ✕, backdrop click, or `Esc`.
+
+This is the primary way to pull assets out of the app into Canva without
+dropping into the Azure Portal (the **☁️ View in Azure** link is still there for
+bulk/blob-level access).
+
 ### 5.2 Storyboard Creator 📋
 Takes the existing **act scripts** and the generated **components** for each
 act, then produces a **storyboard** organized by act — a scene-by-scene plan
@@ -246,7 +270,7 @@ Full pipeline documented at `/pages/process.html`:
 | 2. 📋 Storyboard | `/pages/storyboard.html` | Generate 3 infographic images (4 frames each, 2×2 grid) per act. JSON scene plan. Image prompts saved back to project. |
 | 3. 🎛️ Assets | `/pages/media-manager.html` | Outline → Script → Typed Components → Voiceover → Music → SFX. All saved to Azure. |
 | 3b. 🔄 Script page | `/pages/script-page.html` | Re-generate script with **storyboard images displayed** and image prompts + file references injected as consistency context. Each phase feeds the next (see §5.1 → Storyboard-Script Consistency). |
-| 4. 📥 Download | Media Manager + Azure | Browse images/audio, download individually or via Azure Portal blob access. |
+| 4. 📥 Download | Media Manager + Azure | Browse images/audio, **download** each asset, **copy** image/text/URL to clipboard, and **view** in a modal popup. Bulk/blob access via Azure Portal link. |
 | 5. 🎨 Canva | canva.com | Place components into Canva video timeline. Arranging creates the self-learning loop. |
 
 ### 5.6 Self Learning & Bloom's Taxonomy 🎓
