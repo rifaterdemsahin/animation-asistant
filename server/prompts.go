@@ -193,7 +193,9 @@ Outline summary for this act: {{summary}}
 
 Write only this act. Return JSON with this exact shape:
 {"narration":"1-3 paragraphs of voiceover","beats":[{"id":"beat-1","text":"one concrete, visualizable story beat"}]}
-Rules: stay focused on the act role ({{purpose}}); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only.`,
+Rules: stay focused on the act role ({{purpose}}); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only.
+
+Note: {{storyboard_prompts}} at the top is auto-replaced with storyboard image prompts when they exist, ensuring script narration matches the visuals.`,
 		},
 		Components: componentsPrompt{
 			DefaultTypes: []string{"background", "lower-third", "speech-bubble", "infographic"},

@@ -229,15 +229,15 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 	}
 	sys, usr := a.scriptTmpl()
 	userContent := renderTmpl(usr, map[string]string{
-		"topic":               p.Topic,
-		"act_key":             act.Key,
-		"act_role":            act.Role,
-		"summary":             summary,
-		"purpose":             act.Purpose,
-		"storyboard_prompts":  sbCtx,
+		"topic":              p.Topic,
+		"act_key":            act.Key,
+		"act_role":           act.Role,
+		"summary":            summary,
+		"purpose":            act.Purpose,
+		"storyboard_prompts": "", // Always stripped — hard-prepended below.
 	})
-	// Always prepend storyboard context so it reaches the LLM even if the
-	// editable template doesn't use the {{storyboard_prompts}} placeholder.
+	// Always prepend storyboard context so it reaches the LLM regardless
+	// of whether the editable template includes {{storyboard_prompts}}.
 	if sbCtx != "" {
 		userContent = sbCtx + userContent
 	}

@@ -105,7 +105,8 @@ _DEFAULTS = {
                  "Outline summary for this act: {{summary}}\n\n"
                  "Write only this act. Return JSON with this exact shape:\n"
                  '{"narration":"1-3 paragraphs of voiceover","beats":[{"id":"beat-1","text":"one concrete, visualizable story beat"}]}\n'
-                 "Rules: stay focused on the act role ({{purpose}}); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only."),
+                 "Rules: stay focused on the act role ({{purpose}}); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only.\n\n"
+                 "Note: {{storyboard_prompts}} at the top is auto-replaced with storyboard image prompts when they exist, ensuring script narration matches the visuals."),
     },
     "components": {
         "default_types": ["background", "lower-third", "speech-bubble", "infographic"],
