@@ -11,7 +11,10 @@ const NAV_ITEMS = [
   { name: "📜 Script", url: "/pages/script-page.html" },
   { name: "🎛️ Media Manager", url: "/pages/media-manager.html" },
   { name: "🎧 Audio", url: "/pages/audio.html" },
-  { name: "🛠️ Tools", url: "/pages/tools.html" },
+  { name: "🛠️ Tools", url: "/pages/tools.html", children: [
+    { name: "🛠️ Tools", url: "/pages/tools.html" },
+    { name: "🔬 Compare Models", url: "/pages/compare-models.html" },
+  ]},
   { name: "🎓 Self Learning", url: "/pages/self_learning.html" },
 ];
 

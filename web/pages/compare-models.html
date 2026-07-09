@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Compare Image Models</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
+    .compare-card { background: var(--card-bg, #1e293b); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border, #334155); }
+    .compare-card h3 { margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem; }
+    .compare-card img { width: 100%; border-radius: 8px; cursor: pointer; transition: transform 0.2s; border: 1px solid var(--border, #334155); }
+    .compare-card img:hover { transform: scale(1.02); }
+    .model-badge-pro { background: #7c3aed; color: #fff; padding: 0.2em 0.6em; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+    .model-badge-flash { background: #059669; color: #fff; padding: 0.2em 0.6em; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+    .act-section { margin: 2rem 0; }
+    .act-section h2 { border-bottom: 2px solid var(--border, #334155); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+    .prompt-block { background: var(--card-bg, #1e293b); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; border: 1px solid var(--border, #334155); max-height: 400px; overflow-y: auto; }
+    .prompt-block pre { white-space: pre-wrap; font-size: 0.85em; line-height: 1.5; color: #94a3b8; margin: 0; }
+    .cost-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .cost-table th, .cost-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border, #334155); }
+    .cost-table th { color: #94a3b8; font-weight: 600; font-size: 0.85em; text-transform: uppercase; }
+    .savings { color: #34d399; font-weight: 700; }
+    .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat { background: var(--card-bg, #1e293b); border-radius: 8px; padding: 1rem 1.25rem; border: 1px solid var(--border, #334155); }
+    .stat .label { font-size: 0.8em; color: #94a3b8; margin-bottom: 0.25rem; }
+    .stat .value { font-size: 1.5em; font-weight: 700; }
+    .toggle-btn { cursor: pointer; background: var(--card-bg, #1e293b); border: 1px solid var(--border, #334155); color: #e2e8f0; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.9em; }
+    .toggle-btn:hover { background: #334155; }
+    .size-comparison { display: flex; gap: 0.5rem; align-items: baseline; }
+    .size-bar { height: 8px; border-radius: 4px; }
+    .size-bar.pro { background: #7c3aed; }
+    .size-bar.flash { background: #059669; }
+  </style>
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>🔬 Compare Image Models — Pro vs Flash</h1>
+    <p class="lede">Same <strong>4,079-character prompt</strong> fed to two different Gemini image models. Compare the output quality, cost, and file size.</p>
+
+    <section class="summary-stats" id="stats"></section>
+
+    <section>
+      <h2>📝 The Prompt <button class="toggle-btn" onclick="document.getElementById('prompt-body').classList.toggle('hidden')">Show / Hide</button></h2>
+      <div class="prompt-block hidden" id="prompt-body">
+        <pre id="prompt-text">Loading prompt...</pre>
+      </div>
+    </section>
+
+    <section id="comparison"></section>
+
+    <section>
+      <h2>💰 Cost Comparison</h2>
+      <table class="cost-table">
+        <thead><tr><th>Metric</th><th>Pro</th><th>Flash</th><th>Delta</th></tr></thead>
+        <tbody>
+          <tr><td>Token pricing (input)</td><td>$2.00 / 1M</td><td>$0.50 / 1M</td><td class="savings">4× cheaper</td></tr>
+          <tr><td>Token pricing (output)</td><td>$12.00 / 1M</td><td>$3.00 / 1M</td><td class="savings">4× cheaper</td></tr>
+          <tr><td>Avg tokens (input)</td><td colspan="2" style="text-align:center">~860 (same prompt)</td><td>Same</td></tr>
+          <tr><td>Avg tokens (output)</td><td colspan="2" style="text-align:center">~1,930</td><td>Same</td></tr>
+          <tr><td><strong>Cost per image</strong></td><td><strong>$0.146</strong></td><td><strong>$0.036</strong></td><td class="savings"><strong>75% savings</strong></td></tr>
+          <tr><td>3 images (1 project)</td><td>$0.44</td><td>$0.11</td><td class="savings">Save $0.33</td></tr>
+          <tr><td>48 projects (144 images)</td><td>$21.02</td><td>$5.18</td><td class="savings">Save $15.84</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>📦 File Size Comparison</h2>
+      <table class="cost-table" id="size-table">
+        <thead><tr><th>Act</th><th>Pro</th><th>Flash</th><th>Flash vs Pro</th></tr></thead>
+        <tbody id="size-body"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>⚙️ How to Switch</h2>
+      <div class="prompt-block" style="max-height:none">
+        <pre style="color:#e2e8f0"># .env or fly secrets:
+STORYBOARD_IMAGE_MODEL='google/gemini-3.1-flash-image'
+
+# Or globally for all image generation:
+OPENROUTER_IMAGE_MODEL='google/gemini-3.1-flash-image'</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
+  <script src="/assets/js/compare-models.js"></script>
+</body>
+</html>
