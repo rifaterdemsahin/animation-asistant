@@ -321,7 +321,7 @@ Every page reuses:
   not authenticated, a "🔐 Login" link appears; when authenticated, a
   "👤 Logged in" badge + a "Log out" button are shown. Auth status is
   determined by calling `/api/me` on page load.
-- **Bottom footer** — project info / links / github build link/ commits link/ fly.io link and local link
+- **Bottom footer** — project info / links / github build link/ commits link/ fly.io link and local link. The deploy-time badge shows `🚀 <commit-sha> — <started_at>` when deployed (commit set via `-ldflags="-X main.buildCommit=..."`), or `🚀 local — <started_at>` when running locally (`buildCommit` defaults to `"unknown"` which the frontend treats as no-commit).
 
 Implemented with a small shared component (JS layout injection + shared CSS),
 so a single edit updates all pages. No page is built from scratch; each page

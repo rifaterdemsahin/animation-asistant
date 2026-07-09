@@ -116,9 +116,9 @@ function fetchDeployTime() {
   fetch("/healthz", { credentials: "same-origin" })
     .then(r => r.json())
     .then(d => {
-      var commit = d.commit || "";
+      var commit = (d.commit && d.commit !== "unknown") ? d.commit : "";
       var url = commit ? "https://github.com/rifaterdemsahin/animation-asistant/commit/" + commit : "https://github.com/rifaterdemsahin/animation-asistant/commits/main";
-      var short = commit ? commit.substring(0, 7) : "main";
+      var short = commit ? commit.substring(0, 7) : "local";
       el.innerHTML = '🚀 <a href="' + url + '" target="_blank" style="color:var(--accent)">' + short + '</a> — ' + (d.started_at || "");
     })
     .catch(() => {});
