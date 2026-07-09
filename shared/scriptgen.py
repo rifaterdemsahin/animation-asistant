@@ -33,10 +33,27 @@ def outline_map(slug: str) -> dict:
         return {}
 
 
+def _storyboard_context(p: dict) -> str:
+    sb = p.get("storyboard_prompts", {})
+    if not sb:
+        return ""
+    lines = [
+        "STORYBOARD CONSISTENCY: The narration must describe what the audience sees in the storyboard images below. Match visual elements, composition, and style precisely.",
+        "",
+        "Storyboard image prompts:",
+    ]
+    for a in ACTS:
+        prompt = sb.get(a["key"], "")
+        if prompt:
+            lines.append(f"=== {a['key']} ({a['role']}) ===\n{prompt}")
+    return "\n".join(lines) + "\n\n"
+
+
 def generate_script(slug: str, acts=None) -> dict:
     p = storage.read_project(slug)
     omap = outline_map(slug)
     keys = acts or [a["key"] for a in ACTS]
+    sbCtx = _storyboard_context(p)
     results = {}
     for key in keys:
         act = ACT_BY_KEY[key]
@@ -49,13 +66,17 @@ def generate_script(slug: str, acts=None) -> dict:
                                             "act_key": act["key"],
                                             "act_role": act["role"],
                                             "summary": summary,
-                                            "purpose": act["purpose"]})},
+                                            "purpose": act["purpose"],
+                                            "storyboard_prompts": sbCtx})},
         ]
         obj = extract_json(chat_json(msgs))
         md = to_markdown(act, obj)
         storage.write(slug, f"{act['slug']}/script/act.md", md)
         storage.write(slug, f"{act['slug']}/script/beats.json",
                       json.dumps(obj, indent=2, ensure_ascii=False))
+        narration = (obj.get("narration") or "").strip()
+        if narration:
+            storage.write(slug, f"{act['slug']}/script/voiceover.txt", narration)
         p["acts"][key]["script"] = "done"
         results[key] = obj
     p["status"] = "script"

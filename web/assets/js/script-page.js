@@ -161,7 +161,7 @@ function generatePrompt() {
 
   let sbCtx = "";
   if (storyboardPrompts && Object.keys(storyboardPrompts).length) {
-    const sbLines = ["Storyboard image prompts (previously generated for this project):"];
+    const sbLines = ["STORYBOARD CONSISTENCY: The narration must describe what the audience sees in the storyboard images below. Match visual elements, composition, and style precisely.", "", "Storyboard image prompts:"];
     for (const ak of ["act-1", "act-2", "act-3"]) {
       if (storyboardPrompts[ak]) sbLines.push("=== " + ak + " (" + (actRole[ak] || "") + ") ===\n" + storyboardPrompts[ak]);
     }

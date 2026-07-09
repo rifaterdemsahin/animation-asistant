@@ -186,7 +186,7 @@ Produce a JSON object with this exact shape:
 Each act summary must be 1-2 sentences fitting the act's role. JSON only.`,
 		},
 		Script: scriptPrompt{
-			System: "You are a scriptwriter for short animated explainer videos. You write ONE act and return STRICT JSON only, no markdown.",
+			System: "You are a scriptwriter for short animated explainer videos. You write ONE act and return STRICT JSON only, no markdown. When storyboard image prompts are provided in the prompt context, your narration MUST describe what the audience sees in those images — match the visual style, layout, and elements precisely so the voiceover is fully consistent with the storyboard visuals.",
 			User: `{{storyboard_prompts}}Topic: {{topic}}
 Act: {{act_key}} ({{act_role}})
 Outline summary for this act: {{summary}}
