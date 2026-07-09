@@ -128,7 +128,8 @@ per **act** (see §5.1.1) and see the results.
 #### 5.1.0 Model visibility 🤖
 Every step shows **which model it will trigger** as a badge next to its heading
 (e.g. Outline/Script → `google/gemini-3.5-flash`, Components →
-`google/gemini-3-pro-image`, Voiceover → `eleven_turbo_v2_5 · George`, Music →
+`google/gemini-3-pro-image`, Storyboard → `google/gemini-3.1-flash-image`,
+Voiceover → `eleven_turbo_v2_5 · George`, Music →
 `fal-ai/mmaudio-v2`, SFX → `fal-ai/stable-audio`). Badges are filled client-side
 from `GET /api/models`, which reports the active text/image/storyboard-image
 models plus the three audio layers. **Minimum text/image model is Gemini 3**;
@@ -561,16 +562,16 @@ Items planned but not yet implemented:
 
 Answered during implementation:
 
-- ✅ **Image provider**: OpenRouter → `google/gemini-3-pro-image` (not a separate `IMAGE_API_KEY`)
+- ✅ **Image provider**: OpenRouter → `google/gemini-3-pro-image` for components, `google/gemini-3.1-flash-image` for storyboard (4× cheaper, set via `STORYBOARD_IMAGE_MODEL`)
 - ✅ **TTS provider**: ElevenLabs `eleven_turbo_v2_5`, voice "George" (`TTS_API_KEY`)
 - ✅ **Default Gemini model**: `google/gemini-3.5-flash` for text/script/storyboard
 - ✅ **Music + SFX**: fal.ai (`fal-ai/mmaudio-v2` for music, `fal-ai/stable-audio` for SFX, `FAL_KEY`)
 - ✅ **Animation types**: 9 built-in types (background, lower-third, speech-bubble, infographic, character, icon, title-card, transition + extensible)
-- ✅ **Model policy (min Gemini 3)**: text/script/storyboard = `google/gemini-3.5-flash`, images = `google/gemini-3-pro-image` (both Gemini 3). Active models exposed at `GET /api/models` and shown inline as badges on the Media Manager.
+- ✅ **Model policy (min Gemini 3)**: text/script = `google/gemini-3.5-flash`, component images = `google/gemini-3-pro-image`, storyboard images = `google/gemini-3.1-flash-image` (75% cost savings). Storyboard model override via `STORYBOARD_IMAGE_MODEL`. Active models exposed at `GET /api/models` and shown inline as badges on the Media Manager.
 
 Still open:
 
-- ❓ Best model for image generation if `gemini-3.5-flash-image` is deprecated
+- ✅ Best model for storyboard image generation: `google/gemini-3.1-flash-image` — 4× cheaper than pro with comparable quality for infographic/comic-strip style. See `compare_pro_vs_flash/` for side-by-side comparison.
 - ❓ Which fal.ai model for SFX when `stable-audio` is deprecated
 
 ## 15. Lessons Learned 📝

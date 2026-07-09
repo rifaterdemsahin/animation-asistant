@@ -79,7 +79,8 @@ When asked to do both ("open local + deploy"), run the server in background and
 deploy in parallel, then open Chrome once the server is ready.
 
 Models (min Gemini 3 for text+image): text `google/gemini-3.5-flash`,
-image `google/gemini-3-pro-image`, TTS ElevenLabs `eleven_turbo_v2_5` / voice
+image `google/gemini-3-pro-image`, storyboard image `google/gemini-3.1-flash-image`,
+TTS ElevenLabs `eleven_turbo_v2_5` / voice
 "George", music `fal-ai/mmaudio-v2`, SFX `fal-ai/stable-audio`. Active models
 are exposed at `GET /api/models` and shown inline as `.model-badge` pills on the
 Media Manager. Override via env.
