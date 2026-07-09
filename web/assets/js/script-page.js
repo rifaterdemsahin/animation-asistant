@@ -21,7 +21,10 @@ function setLoading(btn, on) {
 
 function selectedActs() {
   // Checkbox ids are sc-act-1/2/3; keep k as act-1/2/3 (used downstream).
-  return ["act-1", "act-2", "act-3"].filter(k => document.getElementById("sc-" + k).checked);
+  return ["act-1", "act-2", "act-3"].filter(k => {
+    const el = document.getElementById("sc-" + k);
+    return el && el.checked;
+  });
 }
 
 let promptTemplate = null;
