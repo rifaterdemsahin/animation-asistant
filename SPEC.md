@@ -153,6 +153,21 @@ how it demonstrates the act:
 
 - Each component carries metadata: `id`, `type`, `prompt`, `file`, and the
   `script_ref` (which script beat it illustrates).
+- **Per-component control** (Media Manager → *3. Components*): instead of one
+  shared prompt for the whole step, **each component** is its own object with
+  its own **👁️ Prompt** button and its own **⚡ Generate** button. The Prompt
+  button reveals the exact image prompt for that component — rendered from the
+  `image_prompt` template using that type's `style` and the act's beat (the
+  stored prompt is shown once the component has been generated). The Generate
+  button regenerates **just that one component** via
+  `POST /api/projects/{slug}/components` with a single `acts:[act]` +
+  `types:[type]`. A separate **⚡ Generate all components** button bulk-creates
+  every type for the selected acts.
+- **Merge semantics**: regenerating a single component only replaces that type's
+  entry in the act's `components.json`; every other already-generated type is
+  preserved (never wiped). The beat used for each type is its **canonical index**
+  in the default-type order, so generating one type in isolation still picks the
+  correct beat (e.g. `infographic` alone uses beat-4, not beat-1).
 - One act typically contains a **mix** of types (e.g. a `background` + a
   `lower-third` + an `infographic`) that together demonstrate the act.
 - The image generator (`generate_image.py`) is type-aware: it takes a `--type`
@@ -495,7 +510,7 @@ Answered during implementation:
 
 - ✅ **Image provider**: OpenRouter → `google/gemini-3.5-flash-image` (not a separate `IMAGE_API_KEY`)
 - ✅ **TTS provider**: ElevenLabs `eleven_turbo_v2_5`, voice "George" (`TTS_API_KEY`)
-- ✅ **Default Gemini model**: `google/gemini-2.5-flash` for text/script/storyboard
+- ✅ **Default Gemini model**: `google/gemini-3.5-flash` for text/script/storyboard
 - ✅ **Music + SFX**: fal.ai (`fal-ai/mmaudio-v2` for music, `fal-ai/stable-audio` for SFX, `FAL_KEY`)
 - ✅ **Animation types**: 9 built-in types (background, lower-third, speech-bubble, infographic, character, icon, title-card, transition + extensible)
 

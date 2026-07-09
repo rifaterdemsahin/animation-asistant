@@ -71,13 +71,11 @@
 
       <section class="panel">
         <h2>🖼️ 3. Components (typed images)</h2>
-        <p class="muted">Generates one of each type per act: background, lower-third, speech-bubble, infographic.</p>
+        <p class="muted">Each component has its own prompt + Generate button. Use <strong>Generate all components</strong> to bulk-create every type for the selected acts.</p>
         <div class="row">
-          <button id="show-comp-prompt" class="btn">👁️ Show Prompt</button>
-          <button id="gen-components" class="btn primary">Generate components</button>
-          <span class="muted">uses act checkboxes above</span>
+          <button id="gen-components" class="btn primary">⚡ Generate all components</button>
+          <span class="muted">uses act checkboxes above · per-card buttons below</span>
         </div>
-        <pre id="comp-prompt" class="out hidden muted" style="font-size:12px;max-height:120px;overflow:auto"></pre>
         <div id="components-out"></div>
       </section>
 

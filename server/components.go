@@ -26,12 +26,23 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 	if len(keys) == 0 {
 		keys = allActKeys()
 	}
-	types := req.Types
-	if len(types) == 0 {
-		_, types, _ = a.componentsTmpl()
+
+	styles, defaultTypes, imgTmpl := a.componentsTmpl()
+
+	// Canonical beat index per type (from the default type order). A single-type
+	// request must still pick the beat that matches its position in the full set,
+	// otherwise generating "infographic" alone would wrongly grab beat-1.
+	beatIdx := map[string]int{}
+	for i, t := range defaultTypes {
+		beatIdx[t] = i
 	}
 
-	styles, _, imgTmpl := a.componentsTmpl()
+	// Which types to (re)generate. Empty = all default types.
+	typeSet := req.Types
+	if len(typeSet) == 0 {
+		typeSet = defaultTypes
+	}
+
 	manifest := map[string][]map[string]any{}
 	for _, key := range keys {
 		act, ok := actByKey(key)
@@ -39,12 +50,22 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		beats := a.loadBeats(slug, act)
-		var list []map[string]any
-		for i, t := range types {
+
+		// Merge semantics: start from the existing manifest so regenerating one
+		// component never wipes the other types already produced for the act.
+		byType := map[string]map[string]any{}
+		for _, e := range a.loadComponentManifest(slug, act) {
+			if t, ok := e["type"].(string); ok {
+				byType[t] = e
+			}
+		}
+
+		for _, t := range typeSet {
 			style := styles[t]
 			if style == "" {
 				style = t
 			}
+			i := beatIdx[t] // canonical index; custom types fall back to 0
 			beatText := beatAt(beats, i)
 			if beatText == "" {
 				beatText = p.Topic
@@ -66,14 +87,30 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			list = append(list, map[string]any{
+			byType[t] = map[string]any{
 				"id":         fmt.Sprintf("%s-%s-%02d", slug, t, i+1),
 				"type":       t,
 				"prompt":     prompt,
 				"file":       rel,
 				"script_ref": beatID(beats, i),
-			})
+			}
 		}
+
+		// Rebuild the manifest in canonical (default-type) order, then any extras.
+		var list []map[string]any
+		for _, t := range defaultTypes {
+			if e, ok := byType[t]; ok {
+				list = append(list, e)
+			}
+		}
+		for _, e := range byType {
+			if t, ok := e["type"].(string); ok {
+				if _, isDefault := beatIdx[t]; !isDefault {
+					list = append(list, e)
+				}
+			}
+		}
+
 		buf, _ := json.MarshalIndent(list, "", "  ")
 		_ = a.store.Write(slug, act.Slug+"/components/components.json", buf)
 		manifest[key] = list
@@ -100,6 +137,19 @@ func (a *App) getComponents(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"acts": out})
+}
+
+// loadComponentManifest reads an act's existing components.json (may be empty).
+func (a *App) loadComponentManifest(slug string, act Act) []map[string]any {
+	b, err := a.store.Read(slug, act.Slug+"/components/components.json")
+	if err != nil {
+		return nil
+	}
+	var list []map[string]any
+	if json.Unmarshal(b, &list) != nil {
+		return nil
+	}
+	return list
 }
 
 // loadBeats reads an act's beats.json into a slice of beat objects.

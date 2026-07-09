@@ -53,19 +53,102 @@ function renderScripts(acts) {
 }
 async function loadScript() { try { var r = await j(api + "/projects/" + slug() + "/script"); renderScripts(r.acts || {}); } catch {} }
 
-function renderComponents(acts) {
-  var out = document.getElementById("components-out"); out.innerHTML = "";
-  var order = [["act-1","Act 1"],["act-2","Act 2"],["act-3","Act 3"]];
-  var any = false;
-  for (var i = 0; i < order.length; i++) { var k = order[i][0], t = order[i][1]; var l = acts[k] || []; if (!l.length) continue; any = true;
-    var s = document.createElement("div"); s.className = "panel"; s.innerHTML = "<h3>" + t + "</h3>";
-    var g = document.createElement("div"); g.className = "grid";
-    for (var jj = 0; jj < l.length; jj++) { var c = l[jj]; var card = document.createElement("div"); card.className = "comp"; card.innerHTML = "<img loading='lazy' src='" + api + "/projects/" + slug() + "/raw/" + c.file + "' alt='" + esc(c.type) + "'><div class='comp-meta'><span class='badge'>" + esc(c.type) + "</span><span class='muted'>" + esc(c.script_ref||"") + "</span></div><div class='comp-prompt muted' style='font-size:10px'>" + esc(c.prompt||"") + "</div>"; g.append(card); }
-    s.append(g); out.append(s);
-  }
-  if (!any) out.innerHTML = "<p class='muted'>No components yet — generate above.</p>";
+var compTmpl = null;     // components prompt template: {default_types, styles, image_prompt}
+var beatsByAct = {};     // actKey -> [beat text,...] from the latest script version
+var compTopic = "";
+
+function renderCompPrompt(tmpl, style, beat, topic) {
+  return (tmpl || "{{style}}. Illustrate this idea: {{beat}}. Topic: {{topic}}. Flat vector, clean, consistent style.")
+    .replace(/\{\{style\}\}/g, style)
+    .replace(/\{\{beat\}\}/g, beat)
+    .replace(/\{\{topic\}\}/g, topic);
 }
-async function loadComponents() { try { var r = await j(api + "/projects/" + slug() + "/components"); renderComponents(r.acts || {}); } catch {} }
+
+// Loads the components template, the latest per-act script beats, and the topic
+// so each component card can show the exact prompt that will be (or was) sent.
+async function ensureCompData() {
+  var s = slug();
+  var jobs = [];
+  if (!compTmpl) jobs.push(j(api + "/prompts/components").then(function (r) { compTmpl = JSON.parse(r.raw); }));
+  if (!Object.keys(beatsByAct).length) jobs.push(j(api + "/projects/" + s + "/script").then(function (r) {
+    beatsByAct = {};
+    var vers = r.versions || {};
+    for (var act in vers) {
+      var arr = vers[act] || []; var latest = null;
+      for (var i = 0; i < arr.length; i++) if (!latest || (arr[i].id || 0) > (latest.id || 0)) latest = arr[i];
+      if (!latest || !latest.beats) continue;
+      try { var parsed = JSON.parse(latest.beats); var texts = [];
+        for (var b = 0; b < parsed.length; b++) texts.push((parsed[b] && parsed[b].text) || "");
+        beatsByAct[act] = texts;
+      } catch (e) {}
+    }
+  }).catch(function () {}));
+  if (!compTopic) jobs.push(j(api + "/projects/" + s).then(function (p) { compTopic = p.topic || p.title || s; }).catch(function () {}));
+  if (jobs.length) await Promise.all(jobs);
+  return compTmpl;
+}
+
+function renderComponents(actsObj) {
+  var out = document.getElementById("components-out"); out.innerHTML = "";
+  var types = (compTmpl && compTmpl.default_types) || ["background", "lower-third", "speech-bubble", "infographic"];
+  var styles = (compTmpl && compTmpl.styles) || {};
+  var imgTmpl = (compTmpl && compTmpl.image_prompt) || "";
+  var topic = compTopic || (window.currentProject() || {}).title || "";
+  var s = slug();
+  var order = [["act-1", "Act 1 — 😱 Problem"], ["act-2", "Act 2 — 💡 Solution"], ["act-3", "Act 3 — 🎓 Lesson"]];
+
+  for (var oi = 0; oi < order.length; oi++) {
+    var key = order[oi][0], title = order[oi][1];
+    var existing = actsObj[key] || [];
+    var byType = {};
+    for (var e = 0; e < existing.length; e++) if (existing[e] && existing[e].type) byType[existing[e].type] = existing[e];
+
+    var wrap = document.createElement("div"); wrap.className = "panel"; wrap.style.marginTop = "12px";
+    wrap.innerHTML = "<h3>" + title + "</h3>";
+    var grid = document.createElement("div"); grid.className = "grid";
+
+    for (var ti = 0; ti < types.length; ti++) {
+      (function (actKey, t, idx) {
+        var entry = byType[t] || {};
+        var style = styles[t] || t;
+        // Same fallback order as the backend beatAt(): beat[idx] -> beat[0] -> topic.
+        var beatText = (beatsByAct[actKey] && beatsByAct[actKey][idx]) || (beatsByAct[actKey] && beatsByAct[actKey][0]) || topic;
+        var preview = entry.prompt || renderCompPrompt(imgTmpl, style, beatText, topic);
+
+        var card = document.createElement("div"); card.className = "comp";
+        var imgHtml = entry.file
+          ? "<img loading='lazy' src='" + api + "/projects/" + s + "/raw/" + entry.file + "' alt='" + esc(t) + "'>"
+          : "<div class='comp-placeholder muted'>— not generated yet —</div>";
+        card.innerHTML =
+          imgHtml +
+          "<div class='comp-meta'>" +
+            "<span class='badge'>" + esc(t) + (entry.script_ref ? " · " + esc(entry.script_ref) : "") + "</span>" +
+            "<div class='row' style='gap:6px'>" +
+              "<button class='btn comp-show'>👁️ Prompt</button>" +
+              "<button class='btn primary comp-gen'>⚡ Generate</button>" +
+            "</div>" +
+            "<pre class='comp-prompt-out out hidden' style='font-size:10px;max-height:120px;overflow:auto;margin:6px 0 0'>" + esc(preview) + "</pre>" +
+          "</div>";
+        grid.append(card);
+
+        var pre = card.querySelector(".comp-prompt-out");
+        card.querySelector(".comp-show").addEventListener("click", function () { pre.classList.toggle("hidden"); });
+        card.querySelector(".comp-gen").addEventListener("click", function (e2) {
+          var b = e2.currentTarget; loading(b, true);
+          j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: [actKey], types: [t] }) })
+            .then(function () { return loadComponents(); })
+            .catch(function (err) { alert(err.message); })
+            .finally(function () { loading(b, false); });
+        });
+      })(key, types[ti], ti);
+    }
+    wrap.append(grid); out.append(wrap);
+  }
+
+  var hasAny = false; for (var ak in actsObj) if ((actsObj[ak] || []).length) { hasAny = true; break; }
+  if (!hasAny) { var note = document.createElement("p"); note.className = "muted"; note.textContent = "No components yet — click a per-card Generate, or Generate all components above."; out.prepend(note); }
+}
+async function loadComponents() { try { var r = await j(api + "/projects/" + slug() + "/components"); await ensureCompData(); renderComponents(r.acts || {}); } catch {} }
 
 function renderAudio(audio) {
   var out = document.getElementById("audio-out"); out.innerHTML = "";
@@ -206,6 +289,7 @@ document.addEventListener("layout:ready", function () {
         loadOutline();
       });
       await step("script (3 acts)", async function () {
+        beatsByAct = {}; // invalidate cached beats so component prompts stay fresh
         await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: ["act-1","act-2","act-3"] }) });
         loadScript();
       });
@@ -237,14 +321,11 @@ document.addEventListener("layout:ready", function () {
     "User: Topic: " + cur.title + "\nAct: act-1 (problem)\nOutline summary for this act: <from outline>\n\n" +
     "Write only this act. Return JSON with shape:\n{\"narration\":\"1-3 paragraphs\",\"beats\":[{\"id\":\"beat-1\",\"text\":\"one concrete beat\"}]}\n3 to 6 beats. JSON only.");
 
-  togglePrompt("show-comp-prompt", "comp-prompt",
-    "Image model: google/gemini-3.5-flash-image\nPrompt per type:\n• background: 'wide 16:9 background scene illustration, clean flat vector style, no text. Illustrate this idea: <beat>. Topic: " + cur.title + ". Flat vector, clean.'\n• lower-third: 'lower-third banner overlay graphic with space for a short caption, flat vector, minimal.'\n• speech-bubble: 'speech bubble graphic with space for a short quote, flat vector, clean.'\n• infographic: 'clean infographic with simple data visualization using icons and numbers, flat vector.'\nDefaults: 4 types × 3 acts = 12 images.");
-
   togglePrompt("show-audio-prompt", "audio-prompt",
     "ElevenLabs TTS\nVoice: George (warm storyteller)\nModel: eleven_turbo_v2_5\nInput: act narration text from script generation.");
 
   document.getElementById("gen-outline").addEventListener("click", async function (e) { var b = e.currentTarget; loading(b, true); try { var r = await j(api + "/projects/" + s + "/outline", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); document.getElementById("outline-out").textContent = JSON.stringify(r.outline, null, 2); document.getElementById("outline-out").classList.remove("hidden"); document.getElementById("outline-state").textContent = "✅ ready"; } catch (err) { alert(err.message); } finally { loading(b, false); } });
-  document.getElementById("gen-script").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadScript(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
+  document.getElementById("gen-script").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { beatsByAct = {}; await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadScript(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("gen-components").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadComponents(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("gen-audio").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadAudio(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("refresh-files").addEventListener("click", function () { loadBrowse(); });
