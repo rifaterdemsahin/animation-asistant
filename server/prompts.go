@@ -536,6 +536,12 @@ func (a *App) scriptTmpl() (string, string) {
 	if v.User == "" {
 		v.User = d.User
 	}
+	// Enforce storyboard_prompts placeholder — if the editable template
+	// was saved without it, fall back to the compiled default so the UI
+	// always shows it and the backend hard-prepend has a clear insertion point.
+	if !strings.Contains(v.User, "{{storyboard_prompts}}") {
+		v.User = d.User
+	}
 	return v.System, v.User
 }
 

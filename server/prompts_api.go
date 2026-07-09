@@ -50,14 +50,30 @@ func (a *App) getPrompt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	raw := a.promptRaw(id)
+	def := defaultPromptJSON()[id]
+	// Enforce {{storyboard_prompts}} in the script prompt — if the stored
+	// template was saved without it, auto-repair so the prompts page shows it.
+	if id == "script" {
+		var probe struct {
+			System string `json:"system"`
+			User   string `json:"user"`
+		}
+		if json.Unmarshal([]byte(raw), &probe) == nil && !strings.Contains(probe.User, "{{storyboard_prompts}}") {
+			if a.prompts != nil {
+				a.invalidatePromptCache(id)
+				_ = a.prompts.Write(id, def)
+			}
+			raw = def
+		}
+	}
 	writeJSON(w, http.StatusOK, promptOut{
 		ID:          d.ID,
 		Title:       d.Title,
 		Description: d.Description,
 		Variables:   d.Variables,
 		Raw:         raw,
-		Default:     defaultPromptJSON()[id],
-		Dirty:       strings.TrimSpace(raw) != strings.TrimSpace(defaultPromptJSON()[id]),
+		Default:     def,
+		Dirty:       strings.TrimSpace(raw) != strings.TrimSpace(def),
 	})
 }
 
