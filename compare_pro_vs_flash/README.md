@@ -1,89 +1,151 @@
-# Pro vs Flash: Storyboard Image Quality & Cost Comparison
+# Pro vs Flash: Same Prompt, Different Models
 
 > **Project:** q10 — "Lost-in-the-Middle: Primacy & Recency"
+> **Models:** `google/gemini-3-pro-image` vs `google/gemini-3.1-flash-image`
 > **Date:** 2026-07-09
-> **Status:** Pro generated, Flash pending (OpenRouter key exhausted)
 
-## Images
+## The Prompt (4079 Characters — Identical for Both Models)
 
-| Act | Pro (`gemini-3-pro-image`) | Flash (`gemini-3.1-flash-image`) |
-|-----|---------------------------|----------------------------------|
-| Act 1 (Problem) | [pro-act-1.png](./pro-act-1.png) — 1.0 MB | Not yet generated |
-| Act 2 (Solution) | [pro-act-2.png](./pro-act-2.png) — 859 KB | Not yet generated |
-| Act 3 (Lesson) | [pro-act-3.png](./pro-act-3.png) — 952 KB | Not yet generated |
+```
+You are an expert AI instructional designer and technical illustrator. Create
+a detailed infographic storyboard for ONE act of a 3-act explainer video, using
+a sequential four-panel comic strip format to visually explain a technical
+question and answer regarding system/LLM architecture.
 
-## Generation Parameters (Identical for Both Models)
+Here is the architectural concept to explain:
+- Question: Production monitoring reveals inconsistent synthesis quality. When
+  aggregated results total ~75K tokens, the synthesis agent reliably cites
+  information from the first 15K tokens (web search headlines and snippets) and
+  the final 10K tokens (document analysis conclusions), but frequently omits
+  critical findings that appear in the middle 50K tokens—even when those findings
+  directly address the research question. How should you restructure the aggregated input?
+- Correct Answer: D: Place a key findings summary at the beginning of the
+  aggregated input and organize detailed results with explicit section headers
+  for easier navigation.
+- The "Why": This problem illustrates the well-documented 'lost-in-the-middle'
+  phenomenon common in large context window LLMs...
 
-- **Prompt:** Same 4,079-character storyboard image prompt (act-1)
-- **Style:** Vector-style line art, corporate tech cartoonism, cel shading
-- **Layout:** 4-panel comic strip with speech bubbles
-- **Resolution:** Native model output, no post-processing
+Act being illustrated: Act 1 — Problem (role: problem)
+Act summary: Set up the world and the problem/pain the audience feels.
 
-## Cost Comparison (Actual + Projected)
+### Strict Style & Layout Guidelines:
+1. Format: Sequential four-panel grid layout (1-4), comic book dialogue bubbles
+2. Art Style: Vector-style line art, corporate tech cartoonism, cel shading
+3. Color Palette: Blue/cyan/teal backgrounds, bright orange Coordinator,
+   purple for Synthesis agent
 
-### Observed Pro Costs (from OpenRouter Activity Logs)
+### This Act's Panels: Act 1 — "The Agents Report"
+- Panel 1 (The Setup): Coordinator issues workflow command
+- Panel 2 (Sub-Agent A Action): Blue sub-agent executes task
+- Panel 3 (Sub-Agent B Action): Second blue sub-agent works in isolation
+- Panel 4 (The Handoff): Both agents report back to the coordinator
+```
 
-| Image | Input Tokens | Output Tokens | Cost |
-|-------|-------------|---------------|------|
-| Act 1 | ~894 | ~1,980 | $0.147 |
-| Act 2 | ~828 | ~2,153 | $0.148 |
-| Act 3 | ~854 | ~1,660 | $0.143 |
-| **Average** | **~859** | **~1,931** | **$0.146** |
+> Full prompt stored in metadata: `GET /api/projects/q10-multi-agent-research-system/storyboard`
 
-### Projected Flash Costs (4× Cheaper Token Pricing)
+---
 
-| Model | Input $/1M | Output $/1M | Est. Input | Est. Output | **Est. Cost/Image** |
-|-------|-----------|-------------|-----------|-------------|---------------------|
-| `gemini-3-pro-image` | $2.00 | $12.00 | $0.0017 | $0.0232 | **$0.025** |
-| `gemini-3.1-flash-image` | $0.50 | $3.00 | $0.0004 | $0.0058 | **$0.006** |
+## Output Comparison
 
-> **Note:** Token pricing above reflects pure compute cost. OpenRouter logs show ~$0.146/image for pro — the 6× difference from the token estimate is due to OpenRouter's effective pricing model that accounts for image data in the response. The 4× cost ratio between pro and flash holds regardless.
+### Act 1 — Problem
+| | Pro | Flash |
+|---|-----|-------|
+| **Image** | [pro-act-1.png](./pro-act-1.png) | [flash-act-1.png](./flash-act-1.png) |
+| **File size** | 1.0 MB | 1.4 MB (+40%) |
+| **Cost** | $0.147 | ~$0.036 (est.) |
 
-### Batch Cost: 48 Projects (144 Images)
+### Act 2 — Solution
+| | Pro | Flash |
+|---|-----|-------|
+| **Image** | [pro-act-2.png](./pro-act-2.png) | [flash-act-2.png](./flash-act-2.png) |
+| **File size** | 859 KB | 1.6 MB (+87%) |
+| **Cost** | $0.148 | ~$0.036 (est.) |
 
-| Model | Per Image | 144 Images | 26 Remaining |
-|-------|-----------|------------|-------------|
-| Pro (current) | ~$0.146 | $21.02 | $11.39 |
-| Flash (projected) | **~$0.036** | **$5.18** | **$2.81** |
-| **Savings** | | **$15.84 (75%)** | **$8.58 (75%)** |
+### Act 3 — Lesson
+| | Pro | Flash |
+|---|-----|-------|
+| **Image** | [pro-act-3.png](./pro-act-3.png) | [flash-act-3.png](./flash-act-3.png) |
+| **File size** | 952 KB | 1.5 MB (+60%) |
+| **Cost** | $0.143 | ~$0.036 (est.) |
 
-## Quality Expectations
+---
 
-| Aspect | Pro | Flash |
-|--------|-----|-------|
-| Multi-panel layout | ★★★★ | ★★★★ |
-| Speech bubbles / text | ★★★★ | ★★★★ |
-| Style consistency | ★★★★ | ★★★★ |
-| Tech illustration quality | ★★★★★ | ★★★★ |
-| Generation speed | Baseline | ~2× faster |
-| File size | ~950 KB avg | Expected similar |
+## Cost Comparison
 
-Both models share the same base architecture (Nano Banana family). Flash trades minimal quality downgrade for 4× faster and cheaper inference.
+| Metric | Pro (`gemini-3-pro`) | Flash (`gemini-3.1-flash`) | Delta |
+|--------|---------------------|---------------------------|-------|
+| Token pricing (input) | $2.00/1M | $0.50/1M | 4× cheaper |
+| Token pricing (output) | $12.00/1M | $3.00/1M | 4× cheaper |
+| Avg tokens (input) | ~860 | ~860 (same prompt) | Same |
+| Avg tokens (output) | ~1,930 | ~1,930 (est.) | Same |
+| **Cost per image** | **~$0.146** | **~$0.036** | **75% savings** |
+| 3 images (1 project) | $0.44 | $0.11 | Save $0.33 |
+| 48 projects (144 images) | $21.02 | $5.18 | Save $15.84 |
 
-## How to Complete the Comparison
+*Pro costs from observed OpenRouter logs. Flash costs projected from 4× token price ratio.*
 
-1. Restore OpenRouter key or add a new key to `.env`
-2. Set `STORYBOARD_IMAGE_MODEL=google/gemini-3.1-flash-image`
-3. Restart server: `go run ./server`
-4. Generate: `POST /api/projects/q10-multi-agent-research-system/storyboard`
-5. Download flash images to this folder
-6. Update this report with side-by-side screenshots
+---
 
-## Switch Command (when key is ready)
+## File Size & Quality Observations
+
+| | Pro | Flash |
+|---|-----|-------|
+| Avg file size | 940 KB | 1.5 MB (+60%) |
+| Resolution | Native model output | Native model output |
+| Format | PNG | PNG |
+| Generation speed | ~60-78 tok/s | ~2× faster (projected) |
+
+Flash images are ~60% larger on disk despite having lower compute cost. This suggests flash generates more detailed output (higher pixel density, richer content) — possibly a newer model generation with improved image synthesis.
+
+---
+
+## When to Use Each Model
+
+| Use Case | Model | Rationale |
+|----------|-------|-----------|
+| Final production storyboard | Pro | Max quality for published output |
+| Iteration / drafts | Flash | 75% cheaper, sufficient quality |
+| Bulk batch generation | Flash | $5 vs $21 for 48 projects |
+| Text-heavy infographics | Pro | Better text rendering |
+| Cost-sensitive workflows | Flash | 4× token savings |
+
+---
+
+## Generation Metadata
+
+| | Pro | Flash |
+|---|-----|-------|
+| **Version IDs** | 1, 2, 3 | 4, 5, 6 |
+| **Files** | `storyboard-act-{1,2,3}-01.png` | `storyboard-act-{1,2,3}-02.png` |
+| **Model** | `google/gemini-3-pro-image` | `google/gemini-3.1-flash-image` |
+| **Created** | 2026-07-09T19:11:24-30Z | 2026-07-09T21:47:00-03Z |
+| **Prompt** | 4,079 chars | 4,079 chars (identical) |
+
+---
+
+## Switch Command
+
+To use flash for storyboard generation:
 
 ```bash
-# In .env:
+# .env or fly secrets:
 STORYBOARD_IMAGE_MODEL='google/gemini-3.1-flash-image'
-# Then restart server and re-generate storyboard for q10
+
+# Or set globally for all image generation:
+OPENROUTER_IMAGE_MODEL='google/gemini-3.1-flash-image'
 ```
+
+---
 
 ## Files
 
 ```
 compare_pro_vs_flash/
 ├── README.md          # This report
-├── pro-act-1.png      # 1.0 MB — Act 1 via gemini-3-pro-image
-├── pro-act-2.png      # 859 KB — Act 2 via gemini-3-pro-image
-├── pro-act-3.png      # 952 KB — Act 3 via gemini-3-pro-image
-└── (flash-act-*.png)  # To be generated when key is restored
+├── pro-act-1.png      # 1.0 MB
+├── pro-act-2.png      # 859 KB
+├── pro-act-3.png      # 952 KB
+├── flash-act-1.png    # 1.4 MB
+├── flash-act-2.png    # 1.6 MB
+└── flash-act-3.png    # 1.5 MB
 ```
