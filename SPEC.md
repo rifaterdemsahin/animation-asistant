@@ -311,6 +311,20 @@ maps the AI animation production pipeline to Bloom's five cognitive levels:
 > happens when generated content is arranged in Canva to create an aesthetic
 > learning experience.
 
+### 5.7 Backup All Projects 💾
+
+A one-click backup tool on the **Tools** page (`/pages/tools.html`) that
+downloads a `.zip` archive of every project via `GET /api/backup`.
+
+| Feature | Detail |
+|---------|--------|
+| **Endpoint** | `GET /api/backup` (authed) |
+| **Output** | Streaming `.zip` with `animation-assistant-backup-<timestamp>.zip` filename |
+| **Structure** | One folder per project slug, preserving full directory tree |
+| **Contents** | `project.json`, `outline.json`, `storyboard/*.png`, `storyboard/storyboard.json`, `storyboard/versions.json`, per-act `script/`, `components/`, `audio/`, `prompts/` |
+| **Format** | Raw binary files + JSON metadata — no transformation, exact copies |
+| **Implementation** | `server/backup.go` — streams via `archive/zip` stdlib, iterates `ListProjects()` + `List(slug, "")` + `Read()` |
+
 ## 6. Project & Data Model 📁
 
 An **animation project** is a folder + a metadata file, organized by the fixed
