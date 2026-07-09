@@ -1,9 +1,12 @@
 const api = "/api";
 
 // --- projects list cache (localStorage) -------------------------------------
-// Speeds up the Projects page: we paint from cache instantly, then revalidate
-// against the server in the background. "Clear cache" wipes it.
+// Speeds up the Projects page: while the cache is fresh (within CACHE_TTL) we
+// paint from it and skip the network entirely. Once it auto-expires we
+// revalidate against the server in the background (stale-while-revalidate).
+// "Clear cache" wipes it immediately; "Refresh" forces a revalidate now.
 const CACHE_KEY = "projects_cache_v1";
+const CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hours — cache auto-expires after this
 const STATUSES = ["backlog", "inprogress", "done"];
 const STATUS_LABELS = {
   backlog: "📋 Backlog",
@@ -15,32 +18,54 @@ function validStatus(s) {
   return STATUSES.includes(s) ? s : "backlog";
 }
 
-function getCache() {
+// getStaleCache returns the raw cache regardless of age (or null). Used for the
+// offline fallback and for patching fields without touching the age.
+function getStaleCache() {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const c = JSON.parse(raw);
-    if (!c || !Array.isArray(c.projects)) return null;
+    if (!c || !Array.isArray(c.projects) || typeof c.ts !== "number") return null;
     return c; // { projects, ts }
   } catch { return null; }
 }
 
-function setCache(projects) {
+// isCacheExpired reports whether a cache entry is older than CACHE_TTL.
+function isCacheExpired(c) {
+  return !c || Date.now() - c.ts > CACHE_TTL;
+}
+
+// getCache returns the cache only while it is still fresh (within CACHE_TTL).
+function getCache() {
+  const c = getStaleCache();
+  return isCacheExpired(c) ? null : c;
+}
+
+// writeCache stores projects with a timestamp (defaults to now). Pass an
+// explicit ts to preserve the original age (e.g. when patching a single field).
+function writeCache(projects, ts = Date.now()) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ projects, ts: Date.now() }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ projects, ts }));
   } catch {}
+}
+
+// setCache writes a fresh cache and resets the 3h TTL countdown.
+function setCache(projects) {
+  writeCache(projects, Date.now());
 }
 
 function clearCache() {
   try { localStorage.removeItem(CACHE_KEY); } catch {}
 }
 
+// patchCacheProject updates one project in the stored cache without resetting
+// its age, so a status change doesn't extend the TTL.
 function patchCacheProject(slug, patch) {
-  const c = getCache();
+  const c = getStaleCache();
   if (!c) return;
   const p = c.projects.find(x => x.slug === slug);
   if (p) Object.assign(p, patch);
-  setCache(c.projects);
+  writeCache(c.projects, c.ts);
 }
 
 function cacheAgeText(ts) {
@@ -48,17 +73,41 @@ function cacheAgeText(ts) {
   const s = Math.round((Date.now() - ts) / 1000);
   if (s < 5) return "just now";
   if (s < 60) return s + "s ago";
-  return Math.round(s / 60) + "m ago";
+  const m = Math.round(s / 60);
+  if (m < 60) return m + "m ago";
+  return Math.round(m / 60) + "h ago";
+}
+
+// cacheExpiryText returns a short "expires in Xh Ym" label for a fresh cache,
+// or "" once the TTL has elapsed.
+function cacheExpiryText(ts) {
+  if (!ts) return "";
+  const ms = CACHE_TTL - (Date.now() - ts);
+  if (ms <= 0) return "";
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return "expires in " + mins + "m";
+  const hrs = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return "expires in " + hrs + "h" + (rem ? " " + rem + "m" : "");
 }
 
 function setCacheIndicator({ ts = null, fromCache = false, loading = false, offline = false } = {}) {
   const el = document.getElementById("cache-status");
   if (!el) return;
-  if (loading) { el.textContent = "Refreshing…"; return; }
-  const suffix = offline ? " (offline — showing cached)" : "";
-  el.textContent = fromCache
-    ? "Cached " + cacheAgeText(ts) + suffix
-    : "Updated " + cacheAgeText(ts);
+  if (loading) {
+    el.textContent = ts ? "Cached " + cacheAgeText(ts) + " · refreshing…" : "Refreshing…";
+    return;
+  }
+  if (offline) {
+    el.textContent = "Cached " + cacheAgeText(ts) + " (offline — showing cached)";
+    return;
+  }
+  if (fromCache) {
+    const exp = cacheExpiryText(ts);
+    el.textContent = "Cached " + cacheAgeText(ts) + (exp ? " · " + exp : "");
+    return;
+  }
+  el.textContent = "Updated " + cacheAgeText(ts);
 }
 
 // --- core -------------------------------------------------------------------
@@ -302,26 +351,36 @@ function makeCanvaLink(p) {
   return a;
 }
 
-// loadProjects: stale-while-revalidate. Paints from cache first (unless a hard
-// refresh is requested), then fetches fresh data from the server.
+// loadProjects: cache-first with a 3h TTL. While the cache is fresh we paint
+// from it and skip the network entirely. Once expired (or on a hard refresh)
+// we paint the stale cache as a placeholder and revalidate against the server.
+// If the server is unreachable we fall back to whatever cache we have.
 async function loadProjects({ refresh = false } = {}) {
-  if (!refresh) {
-    const c = getCache();
-    if (c) {
-      renderProjects(c.projects);
-      setCacheIndicator({ ts: c.ts, fromCache: true });
-    }
+  const cache = getStaleCache();
+  const fresh = !isCacheExpired(cache);
+
+  // Fresh cache (and not a hard refresh): serve from cache, no network.
+  if (!refresh && fresh) {
+    renderProjects(cache.projects);
+    setCacheIndicator({ ts: cache.ts, fromCache: true });
+    return;
   }
+
+  // Expired cache: paint it as a placeholder while we revalidate.
+  if (!refresh && cache) {
+    renderProjects(cache.projects);
+  }
+
   try {
-    setCacheIndicator({ loading: true });
+    setCacheIndicator({ loading: true, ts: (!refresh && cache) ? cache.ts : null });
     const data = await json(api + "/projects");
     setCache(data.projects);
     renderProjects(data.projects);
     setCacheIndicator({ ts: Date.now() });
   } catch (err) {
-    const c = getCache();
-    if (c) {
-      setCacheIndicator({ ts: c.ts, fromCache: true, offline: true });
+    if (cache) {
+      renderProjects(cache.projects);
+      setCacheIndicator({ ts: cache.ts, fromCache: true, offline: true });
     } else {
       setCacheIndicator();
       alert(err.message);
@@ -598,6 +657,15 @@ document.addEventListener("layout:ready", () => {
   });
   updateViewToggle();
   updateSortArrows();
+
+  // Auto-expire: when the tab becomes visible again after being idle, refresh
+  // automatically if the cache has passed its 3h TTL (skipped while an edit
+  // modal is open so we never disrupt an active edit).
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (document.getElementById("edit-modal")) return;
+    if (isCacheExpired(getStaleCache())) loadProjects({ refresh: true });
+  });
 
   loadProjects();
 });
