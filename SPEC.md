@@ -117,10 +117,23 @@ The central tool that produces the raw materials for an animation. It generates:
    alignment. Re-generating the script picks up the latest storyboard images
    automatically.
 2. **Images** — visuals produced by the image generator (Python script).
-3. **Audio** — voiceover/sound produced by the audio generator (Python script).
+3. **Audio** — three independent layers per act (see §5.3): **voiceover**
+   (ElevenLabs TTS), **music** (fal.ai), and **sound effects** (fal.ai). Each
+   layer has its own 👁️ Show Prompt / ⚡ Generate Prompt / 🚀 Execute controls
+   in the Media Manager.
 
 The Media Manager lets you pick/create a project, then run each generation step
 per **act** (see §5.1.1) and see the results.
+
+#### 5.1.0 Model visibility 🤖
+Every step shows **which model it will trigger** as a badge next to its heading
+(e.g. Outline/Script → `google/gemini-3.5-flash`, Components →
+`google/gemini-3-pro-image`, Voiceover → `eleven_turbo_v2_5 · George`, Music →
+`fal-ai/mmaudio-v2`, SFX → `fal-ai/stable-audio`). Badges are filled client-side
+from `GET /api/models`, which reports the active text/image/storyboard-image
+models plus the three audio layers. **Minimum text/image model is Gemini 3**;
+both the compiled defaults and the deployed `OPENROUTER_TEXT_MODEL` secret are
+Gemini 3.
 
 #### 5.1.1 Three-Act narrative structure 🎭
 Every project is built on a fixed **three-act** story structure. Generation
@@ -227,7 +240,9 @@ that reveals the full prompt being sent to the model before generation. This
 applies to both the JSON text prompt and the infographic image prompt.
 
 ### 5.3 Audio Tools 🎧
-Audio is handled by two complementary systems:
+The Media Manager's **§4 Audio** section drives three independent audio layers
+per act. Each layer has 👁️ Show Prompt (raw template), ⚡ Generate Prompt
+(rendered with project context), and 🚀 Execute (run generation):
 
 #### 5.3.1 Voiceover / Narration 🎙️
 Full-act narration voiceover via **ElevenLabs** TTS. One MP3 per act, stored at
@@ -537,11 +552,12 @@ Items planned but not yet implemented:
 
 Answered during implementation:
 
-- ✅ **Image provider**: OpenRouter → `google/gemini-3.5-flash-image` (not a separate `IMAGE_API_KEY`)
+- ✅ **Image provider**: OpenRouter → `google/gemini-3-pro-image` (not a separate `IMAGE_API_KEY`)
 - ✅ **TTS provider**: ElevenLabs `eleven_turbo_v2_5`, voice "George" (`TTS_API_KEY`)
 - ✅ **Default Gemini model**: `google/gemini-3.5-flash` for text/script/storyboard
 - ✅ **Music + SFX**: fal.ai (`fal-ai/mmaudio-v2` for music, `fal-ai/stable-audio` for SFX, `FAL_KEY`)
 - ✅ **Animation types**: 9 built-in types (background, lower-third, speech-bubble, infographic, character, icon, title-card, transition + extensible)
+- ✅ **Model policy (min Gemini 3)**: text/script/storyboard = `google/gemini-3.5-flash`, images = `google/gemini-3-pro-image` (both Gemini 3). Active models exposed at `GET /api/models` and shown inline as badges on the Media Manager.
 
 Still open:
 

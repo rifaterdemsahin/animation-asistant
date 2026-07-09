@@ -30,6 +30,7 @@ func (a *App) routes() http.Handler {
 
 	// authed
 	mux.HandleFunc("GET /api/me", a.authed(a.me))
+	mux.HandleFunc("GET /api/models", a.authed(a.models))
 	mux.HandleFunc("GET /api/projects", a.authed(a.listProjects))
 	mux.HandleFunc("POST /api/projects", a.authed(a.createProject))
 	mux.HandleFunc("GET /api/projects/{slug}", a.authed(a.getProject))

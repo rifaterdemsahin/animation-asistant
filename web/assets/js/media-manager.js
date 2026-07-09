@@ -150,14 +150,77 @@ function renderComponents(actsObj) {
 }
 async function loadComponents() { try { var r = await j(api + "/projects/" + slug() + "/components"); await ensureCompData(); renderComponents(r.acts || {}); } catch {} }
 
-function renderAudio(audio) {
-  var out = document.getElementById("audio-out"); out.innerHTML = "";
-  var order = [["act-1","Act 1 — 😱 Problem"],["act-2","Act 2 — 💡 Solution"],["act-3","Act 3 — 🎓 Lesson"]];
-  var any = false;
-  for (var i = 0; i < order.length; i++) { var k = order[i][0], t = order[i][1]; if (!audio[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h3>" + t + "</h3>🎙️ <audio controls src='" + api + "/projects/" + slug() + "/raw/" + audio[k] + "'></audio>"; out.append(d); }
-  if (!any) out.innerHTML = "<p class='muted'>No audio yet — generate above.</p>";
+// --- Models (shown inline per step) + audio layer loaders ---
+
+var models = null;
+async function loadModels() {
+  try {
+    models = await j(api + "/models");
+    var set = function (id, txt) { var el = document.getElementById(id); if (el && txt) { el.textContent = "🤖 " + txt; el.title = "Model: " + txt; } };
+    set("mb-outline", models.text);
+    set("mb-script", models.text);
+    set("mb-components", models.image);
+    set("mb-storyboard", models.storyboard_image);
+    if (models.voiceover) {
+      var v = models.voiceover.voice === "JBFqnCBsd6RMkjVDRZzb" ? "George" : (models.voiceover.voice || "");
+      set("mb-vo", models.voiceover.model + (v ? " · " + v : ""));
+    }
+    if (models.music) set("mb-music", models.music.model);
+    if (models.sfx) set("mb-sfx", models.sfx.model);
+  } catch {}
 }
-async function loadAudio() { try { var r = await j(api + "/projects/" + slug() + "/audio"); renderAudio(r.audio || {}); } catch {} }
+
+// act-key -> { slug, role, title } mirrors server acts.go
+var ACT_META = {
+  "act-1": { slug: "act-1-problem", role: "problem", title: "Act 1 — 😱 Problem" },
+  "act-2": { slug: "act-2-solution", role: "solution", title: "Act 2 — 💡 Solution" },
+  "act-3": { slug: "act-3-lesson", role: "lesson", title: "Act 3 — 🎓 Lesson" }
+};
+
+function renderTmplJS(tmpl, vars) {
+  var s = String(tmpl || "");
+  for (var k in vars) s = s.split("{{" + k + "}}").join(vars[k]);
+  return s;
+}
+async function ensureTopic() {
+  if (compTopic) return compTopic;
+  try { var p = await j(api + "/projects/" + slug()); compTopic = p.topic || p.title || slug(); } catch {}
+  return compTopic;
+}
+
+var ACT_ORDER = [["act-1", "Act 1 — 😱 Problem"], ["act-2", "Act 2 — 💡 Solution"], ["act-3", "Act 3 — 🎓 Lesson"]];
+function audioEl(kind, file) {
+  return kind + " <audio controls src='" + api + "/projects/" + slug() + "/raw/" + file + "'></audio>";
+}
+
+function renderVoiceover(audio) {
+  var out = document.getElementById("vo-out"); out.innerHTML = "";
+  var any = false;
+  for (var i = 0; i < ACT_ORDER.length; i++) { var k = ACT_ORDER[i][0], t = ACT_ORDER[i][1]; if (!audio[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h4>" + t + "</h4>" + audioEl("🎙️", audio[k]); out.append(d); }
+  if (!any) out.innerHTML = "<p class='muted'>No voiceover yet — 🚀 Execute above.</p>";
+}
+async function loadVoiceover() { try { var r = await j(api + "/projects/" + slug() + "/audio"); renderVoiceover(r.audio || {}); } catch {} }
+
+function renderMusic(music) {
+  var out = document.getElementById("music-out"); out.innerHTML = "";
+  var any = false;
+  for (var i = 0; i < ACT_ORDER.length; i++) { var k = ACT_ORDER[i][0], t = ACT_ORDER[i][1]; if (!music[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h4>" + t + "</h4>" + audioEl("🎵", music[k]); out.append(d); }
+  if (!any) out.innerHTML = "<p class='muted'>No music yet — 🚀 Execute above.</p>";
+}
+async function loadMusic() { try { var r = await j(api + "/projects/" + slug() + "/audio/music"); renderMusic(r.music || {}); } catch {} }
+
+function renderSFX(sfx) {
+  var out = document.getElementById("sfx-out"); out.innerHTML = "";
+  var any = false;
+  for (var i = 0; i < ACT_ORDER.length; i++) {
+    var k = ACT_ORDER[i][0], t = ACT_ORDER[i][1]; var files = sfx[k]; if (!files || !files.length) continue; any = true;
+    var d = document.createElement("div"); d.className = "act"; var html = "<h4>" + t + "</h4>";
+    for (var f = 0; f < files.length; f++) { var p = files[f].file || files[f]; html += "<div style='margin:4px 0'>" + audioEl("🔉", p) + "</div>"; }
+    d.innerHTML = html; out.append(d);
+  }
+  if (!any) out.innerHTML = "<p class='muted'>No sound effects yet — 🚀 Execute above.</p>";
+}
+async function loadSFX() { try { var r = await j(api + "/projects/" + slug() + "/audio/sfx"); renderSFX(r.sfx || {}); } catch {} }
 
 // --- Generated-file browser: download, copy-to-clipboard, modal preview ---
 
@@ -430,9 +493,9 @@ document.addEventListener("layout:ready", function () {
         await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: ["act-1","act-2","act-3"] }) });
         loadComponents();
       });
-      await step("audio (3 acts)", async function () {
+      await step("voiceover (3 acts)", async function () {
         await j(api + "/projects/" + s + "/audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: ["act-1","act-2","act-3"] }) });
-        loadAudio();
+        loadVoiceover();
       });
       status.textContent = "Full pipeline complete.";
       loadBrowse();
@@ -454,14 +517,88 @@ document.addEventListener("layout:ready", function () {
     "User: Topic: " + cur.title + "\nAct: act-1 (problem)\nOutline summary for this act: <from outline>\n\n" +
     "Write only this act. Return JSON with shape:\n{\"narration\":\"1-3 paragraphs\",\"beats\":[{\"id\":\"beat-1\",\"text\":\"one concrete beat\"}]}\n3 to 6 beats. JSON only.");
 
-  togglePrompt("show-audio-prompt", "audio-prompt",
-    "ElevenLabs TTS\nVoice: George (warm storyteller)\nModel: eleven_turbo_v2_5\nInput: act narration text from script generation.");
+  // --- Audio §4: three types, each with Show / Generate / Execute ---
+  var audioTmpl = null;
+  async function ensureAudioTmpl() {
+    if (audioTmpl) return audioTmpl;
+    try { var r = await j(api + "/prompts/audio"); audioTmpl = JSON.parse(r.raw); } catch { audioTmpl = null; }
+    return audioTmpl;
+  }
+  function musicInputs() { var t = audioTmpl || {}; return { genre: (document.getElementById("music-genre").value || "").trim() || t.default_genre || "cinematic", mood: (document.getElementById("music-mood").value || "").trim() || t.default_mood || "inspiring and uplifting" }; }
+
+  // Voiceover (ElevenLabs TTS)
+  document.getElementById("vo-show").addEventListener("click", function () {
+    var pre = document.getElementById("vo-prompt"); var m = (models && models.voiceover) || {};
+    var v = m.voice === "JBFqnCBsd6RMkjVDRZzb" ? "George" : (m.voice || "—");
+    pre.textContent = "ElevenLabs Text-to-Speech\nModel: " + (m.model || "eleven_turbo_v2_5") + "\nVoice: " + v + "\nSettings: stability 0.5 · similarity_boost 0.75\nInput: each selected act's narration (Script step → voiceover.txt)\nOutput: <act-slug>/audio/narration.mp3";
+    pre.classList.remove("hidden");
+  });
+  document.getElementById("vo-gen").addEventListener("click", async function () {
+    var pre = document.getElementById("vo-prompt"); var status = document.getElementById("vo-status");
+    var a = acts(); if (!a.length) { alert("Select at least one act."); return; }
+    status.textContent = "Loading narration…";
+    try {
+      var r = await j(api + "/projects/" + s + "/script"); var vo = r.voiceover || {};
+      var text = "";
+      a.forEach(function (k) { text += "=== " + ((ACT_META[k] || {}).title || k) + " — TTS input ===\n" + (vo[k] || "(no narration — generate the Script first)") + "\n\n"; });
+      pre.textContent = text || "No narration available."; pre.classList.remove("hidden"); status.textContent = "Voiceover input ready.";
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+  document.getElementById("vo-exec").addEventListener("click", async function (e) {
+    var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; }
+    loading(b, true); try { await j(api + "/projects/" + s + "/audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadVoiceover(); } catch (err) { alert(err.message); } finally { loading(b, false); }
+  });
+
+  // Music (fal.ai)
+  document.getElementById("music-show").addEventListener("click", async function () {
+    var pre = document.getElementById("music-prompt"); var t = await ensureAudioTmpl();
+    pre.textContent = "fal.ai — Background Music (" + ((models && models.music && models.music.model) || "fal-ai/mmaudio-v2") + ")\n\nmusic_prompt template:\n" + (t ? t.music_prompt : "(none)") + "\n\ndefault_genre: " + (t ? t.default_genre : "") + "\ndefault_mood: " + (t ? t.default_mood : "") + "\nOutput: <act-slug>/audio/music.mp3";
+    pre.classList.remove("hidden");
+  });
+  document.getElementById("music-gen").addEventListener("click", async function () {
+    var pre = document.getElementById("music-prompt"); var status = document.getElementById("music-status");
+    var a = acts(); if (!a.length) { alert("Select at least one act."); return; }
+    status.textContent = "Rendering prompt…";
+    try {
+      var t = await ensureAudioTmpl(); await ensureTopic(); var mv = musicInputs();
+      var tmpl = (t && t.music_prompt) || "{{genre}} {{mood}} background music for a {{act_role}} act about: {{topic}}. 30 seconds, seamless loop.";
+      var text = "genre=" + mv.genre + " · mood=" + mv.mood + " · topic=" + compTopic + "\n\n";
+      a.forEach(function (k) { var m = ACT_META[k] || {}; text += "=== " + (m.title || k) + " ===\n" + renderTmplJS(tmpl, { genre: mv.genre, mood: mv.mood, act_role: m.role || k, topic: compTopic }) + "\n\n"; });
+      pre.textContent = text; pre.classList.remove("hidden"); status.textContent = "Music prompt rendered.";
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+  document.getElementById("music-exec").addEventListener("click", async function (e) {
+    var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; }
+    loading(b, true); try { await ensureAudioTmpl(); var mv = musicInputs(); await j(api + "/projects/" + s + "/audio/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a, genre: mv.genre, mood: mv.mood }) }); await loadMusic(); } catch (err) { alert(err.message); } finally { loading(b, false); }
+  });
+
+  // Sound Effects (fal.ai)
+  document.getElementById("sfx-show").addEventListener("click", async function () {
+    var pre = document.getElementById("sfx-prompt"); var t = await ensureAudioTmpl();
+    var types = (t && t.sfx_types) || []; var lines = types.map(function (x) { return "  - " + x.name + ": " + x.desc; }).join("\n");
+    pre.textContent = "fal.ai — Sound Effects (" + ((models && models.sfx && models.sfx.model) || "fal-ai/stable-audio") + ")\n\nsfx_prompt template:\n" + (t ? t.sfx_prompt : "(none)") + "\n\nsfx_types:\n" + (lines || "  (none)") + "\n\nOutput: <act-slug>/audio/sfx-<name>-NN.mp3";
+    pre.classList.remove("hidden");
+  });
+  document.getElementById("sfx-gen").addEventListener("click", async function () {
+    var pre = document.getElementById("sfx-prompt"); var status = document.getElementById("sfx-status");
+    var a = acts(); if (!a.length) { alert("Select at least one act."); return; }
+    status.textContent = "Rendering prompt…";
+    try {
+      var t = await ensureAudioTmpl(); var tmpl = (t && t.sfx_prompt) || "{{desc}}. Short, clean, game-quality sound effect."; var types = (t && t.sfx_types) || [];
+      var text = "";
+      a.forEach(function (k) { text += "=== " + ((ACT_META[k] || {}).title || k) + " ===\n"; if (!types.length) { text += renderTmplJS(tmpl, { desc: "(no sfx_types configured)" }) + "\n\n"; return; } for (var i = 0; i < types.length; i++) text += renderTmplJS(tmpl, { desc: types[i].desc }) + "\n"; text += "\n"; });
+      pre.textContent = text; pre.classList.remove("hidden"); status.textContent = "SFX prompt rendered.";
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+  document.getElementById("sfx-exec").addEventListener("click", async function (e) {
+    var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; }
+    loading(b, true); try { await j(api + "/projects/" + s + "/audio/sfx", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadSFX(); } catch (err) { alert(err.message); } finally { loading(b, false); }
+  });
 
   document.getElementById("gen-outline").addEventListener("click", async function (e) { var b = e.currentTarget; loading(b, true); try { var r = await j(api + "/projects/" + s + "/outline", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); document.getElementById("outline-out").textContent = JSON.stringify(r.outline, null, 2); document.getElementById("outline-out").classList.remove("hidden"); document.getElementById("outline-state").textContent = "✅ ready"; } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("gen-script").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { beatsByAct = {}; await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadScript(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("gen-components").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadComponents(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
-  document.getElementById("gen-audio").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/audio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadAudio(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("refresh-files").addEventListener("click", function () { loadBrowse(); });
 
-  loadStoryboardImg(); loadOutline(); loadScript(); loadComponents(); loadAudio(); loadBrowse();
+  loadModels(); loadStoryboardImg(); loadOutline(); loadScript(); loadComponents(); loadVoiceover(); loadMusic(); loadSFX(); loadBrowse();
 });

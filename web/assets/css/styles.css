@@ -30,6 +30,18 @@ body {
 .nav-links a:hover { background: var(--panel-2); }
 .nav-links a.disabled { color: var(--muted); pointer-events: none; }
 .nav-sep { color: var(--border); margin: 0 -4px; }
+
+/* dropdown submenu */
+.nav-dropdown { position: relative; display: inline-block; }
+.nav-group-trigger { cursor: pointer; }
+.nav-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 160px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+  z-index: 60; padding: 4px 0; margin-top: 4px; }
+.nav-dropdown-menu a { display: block; padding: 8px 14px; color: var(--ink); text-decoration: none;
+  border-radius: 0; white-space: nowrap; }
+.nav-dropdown-menu a:hover { background: var(--panel); }
+.nav-dropdown:hover .nav-dropdown-menu { display: block; }
+.nav-sep { color: var(--border); margin: 0 -4px; }
 .logged-in-badge { color: var(--accent-2); padding: 6px 8px; border-radius: 6px; font-weight: 600; }
 #logout-btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
   padding: 5px 12px; border-radius: 6px; cursor: pointer; }
@@ -158,6 +170,14 @@ input:focus { outline: none; border-color: var(--accent); }
 .file-card .file-actions { display: flex; gap: 6px; padding: 0 10px 10px; }
 .file-card .file-actions .btn { padding: 4px 8px; font-size: 13px; flex: 1; text-align: center; }
 .file-card .file-icon { cursor: pointer; }
+
+/* model + audio block */
+.model-badge { display: inline-block; margin-left: 8px; vertical-align: middle;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--accent-2);
+  padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.audio-block { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.audio-block:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+.audio-block h3 { margin: 0 0 4px; font-size: 15px; }
 
 /* Bloom's Taxonomy self-learning section */
 .bloom-section { margin-top: 40px; }

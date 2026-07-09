@@ -22,12 +22,19 @@ type falResponse struct {
 	} `json:"audio"`
 }
 
+// fal.ai model ids used for the two audio layers. Exposed via GET /api/models so
+// the UI can show which model each step triggers.
+const (
+	FalMusicModel = "fal-ai/mmaudio-v2"
+	FalSFXModel   = "fal-ai/stable-audio"
+)
+
 func (a *App) falMusic(prompt string) ([]byte, error) {
-	return a.falCall("fal-ai/mmaudio-v2", prompt)
+	return a.falCall(FalMusicModel, prompt)
 }
 
 func (a *App) falSFX(prompt string) ([]byte, error) {
-	return a.falCall("fal-ai/stable-audio", prompt)
+	return a.falCall(FalSFXModel, prompt)
 }
 
 func (a *App) falCall(model, prompt string) ([]byte, error) {

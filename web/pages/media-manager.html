@@ -37,13 +37,13 @@
       </section>
 
       <section id="storyboard-preview" class="panel hidden">
-        <h2>📋 Storyboard Overview</h2>
+        <h2>📋 Storyboard Overview <span id="mb-storyboard" class="model-badge"></span></h2>
         <img id="sb-preview-img" style="max-width:100%;border-radius:8px;border:1px solid var(--border)" alt="storyboard infographic">
         <p style="margin-top:6px"><a href="/pages/storyboard.html" class="btn">📋 Open Storyboard</a></p>
       </section>
 
       <section class="panel">
-        <h2>📝 1. Outline</h2>
+        <h2>📝 1. Outline <span id="mb-outline" class="model-badge"></span></h2>
         <p class="muted">Project-level outline across the 3 acts (Problem → Solution → Lesson).</p>
         <div class="row">
           <button id="show-outline-prompt" class="btn">👁️ Show Prompt</button>
@@ -55,7 +55,7 @@
       </section>
 
       <section class="panel">
-        <h2>📜 2. Script (per act)</h2>
+        <h2>📜 2. Script (per act) <span id="mb-script" class="model-badge"></span></h2>
         <div class="row">
           <label class="row"><input type="checkbox" id="act-1" checked> Act 1 — 😱 Problem</label>
           <label class="row"><input type="checkbox" id="act-2" checked> Act 2 — 💡 Solution</label>
@@ -70,7 +70,7 @@
       </section>
 
       <section class="panel">
-        <h2>🖼️ 3. Components (typed images)</h2>
+        <h2>🖼️ 3. Components (typed images) <span id="mb-components" class="model-badge"></span></h2>
         <p class="muted">Each component has its own prompt + Generate button. Use <strong>Generate all components</strong> to bulk-create every type for the selected acts.</p>
         <div class="row">
           <button id="gen-components" class="btn primary">⚡ Generate all components</button>
@@ -80,14 +80,51 @@
       </section>
 
       <section class="panel">
-        <h2>🎙️ 4. Audio (narration)</h2>
-        <p class="muted">ElevenLabs TTS from each act's narration.</p>
-        <div class="row">
-          <button id="show-audio-prompt" class="btn">👁️ Show Prompt</button>
-          <button id="gen-audio" class="btn primary">Generate audio</button>
+        <h2>🎧 4. Audio <span class="badge">3 types</span></h2>
+        <p class="muted">Three independent audio layers per act — each with 👁️ Show Prompt (raw template), ⚡ Generate Prompt (rendered with project context), and 🚀 Execute (run generation). Uses the act checkboxes in §2.</p>
+
+        <div class="audio-block">
+          <h3>🎙️ Voiceover (narration) <span id="mb-vo" class="model-badge"></span></h3>
+          <p class="muted">ElevenLabs TTS from each act's script narration &rarr; <code>narration.mp3</code>.</p>
+          <div class="row">
+            <button id="vo-show" class="btn">👁️ Show Prompt</button>
+            <button id="vo-gen" class="btn">⚡ Generate Prompt</button>
+            <button id="vo-exec" class="btn primary">🚀 Execute</button>
+            <span id="vo-status" class="muted" style="font-size:13px"></span>
+          </div>
+          <pre id="vo-prompt" class="out hidden muted" style="font-size:12px;max-height:160px;overflow:auto"></pre>
+          <div id="vo-out" class="acts"></div>
         </div>
-        <pre id="audio-prompt" class="out hidden muted" style="font-size:12px;max-height:120px;overflow:auto"></pre>
-        <div id="audio-out" class="acts"></div>
+
+        <div class="audio-block">
+          <h3>🎵 Music (background) <span id="mb-music" class="model-badge"></span></h3>
+          <p class="muted">fal.ai background track per act &rarr; <code>music.mp3</code>.</p>
+          <div class="row">
+            <label>Genre <input id="music-genre" type="text" placeholder="cinematic" style="width:150px"></label>
+            <label>Mood <input id="music-mood" type="text" placeholder="inspiring and uplifting" style="width:220px"></label>
+          </div>
+          <div class="row">
+            <button id="music-show" class="btn">👁️ Show Prompt</button>
+            <button id="music-gen" class="btn">⚡ Generate Prompt</button>
+            <button id="music-exec" class="btn primary">🚀 Execute</button>
+            <span id="music-status" class="muted" style="font-size:13px"></span>
+          </div>
+          <pre id="music-prompt" class="out hidden muted" style="font-size:12px;max-height:160px;overflow:auto"></pre>
+          <div id="music-out" class="acts"></div>
+        </div>
+
+        <div class="audio-block">
+          <h3>🔉 Sound Effects <span id="mb-sfx" class="model-badge"></span></h3>
+          <p class="muted">fal.ai spot effects (whoosh / ding / reveal) per act &rarr; <code>sfx-&lt;name&gt;-NN.mp3</code>.</p>
+          <div class="row">
+            <button id="sfx-show" class="btn">👁️ Show Prompt</button>
+            <button id="sfx-gen" class="btn">⚡ Generate Prompt</button>
+            <button id="sfx-exec" class="btn primary">🚀 Execute</button>
+            <span id="sfx-status" class="muted" style="font-size:13px"></span>
+          </div>
+          <pre id="sfx-prompt" class="out hidden muted" style="font-size:12px;max-height:160px;overflow:auto"></pre>
+          <div id="sfx-out" class="acts"></div>
+        </div>
       </section>
 
       <section class="panel">

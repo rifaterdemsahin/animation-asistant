@@ -37,6 +37,10 @@ loop: **storyboard → script (re-generate with storyboard context)**.
   every asset card has **⬇️ Download** (blob → real filename), **📋 Copy**
   (context-aware: image data / text / URL, fallback URL), and **🔍 View**
   (modal popup). Keep new asset surfaces consistent with these three actions.
+- **Model visibility + 3-type audio:** every Media Manager step shows the model
+  it triggers via a `.model-badge` filled from `GET /api/models`. The **§4 Audio**
+  section has 3 independent layers — voiceover (ElevenLabs), music (fal.ai),
+  SFX (fal.ai) — each with 👁️ Show Prompt / ⚡ Generate Prompt / 🚀 Execute.
 - **Secrets only via env** (`.env` local via KeyVault; `fly secrets` on fly.io).
   Never log secrets. Basic admin login (cookie auth) by design.
 - **Storage via the Backend interface** — handlers use `a.store`, never raw paths.
@@ -74,8 +78,11 @@ fly deploy                                        # fly.io (secrets already set)
 When asked to do both ("open local + deploy"), run the server in background and
 deploy in parallel, then open Chrome once the server is ready.
 
-Models: text `google/gemini-3.5-flash`, image `google/gemini-3.5-flash-image`,
-TTS ElevenLabs `eleven_turbo_v2_5` / voice "George". Override via env.
+Models (min Gemini 3 for text+image): text `google/gemini-3.5-flash`,
+image `google/gemini-3-pro-image`, TTS ElevenLabs `eleven_turbo_v2_5` / voice
+"George", music `fal-ai/mmaudio-v2`, SFX `fal-ai/stable-audio`. Active models
+are exposed at `GET /api/models` and shown inline as `.model-badge` pills on the
+Media Manager. Override via env.
 
 ## 5. Known gotchas
 

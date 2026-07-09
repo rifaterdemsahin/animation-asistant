@@ -27,3 +27,25 @@ func boolToInt(b bool) int {
 	}
 	return 0
 }
+
+// models reports which model each generation step triggers, so the UI can show
+// it inline. Mirrors /healthz for the OpenRouter models and adds the audio
+// layers (TTS + fal.ai music/SFX).
+func (a *App) models(w http.ResponseWriter, r *http.Request) {
+	voice := a.cfg.ElevenLabsVoice
+	if voice == "" {
+		voice = "JBFqnCBsd6RMkjVDRZzb" // George
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"text":             a.cfg.OpenRouterTextModel,
+		"image":            a.cfg.OpenRouterImageModel,
+		"storyboard_image": a.storyboardImageModel(),
+		"voiceover": map[string]string{
+			"provider": "elevenlabs",
+			"model":    a.cfg.ElevenLabsModel,
+			"voice":    voice,
+		},
+		"music": map[string]string{"provider": "fal.ai", "model": FalMusicModel},
+		"sfx":   map[string]string{"provider": "fal.ai", "model": FalSFXModel},
+	})
+}
