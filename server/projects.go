@@ -71,6 +71,7 @@ type projectUpdate struct {
 	Question      *string            `json:"question"`
 	Answer        *string            `json:"answer"`
 	Why           *string            `json:"why"`
+	Status        *string            `json:"status"`
 	Tasks         *[]TaskItem        `json:"tasks"`
 	ActNotes      *map[string]string `json:"act_notes"`
 }
@@ -91,6 +92,24 @@ func defaultTasks() []TaskItem {
 }
 
 var knownTypes = []string{"multi-agent-research", "code-generation", "customer-resolution-agent", "claude-ci"}
+
+// allowedStatuses are the user-selectable project workflow states, editable
+// from the Projects page via the status dropdown.
+var allowedStatuses = map[string]bool{
+	"backlog":    true,
+	"inprogress": true,
+	"done":       true,
+}
+
+// validStatus returns a normalized status, defaulting to "backlog" for any
+// blank or unrecognized value (e.g. legacy "created"/"storyboard" markers).
+func validStatus(s string) string {
+	s = strings.TrimSpace(s)
+	if allowedStatuses[s] {
+		return s
+	}
+	return "backlog"
+}
 
 var qPattern = regexp.MustCompile(`^(q\d+)-(.+)$`)
 
@@ -159,6 +178,7 @@ func (a *App) loadProject(slug string) (*Project, error) {
 	if p.Tasks == nil {
 		p.Tasks = []TaskItem{}
 	}
+	p.Status = validStatus(p.Status)
 	return &p, nil
 }
 
@@ -198,7 +218,7 @@ func (a *App) newProject(in projectIn) *Project {
 		CanvaLink:     strings.TrimSpace(in.CanvaLink),
 		Tasks:         defaultTasks(),
 		ActNotes:      map[string]string{},
-		Status:        "created",
+		Status:        "backlog",
 		CreatedAt:     now,
 		UpdatedAt:     now,
 		Acts:          map[string]ActStatus{},
@@ -307,6 +327,9 @@ func (a *App) updateProject(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Why != nil {
 		existing.Why = strings.TrimSpace(*in.Why)
+	}
+	if in.Status != nil {
+		existing.Status = validStatus(*in.Status)
 	}
 	if in.Tasks != nil {
 		existing.Tasks = *in.Tasks

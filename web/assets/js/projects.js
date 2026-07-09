@@ -1,31 +1,93 @@
 const api = "/api";
 
+// --- projects list cache (localStorage) -------------------------------------
+// Speeds up the Projects page: we paint from cache instantly, then revalidate
+// against the server in the background. "Clear cache" wipes it.
+const CACHE_KEY = "projects_cache_v1";
+const STATUSES = ["backlog", "inprogress", "done"];
+const STATUS_LABELS = {
+  backlog: "📋 Backlog",
+  inprogress: "🔧 In Progress",
+  done: "✅ Done",
+};
+
+function validStatus(s) {
+  return STATUSES.includes(s) ? s : "backlog";
+}
+
+function getCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    if (!c || !Array.isArray(c.projects)) return null;
+    return c; // { projects, ts }
+  } catch { return null; }
+}
+
+function setCache(projects) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ projects, ts: Date.now() }));
+  } catch {}
+}
+
+function clearCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch {}
+}
+
+function patchCacheProject(slug, patch) {
+  const c = getCache();
+  if (!c) return;
+  const p = c.projects.find(x => x.slug === slug);
+  if (p) Object.assign(p, patch);
+  setCache(c.projects);
+}
+
+function cacheAgeText(ts) {
+  if (!ts) return "";
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 5) return "just now";
+  if (s < 60) return s + "s ago";
+  return Math.round(s / 60) + "m ago";
+}
+
+function setCacheIndicator({ ts = null, fromCache = false, loading = false, offline = false } = {}) {
+  const el = document.getElementById("cache-status");
+  if (!el) return;
+  if (loading) { el.textContent = "Refreshing…"; return; }
+  const suffix = offline ? " (offline — showing cached)" : "";
+  el.textContent = fromCache
+    ? "Cached " + cacheAgeText(ts) + suffix
+    : "Updated " + cacheAgeText(ts);
+}
+
+// --- core -------------------------------------------------------------------
+
 async function json(url, opts) {
   const r = await fetch(url, { credentials: "same-origin", ...opts });
   if (!r.ok) throw new Error((await r.text()) || r.statusText);
   return r.json();
 }
 
-async function loadProjects() {
+function renderProjects(projects) {
   const list = document.getElementById("project-list");
   const empty = document.getElementById("empty-state");
-  const data = await json(api + "/projects");
-  data.projects.sort((a, b) => {
+  projects.sort((a, b) => {
     const aNum = parseInt((a.question_id || "").replace(/^q/i, "")) || 0;
     const bNum = parseInt((b.question_id || "").replace(/^q/i, "")) || 0;
     return aNum - bNum;
   });
   list.innerHTML = "";
-  if (!data.projects.length) {
+  if (!projects.length) {
     empty.classList.remove("hidden");
     return;
   }
   empty.classList.add("hidden");
   const current = window.currentProject && window.currentProject();
-  for (const p of data.projects) {
+  for (const p of projects) {
     const li = document.createElement("li");
     const left = document.createElement("div");
-    const metaParts = [p.slug, p.component_type, p.status];
+    const metaParts = [p.slug, p.component_type];
     if (p.question_id) metaParts.unshift(p.question_id);
     if (p.type) metaParts.splice(1, 0, p.type);
     left.innerHTML = `<strong>${escapeHtml(p.title)}</strong>
@@ -33,6 +95,7 @@ async function loadProjects() {
     const right = document.createElement("div");
     right.className = "row";
 
+    const status = buildStatusSelect(p);
     const edit = document.createElement("button");
     edit.className = "btn";
     edit.innerHTML = "&#9999;&#65039;";
@@ -57,7 +120,7 @@ async function loadProjects() {
       open.disabled = true;
     }
 
-    const btns = [edit, open, del];
+    const btns = [status, edit, open, del];
 
     if (p.canva_link) {
       const canva = document.createElement("a");
@@ -76,6 +139,66 @@ async function loadProjects() {
   }
 }
 
+// loadProjects: stale-while-revalidate. Paints from cache first (unless a hard
+// refresh is requested), then fetches fresh data from the server.
+async function loadProjects({ refresh = false } = {}) {
+  if (!refresh) {
+    const c = getCache();
+    if (c) {
+      renderProjects(c.projects);
+      setCacheIndicator({ ts: c.ts, fromCache: true });
+    }
+  }
+  try {
+    setCacheIndicator({ loading: true });
+    const data = await json(api + "/projects");
+    setCache(data.projects);
+    renderProjects(data.projects);
+    setCacheIndicator({ ts: Date.now() });
+  } catch (err) {
+    const c = getCache();
+    if (c) {
+      setCacheIndicator({ ts: c.ts, fromCache: true, offline: true });
+    } else {
+      setCacheIndicator();
+      alert(err.message);
+    }
+  }
+}
+
+function buildStatusSelect(p) {
+  const sel = document.createElement("select");
+  const cur = validStatus(p.status);
+  sel.className = "status-select status-" + cur;
+  sel.title = "Project status";
+  sel.dataset.slug = p.slug;
+  for (const v of STATUSES) {
+    const op = document.createElement("option");
+    op.value = v;
+    op.textContent = STATUS_LABELS[v];
+    if (v === cur) op.selected = true;
+    sel.appendChild(op);
+  }
+  sel.addEventListener("change", () => updateStatus(p.slug, sel.value));
+  return sel;
+}
+
+async function updateStatus(slug, status) {
+  const sel = document.querySelector(`select.status-select[data-slug="${slug}"]`);
+  try {
+    await json(`${api}/projects/${encodeURIComponent(slug)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (sel) sel.className = "status-select status-" + status;
+    patchCacheProject(slug, { status });
+  } catch (err) {
+    alert("Status update failed: " + err.message);
+    loadProjects({ refresh: true });
+  }
+}
+
 function selectProject(p) {
   localStorage.setItem("current_project", JSON.stringify({ slug: p.slug, title: p.title }));
   location.href = "/pages/storyboard.html";
@@ -86,7 +209,8 @@ async function deleteProject(p) {
   await json(`${api}/projects/${encodeURIComponent(p.slug)}`, { method: "DELETE" });
   const cur = window.currentProject && window.currentProject();
   if (cur && cur.slug === p.slug) localStorage.removeItem("current_project");
-  loadProjects();
+  clearCache();
+  loadProjects({ refresh: true });
 }
 
 function buildEditModal(p) {
@@ -131,6 +255,10 @@ function buildEditModal(p) {
     </label>`;
   }
 
+  const cur = validStatus(p.status);
+  const statusOptions = STATUSES.map(v =>
+    `<option value="${v}"${v === cur ? " selected" : ""}>${escapeHtml(STATUS_LABELS[v])}</option>`).join("");
+
   overlay.innerHTML = `<div class="modal">
     <div class="modal-header">
       <h2>Edit: ${escapeHtml(p.title)}</h2>
@@ -145,6 +273,9 @@ function buildEditModal(p) {
           </label>
           <label>Type
             <input type="text" name="type" placeholder="multi-agent-research" value="${escapeHtml(p.type || "")}">
+          </label>
+          <label>Status
+            <select name="status">${statusOptions}</select>
           </label>
         </div>
       </div>
@@ -204,6 +335,7 @@ async function editProject(p) {
 
     const questionId = modal.querySelector('[name="question_id"]').value.trim();
     const qtype = modal.querySelector('[name="type"]').value.trim();
+    const status = modal.querySelector('[name="status"]').value;
     const question = modal.querySelector('[name="question"]').value;
     const answer = modal.querySelector('[name="answer"]').value;
     const why = modal.querySelector('[name="why"]').value;
@@ -235,13 +367,14 @@ async function editProject(p) {
         body: JSON.stringify({
           question_id: questionId || null,
           type: qtype || null,
+          status,
           question, answer, why,
           canva_link: canvaLink || null,
           tasks, act_notes: actNotes,
         }),
       });
       modal.remove();
-      loadProjects();
+      loadProjects({ refresh: true });
     } catch (err) {
       alert("Save failed: " + err.message);
       saveBtn.disabled = false;
@@ -271,5 +404,14 @@ document.addEventListener("layout:ready", () => {
     form.reset();
     selectProject(p);
   });
-  loadProjects().catch(err => alert(err.message));
+
+  const refreshBtn = document.getElementById("refresh-projects");
+  const clearBtn = document.getElementById("clear-cache");
+  if (refreshBtn) refreshBtn.addEventListener("click", () => loadProjects({ refresh: true }));
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    clearCache();
+    loadProjects({ refresh: true });
+  });
+
+  loadProjects();
 });

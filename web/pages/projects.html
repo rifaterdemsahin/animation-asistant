@@ -27,6 +27,12 @@
       <button type="submit" class="btn primary">Create</button>
     </form>
 
+    <div class="cache-bar row">
+      <span id="cache-status" class="muted">Loading…</span>
+      <button type="button" class="btn" id="refresh-projects" title="Fetch fresh from server">&#x1F504; Refresh</button>
+      <button type="button" class="btn" id="clear-cache" title="Wipe the local cache">&#x1F5D1;&#xFE0F; Clear cache</button>
+    </div>
+
     <ul id="project-list" class="list"></ul>
     <p id="empty-state" class="muted">No projects yet.</p>
   </main>

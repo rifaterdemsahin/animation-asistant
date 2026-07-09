@@ -179,7 +179,6 @@ func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.StoryboardPrompts = actPromptsOut
-	p.Status = "storyboard"
 	_ = a.saveProject(p)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":           true,

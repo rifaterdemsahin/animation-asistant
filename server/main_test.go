@@ -233,6 +233,59 @@ func TestErrorsEndpoint(t *testing.T) {
 	}
 }
 
+func TestProjectStatusUpdate(t *testing.T) {
+	app := newTestApp(t)
+	srv := httptest.NewServer(app.routes())
+	defer srv.Close()
+
+	client := &http.Client{}
+	cookie := authCookie(app.cfg)
+
+	body, _ := json.Marshal(map[string]string{
+		"title": "Status Project", "topic": "Statuses", "component_type": "explainer",
+	})
+	req, _ := http.NewRequest("POST", srv.URL+"/api/projects", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(cookie)
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var p Project
+	json.NewDecoder(resp.Body).Decode(&p)
+	resp.Body.Close()
+	if p.Status != "backlog" {
+		t.Errorf("new project status = %q, want backlog", p.Status)
+	}
+
+	// valid status persists
+	body, _ = json.Marshal(map[string]string{"status": "inprogress"})
+	req, _ = http.NewRequest("PUT", srv.URL+"/api/projects/"+p.Slug, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(cookie)
+	resp, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	json.NewDecoder(resp.Body).Decode(&p)
+	resp.Body.Close()
+	if p.Status != "inprogress" {
+		t.Errorf("after update status = %q, want inprogress", p.Status)
+	}
+
+	// invalid status normalizes to backlog
+	body, _ = json.Marshal(map[string]string{"status": "storyboard"})
+	req, _ = http.NewRequest("PUT", srv.URL+"/api/projects/"+p.Slug, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(cookie)
+	resp, _ = client.Do(req)
+	json.NewDecoder(resp.Body).Decode(&p)
+	resp.Body.Close()
+	if p.Status != "backlog" {
+		t.Errorf("after invalid update status = %q, want backlog", p.Status)
+	}
+}
+
 func TestSlugify(t *testing.T) {
 	tests := []struct{ in, want string }{
 		{"Why Sleep Matters", "why-sleep-matters"},
