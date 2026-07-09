@@ -63,6 +63,11 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/browse", a.authed(a.browseFiles))
 	mux.HandleFunc("GET /api/projects/{slug}/raw/{path...}", a.authed(a.serveRaw))
 
+	// favicon (shared SVG, served for both .ico and .svg so every page gets a
+	// tab icon without per-page <link> tags and without a 404 on /favicon.ico)
+	mux.HandleFunc("GET /favicon.ico", a.favicon)
+	mux.HandleFunc("GET /favicon.svg", a.favicon)
+
 	// static frontend (subtree catch-all; registered after API routes)
 	fs := http.FileServer(http.Dir(a.cfg.WebDir))
 	mux.Handle("GET /", fs)
@@ -112,4 +117,20 @@ func setContentType(w http.ResponseWriter, name string) {
 	default:
 		w.Header().Set("Content-Type", "application/octet-stream")
 	}
+}
+
+// faviconSVG is an on-brand play-button favicon (accent → accent-2 gradient).
+const faviconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">` +
+	`<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+	`<stop offset="0" stop-color="#6c8cff"/><stop offset="1" stop-color="#4cd3a5"/>` +
+	`</linearGradient></defs>` +
+	`<rect width="32" height="32" rx="7" fill="url(#g)"/>` +
+	`<path d="M13 10l9 6-9 6z" fill="#0f1115"/>` +
+	`</svg>`
+
+// favicon serves the shared SVG favicon for every page (no per-page <link> needed).
+func (a *App) favicon(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	_, _ = w.Write([]byte(faviconSVG))
 }

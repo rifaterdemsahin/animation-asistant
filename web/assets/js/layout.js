@@ -1,18 +1,28 @@
 // Shared shell: top nav (links + search + logout), header (current project), footer.
 // Each page includes empty <div id="topnav">, <header id="app-header">, <footer id="app-footer">.
 
-const PAGES = [
+const NAV_ITEMS = [
   { name: "🏠 Dashboard", url: "/" },
-  { name: "📁 Projects", url: "/pages/projects.html" },
+  { name: "📁 Projects", url: "/pages/projects.html", children: [
+    { name: "📁 Projects", url: "/pages/projects.html" },
+    { name: "🆕 Create", url: "/pages/create.html" },
+  ]},
   { name: "📋 Storyboard", url: "/pages/storyboard.html" },
   { name: "📜 Script", url: "/pages/script-page.html" },
   { name: "🎛️ Media Manager", url: "/pages/media-manager.html" },
   { name: "🎧 Audio", url: "/pages/audio.html" },
-  { name: "🆕 Create", url: "/pages/create.html" },
-  { name: "🧪 Test", url: "/pages/test.html" },
   { name: "🛠️ Tools", url: "/pages/tools.html" },
   { name: "🎓 Self Learning", url: "/pages/self_learning.html" },
 ];
+
+function flatPages() {
+  const out = [];
+  for (const item of NAV_ITEMS) {
+    out.push(item);
+    if (item.children) out.push(...item.children);
+  }
+  return out;
+}
 
 const REPO = "https://github.com/rifaterdemsahin/animation-asistant";
 const REPO_COMMITS = REPO + "/commits/main";
@@ -59,12 +69,22 @@ async function checkAuth() {
   }
 }
 
+function buildNavItem(item) {
+  if (item.children) {
+    const links = item.children.map(c => `<a href="${c.url}">${c.name}</a>`).join("");
+    return `<div class="nav-dropdown">
+      <a href="${item.url}" class="nav-group-trigger">${item.name} ▾</a>
+      <div class="nav-dropdown-menu">${links}</div>
+    </div>`;
+  }
+  return `<a href="${item.url}">${item.name}</a>`;
+}
+
 async function renderNav() {
   const nav = document.getElementById("topnav");
   if (!nav) return;
   await checkAuth();
-  const pageLinks = PAGES.filter(p => p.url).map(p =>
-    `<a href="${p.url}">${p.name}</a>`).join(" <span class=\"nav-sep\">&gt;</span> ");
+  const pageLinks = NAV_ITEMS.map(buildNavItem).join(" <span class=\"nav-sep\">&gt;</span> ");
   const authItem = isAuthenticated
     ? `<span class="logged-in-badge">👤 Logged in</span>`
     : `<a href="/pages/login.html">🔐 Login</a>`;
@@ -128,8 +148,9 @@ function wireSearch() {
   const input = document.getElementById("nav-search");
   const box = document.getElementById("search-results");
   if (!input || !box) return;
+  const allPages = flatPages();
   const render = (q) => {
-    const items = PAGES.filter(p => p.url && p.name.toLowerCase().includes(q.toLowerCase()));
+    const items = allPages.filter(p => p.url && p.name.toLowerCase().includes(q.toLowerCase()));
     box.innerHTML = items.map(p => `<a href="${p.url}">${p.name}</a>`).join("") ||
       `<a class="disabled">No matches</a>`;
     box.style.display = items.length ? "block" : "none";
@@ -138,7 +159,7 @@ function wireSearch() {
   input.addEventListener("focus", () => { if (input.value) render(input.value); });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      const first = PAGES.find(p => p.url && p.name.toLowerCase().includes(input.value.toLowerCase()));
+      const first = allPages.find(p => p.url && p.name.toLowerCase().includes(input.value.toLowerCase()));
       if (first) location.href = first.url;
     }
   });

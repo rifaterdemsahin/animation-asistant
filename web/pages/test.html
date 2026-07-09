@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Animation Assistant — Test</title>
+  <title>Animation Assistant — Test Runner</title>
   <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body>
@@ -12,30 +12,26 @@
 
   <main class="page">
     <h1>🧪 Test Runner</h1>
-    <p class="lede">Run each generation step against an existing project to catch errors.</p>
+    <p class="lede">Go standard <code>testing</code> package — <code>go test ./...</code> with coverage and benchmarks.</p>
 
-    <div class="form">
-      <label>Project slug
-        <input type="text" id="test-slug" placeholder="e.g. why-sleep-matters" required>
-      </label>
-      <p class="muted">Create one at <a href="/pages/projects.html">📁 Projects</a> first.</p>
-    </div>
+    <section class="panel">
+      <h2>Test Library</h2>
+      <p>The backend (Go <code>server/</code>) uses Go's built-in <code>testing</code> package. Tests run with:</p>
+      <pre class="out" style="margin:8px 0;font-size:13px">go test ./server/...           # all tests
+go test -v ./server/...        # verbose output
+go test -cover ./server/...    # with coverage
+go test -run ^TestX$ ./server/ # single test</pre>
+    </section>
 
-    <div class="row" style="margin-top:12px;gap:6px;flex-wrap:wrap">
-      <button id="show-prompts" class="btn">👁️ Show All Prompts</button>
-    </div>
-    <pre id="prompts-display" class="out hidden muted" style="font-size:12px;max-height:200px;overflow:auto"></pre>
-
-    <div class="row" style="margin-top:8px;gap:6px;flex-wrap:wrap">
-      <button id="test-outline" class="btn">📝 Outline</button>
-      <button id="test-script" class="btn">📜 Script</button>
-      <button id="test-components" class="btn">🖼️ Components</button>
-      <button id="test-voiceover" class="btn">🎙️ Voiceover</button>
-      <button id="test-music" class="btn">🎵 Music</button>
-      <button id="test-sfx" class="btn">🔉 SFX</button>
-      <button id="test-storyboard" class="btn">📋 Storyboard</button>
-      <button id="test-all" class="btn primary">⚡ Run All</button>
-    </div>
+    <section class="panel">
+      <h2>Sample Test Prompt</h2>
+      <p class="muted">Paste a prompt or command below to test the codebase behaviour.</p>
+      <textarea id="test-prompt" rows="4" placeholder="e.g. Verify the outline handler returns valid JSON for all project types"
+        style="width:100%;font-family:monospace">Test the API health endpoint: GET /healthz returns 200 with commit hash and started_at fields.</textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="btn-run" class="btn primary">▶ Run Sample Test</button>
+      </div>
+    </section>
 
     <div id="results" style="margin-top:16px"></div>
   </main>
