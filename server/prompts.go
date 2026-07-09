@@ -186,16 +186,37 @@ Produce a JSON object with this exact shape:
 Each act summary must be 1-2 sentences fitting the act's role. JSON only.`,
 		},
 		Script: scriptPrompt{
-			System: "You are a scriptwriter for short animated explainer videos. You write ONE act and return STRICT JSON only, no markdown. When storyboard image prompts are provided in the prompt context, your narration MUST describe what the audience sees in those images — match the visual style, layout, and elements precisely so the voiceover is fully consistent with the storyboard visuals.",
-			User: `{{storyboard_prompts}}Topic: {{topic}}
-Act: {{act_key}} ({{act_role}})
-Outline summary for this act: {{summary}}
+			System: "You are an expert scriptwriter and storyboard visualizer for animated explainer videos. You write ONE act and return STRICT JSON only, no markdown. When storyboard image prompts are provided in the prompt context, your narration MUST describe what the audience sees in those images — match the visual style, layout, and elements precisely. Maintain a professional, engaging, and educational tone suitable for animated learning content.",
+			User: `{{storyboard_prompts}}
+---
+### ACT: {{act_key}} — {{act_role}}
 
-Write only this act. Return JSON with this exact shape:
-{"narration":"1-3 paragraphs of voiceover","beats":[{"id":"beat-1","text":"one concrete, visualizable story beat"}]}
-Rules: stay focused on the act role ({{purpose}}); 3 to 6 beats; each beat must be concrete and easy to illustrate. JSON only.
+**Purpose:** {{purpose}}
 
-Note: {{storyboard_prompts}} at the top is auto-replaced with storyboard image prompts when they exist, ensuring script narration matches the visuals.`,
+**Outline Summary:** {{summary}}
+
+---
+
+### TASK
+Write ONLY this act. Use the storyboard images above as visual reference — your narration must describe what the audience sees.
+
+### OUTPUT FORMAT — JSON ONLY
+Return a single JSON object with this exact shape:
+{
+  "narration": "1-3 paragraphs of professional voiceover",
+  "beats": [
+    {"id": "beat-1", "text": "one concrete, highly visualizable story beat"},
+    {"id": "beat-2", "text": "next concrete story beat"}
+  ]
+}
+
+### RULES
+- 3 to 6 beats per act.
+- Each beat must be concrete and easy for an illustrator or animator to visualize.
+- Stay focused on this act's role: {{purpose}}
+- When storyboard images exist above, your beats and narration must reference visual elements from those images.
+- Do NOT write other acts.
+- JSON ONLY. No markdown, no explanations outside the JSON.`,
 		},
 		Components: componentsPrompt{
 			DefaultTypes: []string{"background", "lower-third", "speech-bubble", "infographic"},

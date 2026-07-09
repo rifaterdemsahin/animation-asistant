@@ -261,15 +261,14 @@ function generatePrompt() {
 
   let sbCtx = "";
   if (storyboardPrompts && Object.keys(storyboardPrompts).length) {
-    const sbLines = ["STORYBOARD CONSISTENCY: The narration must describe what the audience sees in the storyboard images below. Match visual elements, composition, and style precisely.", ""];
+    const sbLines = ["### STORYBOARD IMAGES FOR THIS ACT", "The narration must describe what the audience sees in these images. Match visual elements, composition, and style precisely.", ""];
     for (const ak of ["act-1", "act-2", "act-3"]) {
       const lines = [];
-      if (storyboardPrompts[ak]) lines.push("Image prompt: " + storyboardPrompts[ak]);
+      if (storyboardPrompts[ak]) lines.push("**" + ak + " (" + (actRole[ak] || "") + "):** " + storyboardPrompts[ak]);
       if (storyboardImages[ak]) lines.push("Image file: " + storyboardImages[ak].file);
-      if (lines.length) sbLines.push("=== " + ak + " (" + (actRole[ak] || "") + ") ===\n" + lines.join("\n"));
+      if (lines.length) sbLines.push(lines.join("\n"));
     }
-    sbLines.push("", "The images described above are the storyboard visuals. Your narration MUST match what the audience will see in these images.");
-    sbCtx = sbLines.join("\n") + "\n\n";
+    sbCtx = sbLines.join("\n") + "\n";
   }
 
   let text = "";

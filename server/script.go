@@ -218,11 +218,11 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 	sbCtx := ""
 	if len(p.StoryboardPrompts) > 0 {
 		var b strings.Builder
-		b.WriteString("STORYBOARD CONSISTENCY: The narration must describe what the audience sees in the storyboard images below. Match visual elements, composition, and style precisely.\n\n")
-		b.WriteString("Storyboard image prompts:\n")
+		b.WriteString("### STORYBOARD IMAGES FOR THIS ACT\n")
+		b.WriteString("The narration must describe what the audience sees in these images. Match visual elements, composition, and style precisely.\n\n")
 		for _, a := range acts {
 			if prompt, ok := p.StoryboardPrompts[a.Key]; ok && prompt != "" {
-				fmt.Fprintf(&b, "=== %s (%s) ===\n%s\n\n", a.Key, a.Role, prompt)
+				fmt.Fprintf(&b, "**%s (%s):** %s\n\n", a.Key, a.Role, prompt)
 			}
 		}
 		sbCtx = b.String()
