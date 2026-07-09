@@ -14,12 +14,12 @@ type audioReq struct {
 }
 
 func (a *App) generateAudio(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	p, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+	slug := p.Slug
 	var req audioReq
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
@@ -60,6 +60,9 @@ func (a *App) generateAudio(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getAudio(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
+	if s, err := a.resolveSlug(slug); err == nil {
+		slug = s
+	}
 	out := map[string]string{}
 	for _, act := range acts {
 		rel := act.Slug + "/audio/narration.mp3"
@@ -106,12 +109,12 @@ type musicReq struct {
 }
 
 func (a *App) generateMusic(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	p, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
+	slug := p.Slug
 	var req musicReq
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
@@ -163,12 +166,12 @@ type sfxReq struct {
 }
 
 func (a *App) generateSFX(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	_, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
+	slug := p.Slug
 	var req sfxReq
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
@@ -213,6 +216,9 @@ func (a *App) generateSFX(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getMusicStatus(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
+	if s, err := a.resolveSlug(slug); err == nil {
+		slug = s
+	}
 	out := map[string]string{}
 	for _, act := range acts {
 		rel := act.Slug + "/audio/music.mp3"
@@ -225,6 +231,9 @@ func (a *App) getMusicStatus(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getSFXStatus(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
+	if s, err := a.resolveSlug(slug); err == nil {
+		slug = s
+	}
 	out := map[string][]string{}
 	for _, act := range acts {
 		glob := act.Slug + "/audio/"

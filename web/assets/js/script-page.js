@@ -1,5 +1,5 @@
 const api = "/api";
-const slug = () => (window.currentProject && window.currentProject() || {}).slug;
+const pid = () => (window.currentProject && window.currentProject() || {}).project_id;
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => (
@@ -35,9 +35,9 @@ let modelName = "";
 
 async function loadProjectMeta() {
   try {
-    const s = slug();
+    const s = pid();
     const p = await json(`${api}/projects/${s}`);
-    if (window.setCurrentProject) window.setCurrentProject(s, p.title || s);
+    if (window.setCurrentProject) window.setCurrentProject(p.project_id || s, p.slug, p.title || s);
     document.getElementById("sc-title").textContent = (p.title || s) + " (" + s + ")";
 
     document.getElementById("qa-question").value = p.question || p.title || "";
@@ -53,7 +53,7 @@ async function loadProjectMeta() {
 
 async function loadOutline() {
   try {
-    const data = await json(`${api}/projects/${slug()}/outline`);
+    const data = await json(`${api}/projects/${pid()}/outline`);
     if (data.outline) {
       const acts = data.outline.acts || {};
       outlineSummaries = {};
@@ -97,7 +97,7 @@ async function loadModel() {
 async function loadStoryboardContext() {
   const wrap = document.getElementById("sb-context");
   try {
-    const data = await json(`${api}/projects/${slug()}/storyboard`);
+    const data = await json(`${api}/projects/${pid()}/storyboard`);
     const versions = data.versions || [];
     const actOrder = [
       {key: "act-1", title: "Act 1 — Problem"},
@@ -117,7 +117,7 @@ async function loadStoryboardContext() {
       const v = latestByAct[key];
       if (!v) continue;
       any = true;
-      const imgUrl = `${api}/projects/${slug()}/raw/${encodeURIComponent(v.file)}`;
+      const imgUrl = `${api}/projects/${pid()}/raw/${encodeURIComponent(v.file)}`;
       storyboardImages[key] = {url: imgUrl, prompt: v.image_prompt || "", file: v.file};
       const div = document.createElement("div");
       div.style.cssText = "flex:1;min-width:180px;max-width:320px;text-align:center";
@@ -143,7 +143,7 @@ async function loadStoryboardContext() {
 
 async function loadExistingScript() {
   try {
-    const data = await json(`${api}/projects/${slug()}/script`);
+    const data = await json(`${api}/projects/${pid()}/script`);
     const acts = data.acts || {};
     const voiceover = data.voiceover || {};
     const versions = data.versions || {};
@@ -289,7 +289,7 @@ function generatePrompt() {
 }
 
 async function executePrompt() {
-  const s = slug();
+  const s = pid();
   if (!s) return;
   const acts = selectedActs();
   if (!acts.length) {
@@ -347,7 +347,7 @@ async function copyVoiceover() {
 }
 
 document.addEventListener("layout:ready", async () => {
-  const s = slug();
+  const s = pid();
   if (!s) return;
   document.getElementById("no-project").classList.add("hidden");
   document.getElementById("manager").classList.remove("hidden");

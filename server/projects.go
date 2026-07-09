@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,7 +21,8 @@ type TaskItem struct {
 
 // Project is the on-disk metadata for one animation project (project.json).
 type Project struct {
-	Slug              string               `json:"slug"`
+	ProjectID         string               `json:"project_id"` // unique, stable, URL-safe id (e.g. "q1"); used in URLs
+	Slug              string               `json:"slug"` // storage key / folder name
 	Title             string               `json:"title"`
 	Topic             string               `json:"topic"`
 	ComponentType     string               `json:"component_type"`
@@ -113,6 +115,56 @@ func validStatus(s string) string {
 
 var qPattern = regexp.MustCompile(`^(q\d+)-(.+)$`)
 
+// projectIDPattern matches a canonical project_id: lowercase q + digits.
+var projectIDPattern = regexp.MustCompile(`^q\d+$`)
+
+// qNum returns the numeric portion of a qN-style id (0 if unparseable).
+func qNum(id string) int {
+	n, _ := strconv.Atoi(strings.TrimPrefix(id, "q"))
+	return n
+}
+
+// assignProjectID returns a unique, stable, lowercase project_id for a new
+// project. If a preferred qN-style id (from question_id or parsed from the
+// slug) is free, it is used; otherwise the next free qN is generated.
+func (a *App) assignProjectID(preferred, fallbackQID string) string {
+	if preferred == "" {
+		preferred = fallbackQID
+	}
+	preferred = strings.ToLower(strings.TrimSpace(preferred))
+	existing := a.existingIDs()
+	if preferred != "" && projectIDPattern.MatchString(preferred) && !existing[preferred] {
+		return preferred
+	}
+	maxN := 0
+	for id := range existing {
+		if n := qNum(id); n > maxN {
+			maxN = n
+		}
+	}
+	for i := maxN + 1; ; i++ {
+		cand := fmt.Sprintf("q%d", i)
+		if !existing[cand] {
+			return cand
+		}
+	}
+}
+
+// existingIDs returns the set of lowercase project_ids already in use.
+func (a *App) existingIDs() map[string]bool {
+	out := map[string]bool{}
+	slugs, err := a.store.ListProjects()
+	if err != nil {
+		return out
+	}
+	for _, s := range slugs {
+		if p, err := a.loadProject(s); err == nil && p.ProjectID != "" {
+			out[strings.ToLower(p.ProjectID)] = true
+		}
+	}
+	return out
+}
+
 func parseQuestionMeta(slug string) (qid, typ, title string) {
 	m := qPattern.FindStringSubmatch(slug)
 	if m == nil {
@@ -169,6 +221,12 @@ func (a *App) loadProject(slug string) (*Project, error) {
 	if err := json.Unmarshal(b, &p); err != nil {
 		return nil, err
 	}
+	if p.ProjectID == "" {
+		// Legacy project without a persisted project_id: derive one from
+		// question_id (lowercase) so URL-by-id resolution works before the
+		// one-time migration persists it.
+		p.ProjectID = strings.ToLower(strings.TrimSpace(p.QuestionID))
+	}
 	if p.Acts == nil {
 		p.Acts = map[string]ActStatus{}
 	}
@@ -180,6 +238,76 @@ func (a *App) loadProject(slug string) (*Project, error) {
 	}
 	p.Status = validStatus(p.Status)
 	return &p, nil
+}
+
+// --- project_id -> slug resolution (URLs use project_id; storage is slug-keyed) ---
+
+// resolveSlug returns the storage slug for a project identified in the URL by
+// either its project_id or its slug (backward compatible). A direct Exists()
+// check handles slug lookups cheaply; an in-memory project_id->slug index
+// (built lazily, invalidated on writes) handles project_id lookups.
+func (a *App) resolveSlug(idOrSlug string) (string, error) {
+	idOrSlug = strings.TrimSpace(idOrSlug)
+	if idOrSlug == "" {
+		return "", fmt.Errorf("empty project id")
+	}
+	if a.store.Exists(idOrSlug) {
+		return idOrSlug, nil
+	}
+	if slug, ok := a.slugForID(idOrSlug); ok {
+		return slug, nil
+	}
+	return "", fmt.Errorf("project not found: %s", idOrSlug)
+}
+
+// resolveProject resolves a project by project_id or slug and loads it.
+func (a *App) resolveProject(idOrSlug string) (*Project, error) {
+	slug, err := a.resolveSlug(idOrSlug)
+	if err != nil {
+		return nil, err
+	}
+	return a.loadProject(slug)
+}
+
+// slugForID looks up the storage slug for a project_id (case-insensitive),
+// building the in-memory index on first use.
+func (a *App) slugForID(id string) (string, bool) {
+	id = strings.ToLower(strings.TrimSpace(id))
+	a.idIndexMu.RLock()
+	slug, ok := a.idIndex[id]
+	a.idIndexMu.RUnlock()
+	if ok {
+		return slug, true
+	}
+	a.buildIDIndex()
+	a.idIndexMu.RLock()
+	slug, ok = a.idIndex[id]
+	a.idIndexMu.RUnlock()
+	return slug, ok
+}
+
+func (a *App) buildIDIndex() {
+	slugs, err := a.store.ListProjects()
+	if err != nil {
+		return
+	}
+	m := make(map[string]string, len(slugs))
+	for _, s := range slugs {
+		if p, err := a.loadProject(s); err == nil && p.ProjectID != "" {
+			m[strings.ToLower(p.ProjectID)] = s
+		}
+	}
+	a.idIndexMu.Lock()
+	a.idIndex = m
+	a.idIndexMu.Unlock()
+}
+
+// invalidateIDIndex clears the project_id->slug index so it is rebuilt on next
+// use. Call after create/update/delete.
+func (a *App) invalidateIDIndex() {
+	a.idIndexMu.Lock()
+	a.idIndex = nil
+	a.idIndexMu.Unlock()
 }
 
 func (a *App) saveProject(p *Project) error {
@@ -206,6 +334,7 @@ func (a *App) newProject(in projectIn) *Project {
 		in.Question = qtitle
 	}
 	p := &Project{
+		ProjectID:     a.assignProjectID(in.QuestionID, qid),
 		Slug:          slug,
 		Title:         title,
 		Topic:         strings.TrimSpace(in.Topic),
@@ -268,11 +397,12 @@ func (a *App) createProject(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to save project: "+err.Error())
 		return
 	}
+	a.invalidateIDIndex()
 	writeJSON(w, http.StatusCreated, p)
 }
 
 func (a *App) getProject(w http.ResponseWriter, r *http.Request) {
-	p, err := a.loadProject(r.PathValue("slug"))
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
@@ -281,16 +411,21 @@ func (a *App) getProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) deleteProject(w http.ResponseWriter, r *http.Request) {
-	if err := a.store.Delete(r.PathValue("slug")); err != nil {
+	p, err := a.resolveProject(r.PathValue("slug"))
+	if err != nil {
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
+		return
+	}
+	if err := a.store.Delete(p.Slug); err != nil {
 		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to delete project: "+err.Error())
 		return
 	}
+	a.invalidateIDIndex()
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
 func (a *App) updateProject(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	existing, err := a.loadProject(slug)
+	existing, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
@@ -346,5 +481,54 @@ func (a *App) updateProject(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, http.StatusInternalServerError, "storage_error", "failed to save project: "+err.Error())
 		return
 	}
+	a.invalidateIDIndex()
 	writeJSON(w, http.StatusOK, existing)
+}
+
+// migrateProjectIDs backfills the project_id field into every project.json that
+// lacks it (derived from question_id, lowercased). All other fields and
+// updated_at are preserved. Idempotent.
+func (a *App) migrateProjectIDs(w http.ResponseWriter, r *http.Request) {
+	slugs, err := a.store.ListProjects()
+	if err != nil {
+		writeError(w, r, http.StatusInternalServerError, "storage_error", err.Error())
+		return
+	}
+	migrated := 0
+	for _, s := range slugs {
+		raw, err := a.store.ReadProject(s)
+		if err != nil {
+			continue
+		}
+		var m map[string]any
+		if err := json.Unmarshal(raw, &m); err != nil {
+			continue
+		}
+		if _, ok := m["project_id"]; ok {
+			continue
+		}
+		pid := ""
+		if q, ok := m["question_id"].(string); ok {
+			pid = strings.ToLower(strings.TrimSpace(q))
+		}
+		if pid == "" {
+			if p, err := a.loadProject(s); err == nil {
+				pid = p.ProjectID
+			}
+		}
+		if pid == "" {
+			continue
+		}
+		m["project_id"] = pid
+		out, err := json.MarshalIndent(m, "", "  ")
+		if err != nil {
+			continue
+		}
+		if err := a.store.WriteProject(s, out); err != nil {
+			continue
+		}
+		migrated++
+	}
+	a.invalidateIDIndex()
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "migrated": migrated, "total": len(slugs)})
 }

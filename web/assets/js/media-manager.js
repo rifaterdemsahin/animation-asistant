@@ -1,5 +1,5 @@
 var api = "/api";
-var slug = function () { return (window.currentProject && window.currentProject() || {}).slug; };
+var pid = function () { return (window.currentProject && window.currentProject() || {}).project_id; };
 
 function esc(s) { return String(s ?? "").replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; }); }
 async function j(url, opts) { var r = await fetch(url, { credentials: "same-origin", ...opts }); if (!r.ok) throw new Error((await r.text()) || r.statusText); return r.json(); }
@@ -15,7 +15,7 @@ function togglePrompt(btnId, preId, text) {
 }
 
 async function loadStoryboardImg() {
-  var s = slug();
+  var s = pid();
   try {
     var sb = await j(api + "/projects/" + s + "/storyboard");
     var file = "";
@@ -39,7 +39,7 @@ async function loadStoryboardImg() {
 
 async function loadOutline() {
   try {
-    var r = await j(api + "/projects/" + slug() + "/outline");
+    var r = await j(api + "/projects/" + pid() + "/outline");
     if (r.outline) { document.getElementById("outline-out").textContent = JSON.stringify(r.outline, null, 2); document.getElementById("outline-out").classList.remove("hidden"); document.getElementById("outline-state").textContent = "✅ ready"; }
   } catch {}
 }
@@ -51,7 +51,7 @@ function renderScripts(acts) {
   for (var i = 0; i < order.length; i++) { var k = order[i][0], t = order[i][1]; if (!acts[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h3>" + t + "</h3><pre>" + esc(acts[k]) + "</pre>"; out.append(d); }
   if (!any) out.innerHTML = "<p class='muted'>No script yet — generate one above.</p>";
 }
-async function loadScript() { try { var r = await j(api + "/projects/" + slug() + "/script"); renderScripts(r.acts || {}); } catch {} }
+async function loadScript() { try { var r = await j(api + "/projects/" + pid() + "/script"); renderScripts(r.acts || {}); } catch {} }
 
 var compTmpl = null;     // components prompt template: {default_types, styles, image_prompt}
 var beatsByAct = {};     // actKey -> [beat text,...] from the latest script version
@@ -67,7 +67,7 @@ function renderCompPrompt(tmpl, style, beat, topic) {
 // Loads the components template, the latest per-act script beats, and the topic
 // so each component card can show the exact prompt that will be (or was) sent.
 async function ensureCompData() {
-  var s = slug();
+  var s = pid();
   var jobs = [];
   if (!compTmpl) jobs.push(j(api + "/prompts/components").then(function (r) { compTmpl = JSON.parse(r.raw); }));
   if (!Object.keys(beatsByAct).length) jobs.push(j(api + "/projects/" + s + "/script").then(function (r) {
@@ -94,7 +94,7 @@ function renderComponents(actsObj) {
   var styles = (compTmpl && compTmpl.styles) || {};
   var imgTmpl = (compTmpl && compTmpl.image_prompt) || "";
   var topic = compTopic || (window.currentProject() || {}).title || "";
-  var s = slug();
+  var s = pid();
   var order = [["act-1", "Act 1 — 😱 Problem"], ["act-2", "Act 2 — 💡 Solution"], ["act-3", "Act 3 — 🎓 Lesson"]];
 
   for (var oi = 0; oi < order.length; oi++) {
@@ -148,7 +148,7 @@ function renderComponents(actsObj) {
   var hasAny = false; for (var ak in actsObj) if ((actsObj[ak] || []).length) { hasAny = true; break; }
   if (!hasAny) { var note = document.createElement("p"); note.className = "muted"; note.textContent = "No components yet — click a per-card Generate, or Generate all components above."; out.prepend(note); }
 }
-async function loadComponents() { try { var r = await j(api + "/projects/" + slug() + "/components"); await ensureCompData(); renderComponents(r.acts || {}); } catch {} }
+async function loadComponents() { try { var r = await j(api + "/projects/" + pid() + "/components"); await ensureCompData(); renderComponents(r.acts || {}); } catch {} }
 
 // --- Models (shown inline per step) + audio layer loaders ---
 
@@ -184,13 +184,13 @@ function renderTmplJS(tmpl, vars) {
 }
 async function ensureTopic() {
   if (compTopic) return compTopic;
-  try { var p = await j(api + "/projects/" + slug()); compTopic = p.topic || p.title || slug(); } catch {}
+  try { var p = await j(api + "/projects/" + pid()); compTopic = p.topic || p.title || pid(); } catch {}
   return compTopic;
 }
 
 var ACT_ORDER = [["act-1", "Act 1 — 😱 Problem"], ["act-2", "Act 2 — 💡 Solution"], ["act-3", "Act 3 — 🎓 Lesson"]];
 function audioEl(kind, file) {
-  return kind + " <audio controls src='" + api + "/projects/" + slug() + "/raw/" + file + "'></audio>";
+  return kind + " <audio controls src='" + api + "/projects/" + pid() + "/raw/" + file + "'></audio>";
 }
 
 function renderVoiceover(audio) {
@@ -199,7 +199,7 @@ function renderVoiceover(audio) {
   for (var i = 0; i < ACT_ORDER.length; i++) { var k = ACT_ORDER[i][0], t = ACT_ORDER[i][1]; if (!audio[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h4>" + t + "</h4>" + audioEl("🎙️", audio[k]); out.append(d); }
   if (!any) out.innerHTML = "<p class='muted'>No voiceover yet — 🚀 Execute above.</p>";
 }
-async function loadVoiceover() { try { var r = await j(api + "/projects/" + slug() + "/audio"); renderVoiceover(r.audio || {}); } catch {} }
+async function loadVoiceover() { try { var r = await j(api + "/projects/" + pid() + "/audio"); renderVoiceover(r.audio || {}); } catch {} }
 
 function renderMusic(music) {
   var out = document.getElementById("music-out"); out.innerHTML = "";
@@ -207,7 +207,7 @@ function renderMusic(music) {
   for (var i = 0; i < ACT_ORDER.length; i++) { var k = ACT_ORDER[i][0], t = ACT_ORDER[i][1]; if (!music[k]) continue; any = true; var d = document.createElement("div"); d.className = "act"; d.innerHTML = "<h4>" + t + "</h4>" + audioEl("🎵", music[k]); out.append(d); }
   if (!any) out.innerHTML = "<p class='muted'>No music yet — 🚀 Execute above.</p>";
 }
-async function loadMusic() { try { var r = await j(api + "/projects/" + slug() + "/audio/music"); renderMusic(r.music || {}); } catch {} }
+async function loadMusic() { try { var r = await j(api + "/projects/" + pid() + "/audio/music"); renderMusic(r.music || {}); } catch {} }
 
 function renderSFX(sfx) {
   var out = document.getElementById("sfx-out"); out.innerHTML = "";
@@ -220,7 +220,7 @@ function renderSFX(sfx) {
   }
   if (!any) out.innerHTML = "<p class='muted'>No sound effects yet — 🚀 Execute above.</p>";
 }
-async function loadSFX() { try { var r = await j(api + "/projects/" + slug() + "/audio/sfx"); renderSFX(r.sfx || {}); } catch {} }
+async function loadSFX() { try { var r = await j(api + "/projects/" + pid() + "/audio/sfx"); renderSFX(r.sfx || {}); } catch {} }
 
 // --- Generated-file browser: download, copy-to-clipboard, modal preview ---
 
@@ -327,7 +327,7 @@ function openAssetModal(file) {
 async function loadBrowse() {
   var out = document.getElementById("files-out");
   try {
-    var r = await j(api + "/projects/" + slug() + "/browse"); var f = r.files || [];
+    var r = await j(api + "/projects/" + pid() + "/browse"); var f = r.files || [];
     if (!f.length) { out.innerHTML = "<p class='muted'>No files generated yet.</p>"; return; }
     out.innerHTML = "";
     f.forEach(function (x) {
@@ -369,12 +369,12 @@ async function loadBrowse() {
 }
 
 document.addEventListener("layout:ready", function () {
-  var s = slug(); if (!s) return;
+  var s = pid(); if (!s) return;
   document.getElementById("no-project").classList.add("hidden");
   document.getElementById("manager").classList.remove("hidden");
   var cur = window.currentProject();
   document.getElementById("mm-title").textContent = cur.title + " (" + s + ")";
-  document.getElementById("mm-status").textContent = cur.slug;
+  document.getElementById("mm-status").textContent = cur.project_id || cur.slug;
 
   var allPrompts = null;
 

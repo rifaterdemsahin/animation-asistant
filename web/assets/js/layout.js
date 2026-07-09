@@ -34,27 +34,38 @@ function el(html) {
 }
 
 function currentProject() {
-  // Deep-link support: ?project=<slug> (or ?slug=<slug>) selects the project.
+  // Deep-link support: ?project=<project_id> (or legacy ?slug=<slug>) selects
+  // the project. project_id is the canonical URL identifier.
   try {
     const params = new URLSearchParams(location.search);
     const qs = params.get("project") || params.get("slug");
     if (qs) {
       const cur = JSON.parse(localStorage.getItem("current_project") || "null");
-      if (!cur || cur.slug !== qs) {
-        localStorage.setItem("current_project", JSON.stringify({
-          slug: qs,
-          title: (cur && cur.slug === qs && cur.title) ? cur.title : qs,
-        }));
-      }
+      const same = cur && (cur.project_id === qs || cur.slug === qs);
+      localStorage.setItem("current_project", JSON.stringify({
+        project_id: qs,
+        slug: (same && cur.slug) || qs,
+        title: (same && cur.title) ? cur.title : qs,
+      }));
     }
   } catch {}
-  try { return JSON.parse(localStorage.getItem("current_project") || "null"); }
-  catch { return null; }
+  try {
+    const c = JSON.parse(localStorage.getItem("current_project") || "null");
+    // Back-compat: older entries stored only {slug, title} — treat slug as the
+    // project_id (the backend resolves either).
+    if (c && !c.project_id && c.slug) c.project_id = c.slug;
+    return c;
+  } catch { return null; }
 }
 
-// setCurrentProject updates the active project and refreshes the header.
-function setCurrentProject(slug, title) {
-  localStorage.setItem("current_project", JSON.stringify({ slug, title: title || slug }));
+// setCurrentProject updates the active project (project_id is the URL id;
+// slug is kept for display/cache) and refreshes the header.
+function setCurrentProject(projectID, slug, title) {
+  localStorage.setItem("current_project", JSON.stringify({
+    project_id: projectID,
+    slug: slug || projectID,
+    title: title || projectID,
+  }));
   renderHeader();
 }
 
@@ -111,7 +122,7 @@ function renderHeader() {
   const p = currentProject();
   h.innerHTML = `<div class="app-header">
       <span class="label">Project:</span>
-      <span class="name">${p ? (p.title + " (" + p.slug + ")") : "none selected"}</span>
+      <span class="name">${p ? (p.title + " (" + (p.project_id || p.slug) + ")") : "none selected"}</span>
     </div>`;
 }
 

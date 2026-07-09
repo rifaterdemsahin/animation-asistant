@@ -38,12 +38,12 @@ type storyboardVersions struct {
 }
 
 func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	p, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+	slug := p.Slug
 
 	// Optional body: edited per-act image prompts + Q&A overrides from the UI.
 	var req storyboardReq
@@ -193,6 +193,9 @@ func (a *App) generateStoryboard(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getStoryboard(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
+	if s, err := a.resolveSlug(slug); err == nil {
+		slug = s
+	}
 	versions := a.loadStoryboardVersions(slug)
 	// Legacy fallback: projects generated before per-act versioning had a
 	// single storyboard.png (and optionally image_prompt.txt).

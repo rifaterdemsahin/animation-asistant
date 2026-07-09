@@ -16,6 +16,8 @@ type App struct {
 	prompts   PromptStore
 	pcache    map[string]string
 	pcacheMu  sync.Mutex
+	idIndex   map[string]string // project_id (lowercase) -> storage slug
+	idIndexMu sync.RWMutex
 	startedAt string
 }
 
@@ -53,6 +55,9 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /api/projects/{slug}/storyboard", a.authed(a.generateStoryboard))
 	mux.HandleFunc("GET /api/projects/{slug}/storyboard", a.authed(a.getStoryboard))
 
+	// one-time data migration: backfill project_id into every project.json
+	mux.HandleFunc("POST /api/admin/migrate-project-ids", a.authed(a.migrateProjectIDs))
+
 	// editable prompt templates (Azure "prompts" container)
 	mux.HandleFunc("GET /api/prompts", a.authed(a.listPrompts))
 	mux.HandleFunc("GET /api/prompts/{id}", a.authed(a.getPrompt))
@@ -88,7 +93,11 @@ func (a *App) authed(h http.HandlerFunc) http.HandlerFunc {
 
 // serveRaw streams a generated asset (image/audio) out of storage.
 func (a *App) serveRaw(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
+	slug, err := a.resolveSlug(r.PathValue("slug"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
 	p := r.PathValue("path")
 	if strings.Contains(p, "..") || strings.Contains(slug, "..") {
 		http.Error(w, "bad path", http.StatusBadRequest)

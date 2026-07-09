@@ -16,12 +16,12 @@ type outlineReq struct {
 }
 
 func (a *App) generateOutline(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	p, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
+	slug := p.Slug
 	var req outlineReq
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
@@ -62,6 +62,9 @@ func (a *App) generateOutline(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getOutline(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
+	if s, err := a.resolveSlug(slug); err == nil {
+		slug = s
+	}
 	b, err := a.store.Read(slug, "outline.json")
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"outline": nil})
@@ -121,12 +124,12 @@ func scriptModelName(a *App) string {
 }
 
 func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	p, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
+	slug := p.Slug
 	var req scriptReq
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
@@ -276,11 +279,12 @@ func (a *App) loadOutlineMap(slug string) map[string]string {
 }
 
 func (a *App) getScript(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	if _, err := a.loadProject(slug); err != nil {
+	p, err := a.resolveProject(r.PathValue("slug"))
+	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
+	slug := p.Slug
 	result := map[string]string{}
 	voiceover := map[string]string{}
 	allVersions := map[string][]map[string]any{}

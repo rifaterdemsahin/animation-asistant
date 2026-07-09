@@ -13,12 +13,12 @@ type compReq struct {
 }
 
 func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	p, err := a.loadProject(slug)
+	p, err := a.resolveProject(r.PathValue("slug"))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+	slug := p.Slug
 	var req compReq
 	body, _ := io.ReadAll(r.Body)
 	_ = json.Unmarshal(body, &req)
@@ -125,6 +125,9 @@ func (a *App) generateComponents(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getComponents(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
+	if s, err := a.resolveSlug(slug); err == nil {
+		slug = s
+	}
 	out := map[string][]map[string]any{}
 	for _, act := range acts {
 		b, err := a.store.Read(slug, act.Slug+"/components/components.json")

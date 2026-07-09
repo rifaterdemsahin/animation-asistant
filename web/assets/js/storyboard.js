@@ -3,7 +3,7 @@
 // generates 3 images — one per act (act-1/act-2/act-3). Each generation is
 // saved as a new version (never overwritten); all are shown grouped by act.
 const api = "/api";
-const slug = () => (window.currentProject && window.currentProject() || {}).slug;
+const pid = () => (window.currentProject && window.currentProject() || {}).project_id;
 
 // Fixed 3-act structure (mirrors server/acts.go).
 const ACTS = [
@@ -33,7 +33,7 @@ let modelName = "";
 
 // One version card (image + prompt details). Used for every act's gallery.
 function versionCard(v, actTitle) {
-  const rawUrl = `${api}/projects/${slug()}/raw/${v.file}`;
+  const rawUrl = `${api}/projects/${pid()}/raw/${v.file}`;
   const bust = rawUrl + (rawUrl.includes("?") ? "&" : "?") + "_t=" + encodeURIComponent(v.created_at || ("v" + v.id));
   const actKey = v.act || "storyboard";
   const downloadName = `${actKey}-v${v.id}.png`;
@@ -133,7 +133,7 @@ function fillActPrompts(actPrompts) {
 
 async function loadStoryboard() {
   try {
-    const data = await json(`${api}/projects/${slug()}/storyboard`);
+    const data = await json(`${api}/projects/${pid()}/storyboard`);
     renderVersions(data.versions || []);
     fillActPrompts(data.act_prompts || {});
     if (data.image_model) {
@@ -146,9 +146,9 @@ async function loadStoryboard() {
 
 async function loadProjectMeta() {
   try {
-    const s = slug();
+    const s = pid();
     const p = await json(`${api}/projects/${s}`);
-    if (window.setCurrentProject) window.setCurrentProject(s, p.title || s);
+    if (window.setCurrentProject) window.setCurrentProject(p.project_id || s, p.slug, p.title || s);
     const sbTitle = document.getElementById("sb-title");
     if (sbTitle) sbTitle.textContent = (p.title || s) + " (" + s + ")";
     let question = p.question || p.title || "";
@@ -224,7 +224,7 @@ function generatePrompt() {
 }
 
 async function executePrompt() {
-  const s = slug();
+  const s = pid();
   if (!s) return;
   const btn = document.getElementById("execute-prompt");
   const status = document.getElementById("execute-status");
@@ -273,7 +273,7 @@ async function executePrompt() {
 }
 
 document.addEventListener("layout:ready", async () => {
-  const s = slug();
+  const s = pid();
   if (!s) return;
   document.getElementById("no-project").classList.add("hidden");
   document.getElementById("manager").classList.remove("hidden");

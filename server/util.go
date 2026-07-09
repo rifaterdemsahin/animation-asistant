@@ -14,11 +14,12 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func (a *App) browseFiles(w http.ResponseWriter, r *http.Request) {
-	slug := r.PathValue("slug")
-	if _, err := a.loadProject(slug); err != nil {
+	p, err := a.resolveProject(r.PathValue("slug"))
+	if err != nil {
 		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
 		return
 	}
+	slug := p.Slug
 	entries, err := a.store.List(slug, "")
 	if err != nil {
 		writeError(w, r, http.StatusInternalServerError, "storage_error", err.Error())
@@ -37,12 +38,12 @@ func (a *App) browseFiles(w http.ResponseWriter, r *http.Request) {
 		t := fileType(e)
 		files = append(files, fileInfo{
 			Path: e,
-			URL:  "/api/projects/" + slug + "/raw/" + e,
+			URL:  "/api/projects/" + p.ProjectID + "/raw/" + e,
 			Type: t,
 		})
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
-	writeJSON(w, http.StatusOK, map[string]any{"slug": slug, "files": files})
+	writeJSON(w, http.StatusOK, map[string]any{"project_id": p.ProjectID, "slug": slug, "files": files})
 }
 
 func fileType(name string) string {

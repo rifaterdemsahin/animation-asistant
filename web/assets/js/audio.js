@@ -1,5 +1,5 @@
 var api = "/api";
-var slug = function () { return (window.currentProject && window.currentProject() || {}).slug; };
+var pid = function () { return (window.currentProject && window.currentProject() || {}).project_id; };
 
 function el(id) { return document.getElementById(id); }
 function setLoading(btn, on) {
@@ -20,13 +20,13 @@ async function json(url, opts) {
 }
 
 document.addEventListener("layout:ready", function () {
-  var s = slug();
+  var s = pid();
   if (!s) return;
   el("no-project").classList.add("hidden");
   el("manager").classList.remove("hidden");
   var cur = window.currentProject && window.currentProject();
   el("at-title").textContent = cur.title + " (" + s + ")";
-  el("at-status").textContent = cur.slug;
+  el("at-status").textContent = cur.project_id || cur.slug;
 
   el("show-vo-prompt").addEventListener("click", function () {
     var pre = el("vo-prompt");

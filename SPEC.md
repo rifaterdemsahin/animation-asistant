@@ -178,9 +178,10 @@ how it demonstrates the act:
   `image_prompt` template using that type's `style` and the act's beat (the
   stored prompt is shown once the component has been generated). The Generate
   button regenerates **just that one component** via
-  `POST /api/projects/{slug}/components` with a single `acts:[act]` +
-  `types:[type]`. A separate **⚡ Generate all components** button bulk-creates
-  every type for the selected acts.
+  `POST /api/projects/{project_id}/components` (URLs use the unique
+  `project_id`; the `slug` is also accepted for backward compatibility) with a
+  single `acts:[act]` + `types:[type]`. A separate **⚡ Generate all
+  components** button bulk-creates every type for the selected acts.
 - **Merge semantics**: regenerating a single component only replaces that type's
   entry in the act's `components.json`; every other already-generated type is
   preserved (never wiped). The beat used for each type is its **canonical index**
@@ -343,10 +344,18 @@ script, a set of typed **components**, and audio.
 - `components.json` (per act) is an array of components:
   `{ id, type, prompt, file, script_ref }` where `script_ref` points at the
   script beat the component illustrates.
-- `project.json` holds: `slug`, `title`, `topic`, `animation_type`,
+- `project.json` holds: `project_id`, `slug`, `title`, `topic`, `animation_type`,
   `created_at`, `updated_at`, `status`, and a `acts` map keyed by
   `act-1` / `act-2` / `act-3` with each act's `role` (`problem` / `solution` /
   `lesson`) and per-act status.
+- **`project_id`** is the canonical, unique, stable, URL-safe identifier for a
+  project (lowercase `qN`, e.g. `q1`). It is assigned once at creation, never
+  reused, and **used in all URLs** (`/api/projects/{project_id}/…` and the
+  `?project=<project_id>` deep-link). The `slug` (derived from the title)
+  remains the storage key / folder name and is still accepted in URLs for
+  backward compatibility. `question_id` is the editable display number; the
+  immutable `project_id` is derived from it (lowercased) when available, else
+  generated as the next free `qN`.
 - Each act is independent: you can generate/regenerate any single act
   (script, components, audio) without touching the others.
 - **Scripts are versioned**: each Execute Prompt creates a new version (`v01`, `v02`, …)

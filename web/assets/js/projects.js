@@ -227,7 +227,7 @@ function renderTable(projects) {
   const current = window.currentProject && window.currentProject();
   for (const p of projects) {
     const tr = document.createElement("tr");
-    if (current && current.slug === p.slug) tr.classList.add("current");
+    if (current && (current.project_id === p.project_id || current.slug === p.slug)) tr.classList.add("current");
     tr.innerHTML =
       `<td class="cell-qid">${escapeHtml(p.question_id || "—")}</td>` +
       `<td class="cell-title"><strong>${escapeHtml(p.title || "")}</strong></td>` +
@@ -323,7 +323,7 @@ function makeOpenButton(p, current) {
   b.className = "btn primary";
   b.innerHTML = "&#128193;";
   b.title = "Open and select project";
-  if (current && current.slug === p.slug) {
+  if (current && (current.project_id === p.project_id || current.slug === p.slug)) {
     b.innerHTML = "&#9989;";
     b.title = "Currently selected";
     b.disabled = true;
@@ -403,20 +403,20 @@ function buildStatusSelect(p) {
     if (v === cur) op.selected = true;
     sel.appendChild(op);
   }
-  sel.addEventListener("change", () => updateStatus(p.slug, sel.value));
+  sel.addEventListener("change", () => updateStatus(p, sel.value));
   return sel;
 }
 
-async function updateStatus(slug, status) {
-  const sel = document.querySelector(`select.status-select[data-slug="${slug}"]`);
+async function updateStatus(p, status) {
+  const sel = document.querySelector(`select.status-select[data-slug="${p.slug}"]`);
   try {
-    await json(`${api}/projects/${encodeURIComponent(slug)}`, {
+    await json(`${api}/projects/${encodeURIComponent(p.project_id)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
     if (sel) sel.className = "status-select status-" + status;
-    patchCacheProject(slug, { status });
+    patchCacheProject(p.slug, { status });
   } catch (err) {
     alert("Status update failed: " + err.message);
     loadProjects({ refresh: true });
@@ -424,15 +424,15 @@ async function updateStatus(slug, status) {
 }
 
 function selectProject(p) {
-  localStorage.setItem("current_project", JSON.stringify({ slug: p.slug, title: p.title }));
-  location.href = "/pages/storyboard.html";
+  localStorage.setItem("current_project", JSON.stringify({ project_id: p.project_id, slug: p.slug, title: p.title }));
+  location.href = "/pages/storyboard.html?project=" + encodeURIComponent(p.project_id);
 }
 
 async function deleteProject(p) {
   if (!confirm(`Delete project "${p.title}"? This cannot be undone.`)) return;
-  await json(`${api}/projects/${encodeURIComponent(p.slug)}`, { method: "DELETE" });
+  await json(`${api}/projects/${encodeURIComponent(p.project_id)}`, { method: "DELETE" });
   const cur = window.currentProject && window.currentProject();
-  if (cur && cur.slug === p.slug) localStorage.removeItem("current_project");
+  if (cur && (cur.project_id === p.project_id || cur.slug === p.slug)) localStorage.removeItem("current_project");
   clearCache();
   loadProjects({ refresh: true });
 }
@@ -543,7 +543,7 @@ async function editProject(p) {
   const existing = document.getElementById("edit-modal");
   if (existing) existing.remove();
 
-  const full = await json(`${api}/projects/${encodeURIComponent(p.slug)}`);
+  const full = await json(`${api}/projects/${encodeURIComponent(p.project_id)}`);
   const modal = buildEditModal(full);
   document.body.appendChild(modal);
 
@@ -585,7 +585,7 @@ async function editProject(p) {
     }
 
     try {
-      await json(`${api}/projects/${encodeURIComponent(p.slug)}`, {
+      await json(`${api}/projects/${encodeURIComponent(p.project_id)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

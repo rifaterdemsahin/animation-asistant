@@ -5,6 +5,6 @@ document.addEventListener("layout:ready", () => {
   const name = document.getElementById("current-project-name");
   if (p && panel) {
     panel.classList.remove("hidden");
-    name.textContent = `${p.title} (${p.slug})`;
+    name.textContent = `${p.title} (${p.project_id || p.slug})`;
   }
 });

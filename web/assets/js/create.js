@@ -1,5 +1,5 @@
 var api = "/api";
-var slug = "";
+var pid = "";
 
 function el(id) { return document.getElementById(id); }
 function progressPanel() { el("progress").classList.remove("hidden"); return el("steps"); }
@@ -34,11 +34,11 @@ async function createProject() {
       canva_link: cl
     })
   });
-  slug = p.slug;
-  localStorage.setItem("current_project", JSON.stringify({ slug: p.slug, title: p.title }));
+  pid = p.project_id;
+  localStorage.setItem("current_project", JSON.stringify({ project_id: p.project_id, slug: p.slug, title: p.title }));
   document.dispatchEvent(new CustomEvent("layout:ready"));
   renderHeader();
-  return slug;
+  return pid;
 }
 
 function step(name, icon) {
