@@ -228,16 +228,22 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 		sbCtx = b.String()
 	}
 	sys, usr := a.scriptTmpl()
+	userContent := renderTmpl(usr, map[string]string{
+		"topic":               p.Topic,
+		"act_key":             act.Key,
+		"act_role":            act.Role,
+		"summary":             summary,
+		"purpose":             act.Purpose,
+		"storyboard_prompts":  sbCtx,
+	})
+	// Always prepend storyboard context so it reaches the LLM even if the
+	// editable template doesn't use the {{storyboard_prompts}} placeholder.
+	if sbCtx != "" {
+		userContent = sbCtx + userContent
+	}
 	msgs := []orMessage{
 		{Role: "system", Content: sys},
-		{Role: "user", Content: renderTmpl(usr, map[string]string{
-			"topic":               p.Topic,
-			"act_key":             act.Key,
-			"act_role":            act.Role,
-			"summary":             summary,
-			"purpose":             act.Purpose,
-			"storyboard_prompts":  sbCtx,
-		})},
+		{Role: "user", Content: userContent},
 	}
 	a.savePromptMsg(p.Slug, act.Key, "script", msgs)
 	raw, err := a.chatText(msgs)

@@ -232,9 +232,8 @@ function showPreview() {
     document.getElementById("sc-status").textContent = "Prompt template not loaded.";
     return;
   }
-  document.getElementById("prompt-preview").value =
-    "[System]\n" + promptTemplate.system + "\n\n[User Template]\n" + promptTemplate.user;
-  document.getElementById("sc-status").textContent = "Prompt template preview shown.";
+  generatePrompt();
+  document.getElementById("sc-status").textContent += " (with storyboard context)";
 }
 
 function generatePrompt() {
@@ -282,12 +281,12 @@ function generatePrompt() {
       .replace(/\{\{act_role\}\}/g, actRole[k] || "")
       .replace(/\{\{summary\}\}/g, summary)
       .replace(/\{\{purpose\}\}/g, actPurpose[k] || "")
-      .replace(/\{\{storyboard_prompts\}\}/g, sbCtx);
-    text += "=== " + k + " (" + actRole[k] + ") ===\n" + sbCtx + filled + "\n\n";
+      .replace(/\{\{storyboard_prompts\}\}/g, "");
+    text += "=== " + k + " (" + actRole[k] + ") ===\n" + (sbCtx || "") + filled + "\n\n";
   }
 
   document.getElementById("prompt-preview").value = text;
-  document.getElementById("sc-status").textContent = "Generated prompts for " + acts.length + " act(s).";
+  document.getElementById("sc-status").textContent = "Prompt for " + acts.length + " act(s)" + (sbCtx ? " + storyboard context" : "") + " — ready to Execute.";
 }
 
 async function executePrompt() {
