@@ -1,0 +1,10 @@
+# Fix Log — Animation Assistant
+
+## 2026-07-10
+
+| Time | Fix | Error Addressed |
+|------|-----|----------------|
+| - | Multi-key rotation: comma-separated `OPENROUTER_API_KEY`, client rotates on 401/402/429 | OpenRouter key expiration/usage limits |
+| - | Single-quoted secrets in fly secrets import: `fly secrets set KEY='value'` or double-quoted inline | `#` truncation in fly secrets |
+| - | Model fallback: all model IDs configurable via env vars. Keep `fal-ai/stable-audio` but can switch to alternative | fal.ai model deprecation |
+| - | Base32 encoding for auth HMAC tokens | Auth secret encoding issues |

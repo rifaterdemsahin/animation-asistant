@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Scripts</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+<div id="topnav"></div>
+<header id="app-header"></header>
+
+<main class="page">
+  <h1>Scripts</h1>
+  <p class="lede">Browse all generated voiceover scripts. One script per page with copy buttons.</p>
+
+  <div id="scripts-toolbar" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+    <input type="text" id="search-input" placeholder="Search projects..." style="flex:1;min-width:200px;">
+    <span id="count-label" style="color:var(--muted);white-space:nowrap;"></span>
+    <span id="cache-label" style="color:var(--muted);font-size:0.85em;white-space:nowrap;"></span>
+    <button class="btn" id="refresh-btn">Refresh</button>
+  </div>
+
+  <div id="pager-top" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px;"></div>
+
+  <div id="script-view" class="panel">
+    <p>Loading scripts…</p>
+  </div>
+
+  <div id="pager-bottom" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:12px;"></div>
+</main>
+
+<footer id="app-footer"></footer>
+
+<script src="/assets/js/layout.js"></script>
+<script src="/assets/js/auth.js"></script>
+<script src="/assets/js/debug.js"></script>
+<script src="/assets/js/scripts.js"></script>
+</body>
+</html>

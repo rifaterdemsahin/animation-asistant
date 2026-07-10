@@ -20,5 +20,20 @@ other/*
 
 # OS / IDE
 .DS_Store
+Thumbs.db
+
+# VS Code / Cursor
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Claude Code / AI tools
+.claude/
+
+# Kilo / OpenCode
+.kilo/
+.kilocode/
+
+# Node
+node_modules/

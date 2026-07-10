@@ -1,0 +1,193 @@
+{
+  "projectMenu": [
+    {
+      "label": "App",
+      "url": "https://animation-assistant.fly.dev/"
+    },
+    {
+      "label": "Docs",
+      "url": "markdown_renderer.html?file=2_Environment/README.md"
+    },
+    {
+      "label": "Specs",
+      "url": "markdown_renderer.html?file=4_Formula/README.md"
+    }
+  ],
+  "debugMenu": [
+    {
+      "label": "1_Real_Unknown",
+      "children": [
+        {
+          "label": "README",
+          "url": "markdown_renderer.html?file=1_Real_Unknown/README.md"
+        }
+      ]
+    },
+    {
+      "label": "2_Environment",
+      "children": []
+    },
+    {
+      "label": "3_Simulation",
+      "children": [
+        {
+          "label": "README",
+          "url": "markdown_renderer.html?file=3_Simulation/readme.md"
+        },
+        {
+          "label": "pro-exam.json",
+          "url": "markdown_renderer.html?file=3_Simulation/pro-exam.json"
+        }
+      ]
+    },
+    {
+      "label": "4_Formula",
+      "children": [
+        {
+          "label": "README",
+          "url": "markdown_renderer.html?file=4_Formula/README.md"
+        },
+        {
+          "label": "01-architecture",
+          "url": "markdown_renderer.html?file=4_Formula/01-architecture.md"
+        },
+        {
+          "label": "02-backend",
+          "url": "markdown_renderer.html?file=4_Formula/02-backend.md"
+        },
+        {
+          "label": "03-frontend",
+          "url": "markdown_renderer.html?file=4_Formula/03-frontend.md"
+        },
+        {
+          "label": "04-api",
+          "url": "markdown_renderer.html?file=4_Formula/04-api.md"
+        },
+        {
+          "label": "05-data-model",
+          "url": "markdown_renderer.html?file=4_Formula/05-data-model.md"
+        },
+        {
+          "label": "06-storage",
+          "url": "markdown_renderer.html?file=4_Formula/06-storage.md"
+        },
+        {
+          "label": "07-pipeline",
+          "url": "markdown_renderer.html?file=4_Formula/07-pipeline.md"
+        },
+        {
+          "label": "08-storyboard-cost",
+          "url": "markdown_renderer.html?file=4_Formula/08-storyboard-generation-cost.md"
+        },
+        {
+          "label": "09-alternative-image-models",
+          "url": "markdown_renderer.html?file=4_Formula/09-alternative-image-models.md"
+        },
+        {
+          "label": "10-gemini-vs-openrouter-cost",
+          "url": "markdown_renderer.html?file=4_Formula/10-gemini-direct-vs-openrouter-cost.md"
+        },
+        {
+          "label": "11-storyboard-pipeline-estimate",
+          "url": "markdown_renderer.html?file=4_Formula/11-storyboard-cost-and-pipeline-estimate.md"
+        },
+        {
+          "label": "12-checking-missing-scripts",
+          "url": "markdown_renderer.html?file=4_Formula/12-checking-missing-scripts.md"
+        },
+        {
+          "label": "13-q11-script-trigger",
+          "url": "markdown_renderer.html?file=4_Formula/13-q11-script-trigger.md"
+        },
+        {
+          "label": "14-canva-voiceover-endpoint",
+          "url": "markdown_renderer.html?file=4_Formula/14-canva-voiceover-endpoint.md"
+        },
+        {
+          "label": "15-script-endpoints",
+          "url": "markdown_renderer.html?file=4_Formula/15-script-endpoints.md"
+        }
+      ]
+    },
+    {
+      "label": "5_Symbols",
+      "children": [
+        {
+          "label": "Server",
+          "url": "markdown_renderer.html?file=README.md"
+        },
+        {
+          "label": "Web",
+          "url": "markdown_renderer.html?file=web/index.html"
+        },
+        {
+          "label": "Scripts",
+          "url": "markdown_renderer.html?file=scripts/"
+        },
+        {
+          "label": "Shared",
+          "url": "markdown_renderer.html?file=shared/"
+        }
+      ]
+    },
+    {
+      "label": "6_Semblance",
+      "children": [
+        {
+          "label": "README",
+          "url": "markdown_renderer.html?file=6_Semblance/README.md"
+        }
+      ]
+    },
+    {
+      "label": "7_Test",
+      "children": [
+        {
+          "label": "README",
+          "url": "markdown_renderer.html?file=7_Test/README.md"
+        },
+        {
+          "label": "01-page-error-scan",
+          "url": "markdown_renderer.html?file=7_Test/01-page-error-scan.md"
+        },
+        {
+          "label": "10-q58-cost-report",
+          "url": "markdown_renderer.html?file=7_Test/q10-q58-script-cost-report.md"
+        },
+        {
+          "label": "compare-deepseek-vs-openrouter",
+          "url": "markdown_renderer.html?file=7_Test/compare-deepseek-vs-openrouter.html"
+        }
+      ]
+    },
+    {
+      "label": "Agents",
+      "children": [
+        {
+          "label": "agents.md",
+          "url": "markdown_renderer.html?file=agents.md"
+        },
+        {
+          "label": "claude.md",
+          "url": "markdown_renderer.html?file=claude.md"
+        },
+        {
+          "label": "gemini.md",
+          "url": "markdown_renderer.html?file=gemini.md"
+        },
+        {
+          "label": "copilot.md",
+          "url": "markdown_renderer.html?file=copilot.md"
+        },
+        {
+          "label": "kilocode.md",
+          "url": "markdown_renderer.html?file=kilocode.md"
+        },
+        {
+          "label": "prompts.md",
+          "url": "markdown_renderer.html?file=prompts.md"
+        }
+      ]
+    }
+  ]
+}

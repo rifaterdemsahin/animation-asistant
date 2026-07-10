@@ -1,0 +1,10 @@
+timestamp	input_tok	output_tok	cost_usd	speed_toks_s	finish	inferred_type	note
+2026-07-09 22:46	881	1120	0.0676	88.7	stop	image	FLASH storyboard (after change)
+2026-07-09 22:46	398	807	0.00786	185.7	stop	text	scene-assembly (gemini-3.5-flash)
+2026-07-09 20:35	827	2188	0.149	70.7	stop	image	PRO storyboard (before change)
+2026-07-09 20:35	815	2519	0.153	78.9	stop	image	PRO storyboard (before change)
+2026-07-09 20:34	394	722	0.00709	177.0	stop	text	scene-assembly
+2026-07-09 20:34	804	2449	0.152	78.8	stop	image	PRO storyboard (before change)
+2026-07-09 20:34	777	1784	0.144	71.3	stop	image	PRO storyboard (before change)
+2026-07-09 20:34	792	1707	0.143	62.4	stop	image	PRO storyboard (before change)
+2026-07-09 20:34	317	660	0.00642	170.6	stop	text	scene-assembly

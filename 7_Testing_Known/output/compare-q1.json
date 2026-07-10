@@ -1,0 +1,172 @@
+{
+  "project_id": "q1",
+  "outline": {
+    "openrouter": {
+      "raw": "{\"title\": \"Search & Doc Agents\", \"logline\": \"Discover how AI agents use advanced techniques to understand and analyze web content and documents, making information retrieval smarter and more efficient.\", \"acts\": {\"act-1\": {\"summary\": \"Traditional search engines often provide overwhelming results and struggle with complex queries, forcing users to sift through irrelevant information to find specific answers within documents or across the web.\"}, \"act-2\": {\"summary\": \"Web search and document analysis agents overcome this by using AI to understand context, extract key information, and synthesize answers from diverse sources, providing precise and relevant results. They employ techniques like natural language processing, entity recognition, and semantic search to intelligently process and analyze content.\"}, \"act-3\": {\"summary\": \"These agents empower users with more efficient information retrieval and deeper insights, transforming how we interact with vast amounts of data and enabling better decision-making across various applications.\"}}}",
+      "latency_ms": "2535",
+      "tokens": "{'input': 133, 'output': 185}"
+    },
+    "deepseek": {
+      "raw": "{\"title\":\"Search & Analysis Agents\",\"logline\":\"An animated explainer revealing how autonomous agents retrieve web data and analyze documents to answer complex questions.\",\"acts\":{\"act-1\":{\"summary\":\"A user asks a complex question, but a single search or document can't provide the full answer, revealing the problem of scattered information.\"},\"act-2\":{\"summary\":\"The agent breaks the question into subtasks, uses a web search tool to find relevant pages and a document analysis tool to extract key facts, then combines the results.\"},\"act-3\":{\"summary\":\"By orchestrating these tools, the agent delivers a synthesized answer, teaching that intelligent automation lies in coordinating specialized capabilities.\"}}}",
+      "latency_ms": "2866",
+      "tokens": "{'input': 136, 'output': 139}"
+    }
+  },
+  "scripts": {
+    "act-1": {
+      "or": {
+        "error": "Unterminated string starting at: line 2 column 16 (char 17)"
+      },
+      "ds": {
+        "parsed": {
+          "narration": "We begin in a familiar scene: a user sits before a glowing screen, the blue light of a traditional search engine casting a sterile pallor. The cursor blinks in a search bar, waiting. The user types a complex question, something nuanced and specific, and hits enter. A cascade of blue links and text blocks floods the page, an overwhelming avalanche of information. The user's face, initially hopeful, slowly falls into frustration. They click link after link, scrolling through dense paragraphs and irrelevant ads, hunting for a single, precise answer buried somewhere in the digital noise. The world feels cluttered, inefficient, and exhausting.",
+          "beats": [
+            {
+              "id": "beat-1",
+              "text": "A user sits at a desk in a dimly lit room, a single lamp illuminating a computer screen displaying a traditional search engine's homepage."
+            },
+            {
+              "id": "beat-2",
+              "text": "The user types a long, complex question into the search bar, their expression concentrated and hopeful."
+            },
+            {
+              "id": "beat-3",
+              "text": "The search results page explodes with hundreds of blue links, text snippets, and ads, overwhelming the screen."
+            },
+            {
+              "id": "beat-4",
+              "text": "The user clicks on a result, and we see them scrolling frantically through a dense webpage, their eyes darting across lines of text."
+            },
+            {
+              "id": "beat-5",
+              "text": "The user slumps back in their chair, a frustrated sigh escaping as they rub their temples, the search still incomplete."
+            }
+          ]
+        },
+        "raw": "{\n  \"narration\": \"We begin in a familiar scene: a user sits before a glowing screen, the blue light of a traditional search engine casting a sterile pallor. The cursor blinks in a search bar, waiting. The user types a complex question, something nuanced and specific, and hits enter. A cascade of blue links and text blocks floods the page, an overwhelming avalanche of information. The user's face, initially hopeful, slowly falls into frustration. They click link after link, scrolling through dense paragraphs and irrelevant ads, hunting for a single, precise answer buried somewhere in the digital noise. The world feels cluttered, inefficient, and exhausting.\",\n  \"beats\": [\n    {\"id\": \"beat-1\", \"text\": \"A user sits at a desk in a dimly lit room, a single lamp illuminating a computer screen displaying a traditional search engine's homepage.\"},\n    {\"id\": \"beat-2\", \"text\": \"The user types a long, complex question into the search bar, their expression concentrated and hopeful.\"},\n    {\"id\": \"beat-3\", \"text\": \"The search results page explodes with hundreds of blue links, text snippets, and ads, overwhelming the screen.\"},\n    {\"id\": \"beat-4\", \"text\": \"The user clicks on a result, and we see them scrolling frantically through a dense webpage, their eyes darting across lines of text.\"},\n    {\"id\": \"beat-5\", \"text\": \"The user slumps back in their chair, a frustrated sigh escaping as they rub their temples, the search still incomplete.\"}\n  ]\n}",
+        "latency_ms": "4735",
+        "tokens": "{'input': 355, 'output': 333}"
+      }
+    },
+    "act-2": {
+      "or": {
+        "parsed": {
+          "narration": "Fortunately, advanced AI-powered web search and document analysis agents are revolutionizing how we access and understand information. These intelligent systems leverage sophisticated algorithms to grasp the context of your queries and the content they analyze, moving beyond simple keyword matching. They are designed to extract key information and synthesize precise, relevant answers from a multitude of diverse sources, ensuring you get exactly what you need, quickly and efficiently. By employing cutting-edge techniques like natural language processing, entity recognition, and semantic search, these agents intelligently process and analyze vast amounts of data. This allows them to understand the relationships between concepts, identify critical entities, and deliver highly accurate results that address the nuances of your information needs, overcoming the limitations of traditional search methods.",
+          "beats": [
+            {
+              "id": "beat-1",
+              "text": "A stylized, glowing web search bar appears, centered on a dark background. As a query is typed, the search bar transforms into a digital brain, radiating lines that connect to various floating information nodes around it, symbolizing intelligent processing."
+            },
+            {
+              "id": "beat-2",
+              "text": "The digital brain then expands, showing internal gears and circuits whirring. Text overlays appear: 'Natural Language Processing', 'Entity Recognition', and 'Semantic Search', highlighting these core AI techniques."
+            },
+            {
+              "id": "beat-3",
+              "text": "The brain's radiating lines now connect to a diverse array of digital documents, web pages, and databases, depicted as glowing icons. The icons glow brighter as information is extracted and pulled towards the central brain."
+            },
+            {
+              "id": "beat-4",
+              "text": "The extracted information coalesces within the brain, which then transforms into a clean, concise answer box, displaying a perfectly synthesized answer. The background shifts to a bright, optimistic light."
+            }
+          ]
+        },
+        "raw": "```json\n{\n  \"narration\": \"Fortunately, advanced AI-powered web search and document analysis agents are revolutionizing how we access and understand information. These intelligent systems leverage sophisticated algorithms to grasp the context of your queries and the content they analyze, moving beyond simple keyword matching. They are designed to extract key information and synthesize precise, relevant answers from a multitude of diverse sources, ensuring you get exactly what you need, quickly and efficiently. By employing cutting-edge techniques like natural language processing, entity recognition, and semantic search, these agents intelligently process and analyze vast amounts of data. This allows them to understand the relationships between concepts, identify critical entities, and deliver highly accurate results that address the nuances of your information needs, overcoming the limitations of traditional search methods.\",\n  \"beats\": [\n    {\n      \"id\": \"beat-1\",\n      \"text\": \"A stylized, glowing web search bar appears, centered on a dark background. As a query is typed, the search bar transforms into a digital brain, radiating lines that connect to various floating information nodes around it, symbolizing intelligent processing.\"\n    },\n    {\n      \"id\": \"beat-2\",\n      \"text\": \"The digital brain then expands, showing internal gears and circuits whirring. Text overlays appear: 'Natural Language Processing', 'Entity Recognition', and 'Semantic Search', highlighting these core AI techniques.\"\n    },\n    {\n      \"id\": \"beat-3\",\n      \"text\": \"The brain's radiating lines now connect to a diverse array of digital documents, web pages, and databases, depicted as glowing icons. The icons glow brighter as information is extracted and pulled towards the central brain.\"\n    },\n    {\n      \"id\": \"beat-4\",\n      \"text\": \"The extracted information coalesces within the brain, which then transforms into a clean, concise answer box, displaying a perfectly synthesized answer. The background shifts to a bright, optimistic light.\"\n    }\n  ]\n}\n```",
+        "latency_ms": "3882",
+        "tokens": "{'input': 375, 'output': 419}"
+      },
+      "ds": {
+        "parsed": {
+          "narration": "The solution lies in a new breed of AI-powered agents that can truly understand what you're looking for. These web search and document analysis agents use advanced natural language processing to grasp the context behind your query, not just match keywords. They employ entity recognition to identify key people, places, and concepts, and semantic search to find information based on meaning rather than exact phrasing. As the animation shows, these agents work in parallel, scanning both web pages and internal documents simultaneously. They extract the most relevant passages, cross-reference them for accuracy, and synthesize a coherent answer that pulls from multiple sources. The result is precise, context-aware information delivered in seconds, cutting through the noise to give you exactly what you need.",
+          "beats": [
+            {
+              "id": "beat-1",
+              "text": "A glowing AI agent icon, shaped like a magnifying glass with a brain inside, hovers over a chaotic web of tangled lines and scattered document icons."
+            },
+            {
+              "id": "beat-2",
+              "text": "The agent emits waves of light that untangle the lines, while key terms like 'context,' 'meaning,' and 'synthesis' appear in floating text bubbles."
+            },
+            {
+              "id": "beat-3",
+              "text": "Two agent icons appear side by side: one scans a web page with highlighted text, the other flips through a document with highlighted paragraphs."
+            },
+            {
+              "id": "beat-4",
+              "text": "A flowchart shows the agents' process: query input \u2192 entity recognition \u2192 semantic search \u2192 cross-referencing \u2192 synthesized answer output."
+            },
+            {
+              "id": "beat-5",
+              "text": "The final answer appears as a clean, concise paragraph on a screen, with source citations from both the web page and document shown as small icons below."
+            }
+          ]
+        },
+        "raw": "{\n  \"narration\": \"The solution lies in a new breed of AI-powered agents that can truly understand what you're looking for. These web search and document analysis agents use advanced natural language processing to grasp the context behind your query, not just match keywords. They employ entity recognition to identify key people, places, and concepts, and semantic search to find information based on meaning rather than exact phrasing. As the animation shows, these agents work in parallel, scanning both web pages and internal documents simultaneously. They extract the most relevant passages, cross-reference them for accuracy, and synthesize a coherent answer that pulls from multiple sources. The result is precise, context-aware information delivered in seconds, cutting through the noise to give you exactly what you need.\",\n  \"beats\": [\n    {\"id\": \"beat-1\", \"text\": \"A glowing AI agent icon, shaped like a magnifying glass with a brain inside, hovers over a chaotic web of tangled lines and scattered document icons.\"},\n    {\"id\": \"beat-2\", \"text\": \"The agent emits waves of light that untangle the lines, while key terms like 'context,' 'meaning,' and 'synthesis' appear in floating text bubbles.\"},\n    {\"id\": \"beat-3\", \"text\": \"Two agent icons appear side by side: one scans a web page with highlighted text, the other flips through a document with highlighted paragraphs.\"},\n    {\"id\": \"beat-4\", \"text\": \"A flowchart shows the agents' process: query input \u2192 entity recognition \u2192 semantic search \u2192 cross-referencing \u2192 synthesized answer output.\"},\n    {\"id\": \"beat-5\", \"text\": \"The final answer appears as a clean, concise paragraph on a screen, with source citations from both the web page and document shown as small icons below.\"}\n  ]\n}",
+        "latency_ms": "5231",
+        "tokens": "{'input': 373, 'output': 376}"
+      }
+    },
+    "act-3": {
+      "or": {
+        "parsed": {
+          "narration": "In essence, Retrieval Augmented Generation agents are transforming how we interact with vast amounts of information. By integrating external knowledge bases with generative AI, they empower users with more efficient information retrieval and unlock deeper, more accurate insights from complex data. This innovative approach moves beyond simple search, enabling AI to reason, summarize, and generate content with unprecedented precision and relevance. The implications are profound, touching various sectors from research and education to customer service and healthcare, fundamentally enhancing our ability to make informed decisions and drive innovation.",
+          "beats": [
+            {
+              "id": "beat-1",
+              "text": "A split screen shows two distinct scenarios. On the left, a frustrated user sits before a desktop computer, surrounded by stacks of physical books, a magnifying glass in hand, searching through a chaotic pile of documents. On the right, a calm, focused user sits before a sleek monitor, observing a dynamic, interconnected network of digital data points and glowing lines, representing efficient information flow. A subtle, glowing RAG agent icon hovers near the monitor."
+            },
+            {
+              "id": "beat-2",
+              "text": "Zoom in on the right side of the split screen. The RAG agent icon glows brighter, and the network of digital data points expands, showing a clear path from a user query (represented by a thought bubble with a question mark) to relevant data nodes, and then to a concise, accurate answer displayed on the monitor. Arrows illustrate the seamless flow from query to retrieval to generation."
+            },
+            {
+              "id": "beat-3",
+              "text": "A stylized infographic appears, showcasing three key benefits. The first bubble, labeled 'Efficiency,' shows a stopwatch with a fast-moving hand. The second, 'Accuracy,' displays a target with a bullseye. The third, 'Depth of Insight,' features a magnifying glass revealing intricate details within a complex data set, all interconnected by subtle glowing lines originating from a central RAG agent icon."
+            },
+            {
+              "id": "beat-4",
+              "text": "A montage of diverse application icons scrolls across the screen: a microscope for research, a graduation cap for education, a headset for customer service, and a caduceus for healthcare. Each icon briefly animates with a glowing effect as it passes, underscoring the broad impact of RAG agents across various fields."
+            },
+            {
+              "id": "beat-5",
+              "text": "A hand reaches out to touch a holographic interface displaying a complex decision tree, which then resolves into a clear, optimal solution. This signifies enhanced decision-making. The RAG agent icon subtly appears in the corner of the holographic interface, emphasizing its role in guiding the decision."
+            },
+            {
+              "id": "beat-6",
+              "text": "The screen transitions to a futuristic cityscape, with glowing data streams flowing between buildings. A large, stylized RAG agent icon floats prominently in the foreground, acting as a beacon of innovation and knowledge. The cityscape pulses with energy, representing a future empowered by intelligent information access."
+            }
+          ]
+        },
+        "raw": "```json\n{\n  \"narration\": \"In essence, Retrieval Augmented Generation agents are transforming how we interact with vast amounts of information. By integrating external knowledge bases with generative AI, they empower users with more efficient information retrieval and unlock deeper, more accurate insights from complex data. This innovative approach moves beyond simple search, enabling AI to reason, summarize, and generate content with unprecedented precision and relevance. The implications are profound, touching various sectors from research and education to customer service and healthcare, fundamentally enhancing our ability to make informed decisions and drive innovation.\",\n  \"beats\": [\n    {\n      \"id\": \"beat-1\",\n      \"text\": \"A split screen shows two distinct scenarios. On the left, a frustrated user sits before a desktop computer, surrounded by stacks of physical books, a magnifying glass in hand, searching through a chaotic pile of documents. On the right, a calm, focused user sits before a sleek monitor, observing a dynamic, interconnected network of digital data points and glowing lines, representing efficient information flow. A subtle, glowing RAG agent icon hovers near the monitor.\"\n    },\n    {\n      \"id\": \"beat-2\",\n      \"text\": \"Zoom in on the right side of the split screen. The RAG agent icon glows brighter, and the network of digital data points expands, showing a clear path from a user query (represented by a thought bubble with a question mark) to relevant data nodes, and then to a concise, accurate answer displayed on the monitor. Arrows illustrate the seamless flow from query to retrieval to generation.\"\n    },\n    {\n      \"id\": \"beat-3\",\n      \"text\": \"A stylized infographic appears, showcasing three key benefits. The first bubble, labeled 'Efficiency,' shows a stopwatch with a fast-moving hand. The second, 'Accuracy,' displays a target with a bullseye. The third, 'Depth of Insight,' features a magnifying glass revealing intricate details within a complex data set, all interconnected by subtle glowing lines originating from a central RAG agent icon.\"\n    },\n    {\n      \"id\": \"beat-4\",\n      \"text\": \"A montage of diverse application icons scrolls across the screen: a microscope for research, a graduation cap for education, a headset for customer service, and a caduceus for healthcare. Each icon briefly animates with a glowing effect as it passes, underscoring the broad impact of RAG agents across various fields.\"\n    },\n    {\n      \"id\": \"beat-5\",\n      \"text\": \"A hand reaches out to touch a holographic interface displaying a complex decision tree, which then resolves into a clear, optimal solution. This signifies enhanced decision-making. The RAG agent icon subtly appears in the corner of the holographic interface, emphasizing its role in guiding the decision.\"\n    },\n    {\n      \"id\": \"beat-6\",\n      \"text\": \"The screen transitions to a futuristic cityscape, with glowing data streams flowing between buildings. A large, stylized RAG agent icon floats prominently in the foreground, acting as a beacon of innovation and knowledge. The cityscape pulses with energy, representing a future empowered by intelligent information access.\"\n    }\n  ]\n}\n```",
+        "latency_ms": "5969",
+        "tokens": "{'input': 354, 'output': 673}"
+      },
+      "ds": {
+        "parsed": {
+          "narration": "As we look at the final scene, we see a single user at a sleek desk, surrounded by floating holographic data streams and glowing nodes that pulse with information. The narrator's voice deepens: These AI agents are not just tools\u2014they are partners in exploration. They empower you to sift through mountains of data in seconds, uncovering patterns and insights that would take days to find manually. In a world overflowing with information, these agents transform chaos into clarity, helping you make smarter decisions faster. Whether you're a researcher, a business analyst, or a curious learner, this technology puts the power of deep understanding in your hands. The takeaway is simple: with these agents, you don't just find answers\u2014you discover new questions and possibilities, reshaping how you interact with knowledge itself.",
+          "beats": [
+            {
+              "id": "beat-1",
+              "text": "A single user sits at a sleek desk, surrounded by floating holographic data streams and glowing nodes that pulse with information."
+            },
+            {
+              "id": "beat-2",
+              "text": "The user gestures, and a stream of data morphs into a clear, organized visualization of insights, showing patterns and hidden connections."
+            },
+            {
+              "id": "beat-3",
+              "text": "The scene zooms out to show the user in a calm, futuristic office, with a soft glow around the interface, symbolizing empowerment and clarity."
+            },
+            {
+              "id": "beat-4",
+              "text": "A final overlay shows the user smiling, with the words 'Discover. Decide. Transform.' fading in beneath the data streams."
+            }
+          ]
+        },
+        "raw": "{\n  \"narration\": \"As we look at the final scene, we see a single user at a sleek desk, surrounded by floating holographic data streams and glowing nodes that pulse with information. The narrator's voice deepens: These AI agents are not just tools\u2014they are partners in exploration. They empower you to sift through mountains of data in seconds, uncovering patterns and insights that would take days to find manually. In a world overflowing with information, these agents transform chaos into clarity, helping you make smarter decisions faster. Whether you're a researcher, a business analyst, or a curious learner, this technology puts the power of deep understanding in your hands. The takeaway is simple: with these agents, you don't just find answers\u2014you discover new questions and possibilities, reshaping how you interact with knowledge itself.\",\n  \"beats\": [\n    {\n      \"id\": \"beat-1\",\n      \"text\": \"A single user sits at a sleek desk, surrounded by floating holographic data streams and glowing nodes that pulse with information.\"\n    },\n    {\n      \"id\": \"beat-2\",\n      \"text\": \"The user gestures, and a stream of data morphs into a clear, organized visualization of insights, showing patterns and hidden connections.\"\n    },\n    {\n      \"id\": \"beat-3\",\n      \"text\": \"The scene zooms out to show the user in a calm, futuristic office, with a soft glow around the interface, symbolizing empowerment and clarity.\"\n    },\n    {\n      \"id\": \"beat-4\",\n      \"text\": \"A final overlay shows the user smiling, with the words 'Discover. Decide. Transform.' fading in beneath the data streams.\"\n    }\n  ]\n}",
+        "latency_ms": "4935",
+        "tokens": "{'input': 352, 'output': 353}"
+      }
+    }
+  }
+}

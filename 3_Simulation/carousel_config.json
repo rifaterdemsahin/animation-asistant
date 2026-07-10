@@ -1,0 +1,30 @@
+{
+  "title": "Animation Assistant — Simulation Images",
+  "description": "Side-by-side comparison of Pro vs Flash storyboard image models",
+  "images": [
+    {
+      "src": "../compare_pro_vs_flash/pro-act-1.png",
+      "caption": "Pro — Act 1 (Problem)"
+    },
+    {
+      "src": "../compare_pro_vs_flash/flash-act-1.png",
+      "caption": "Flash — Act 1 (Problem)"
+    },
+    {
+      "src": "../compare_pro_vs_flash/pro-act-2.png",
+      "caption": "Pro — Act 2 (Solution)"
+    },
+    {
+      "src": "../compare_pro_vs_flash/flash-act-2.png",
+      "caption": "Flash — Act 2 (Solution)"
+    },
+    {
+      "src": "../compare_pro_vs_flash/pro-act-3.png",
+      "caption": "Pro — Act 3 (Lesson)"
+    },
+    {
+      "src": "../compare_pro_vs_flash/flash-act-3.png",
+      "caption": "Flash — Act 3 (Lesson)"
+    }
+  ]
+}

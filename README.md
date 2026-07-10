@@ -16,7 +16,7 @@ typed images → audio → storyboard) on a fixed **3-act** structure
 - Multi-key OpenRouter rotation (token expiry/limit tolerant).
 - 📝 All prompts saved to Azure for audit & reproducibility.
 
-📖 See **[SPEC.md](SPEC.md)** (design), **[AGENTS.md](AGENTS.md)** (contributing),
+📖 See **[4_Formula/SPEC.md](4_Formula/SPEC.md)** (design), **[AGENTS.md](AGENTS.md)** (contributing),
 ⚠️ **[risks.md](risks.md)** (status + risks).
 
 ## 🛠️ Tools

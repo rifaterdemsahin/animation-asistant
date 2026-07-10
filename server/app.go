@@ -45,6 +45,10 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("POST /api/projects/{slug}/script", a.authed(a.generateScript))
 	mux.HandleFunc("GET /api/projects/{slug}/script", a.authed(a.getScript))
 	mux.HandleFunc("POST /api/projects/{slug}/script/compare", a.authed(a.compareScript))
+	mux.HandleFunc("GET /api/projects/{slug}/script/generate", a.authed(a.scriptPipelineState))
+	mux.HandleFunc("POST /api/projects/{slug}/script/generate", a.authed(a.generateScriptPipeline))
+	mux.HandleFunc("GET /api/projects/{slug}/script/voiceover", a.authed(a.serveVoiceover))
+	mux.HandleFunc("GET /api/scripts", a.authed(a.listScripts))
 
 	mux.HandleFunc("POST /api/projects/{slug}/components", a.authed(a.generateComponents))
 	mux.HandleFunc("GET /api/projects/{slug}/components", a.authed(a.getComponents))

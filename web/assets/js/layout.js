@@ -11,7 +11,10 @@ const NAV_ITEMS = [
     { name: "📋 Storyboard Creator", url: "/pages/storyboard.html" },
     { name: "🖼️ Gallery", url: "/pages/storyboard-gallery.html" },
   ]},
-  { name: "📜 Script", url: "/pages/script-page.html" },
+  { name: "📜 Script", url: "/pages/script-page.html", children: [
+    { name: "📜 Script", url: "/pages/script-page.html" },
+    { name: "📖 Script Carousel", url: "/pages/scripts.html" },
+  ]},
   { name: "🎛️ Media Manager", url: "/pages/media-manager.html" },
   { name: "🎧 Audio", url: "/pages/audio.html" },
   { name: "🛠️ Tools", url: "/pages/tools.html", children: [

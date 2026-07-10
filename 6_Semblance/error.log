@@ -1,0 +1,10 @@
+# Error Log — Animation Assistant
+
+## 2026-07-10
+
+| Time | Error | Context |
+|------|-------|---------|
+| - | OpenRouter key rotation failures | Token expired or usage limit hit. Multi-key rotation implemented (comma-separated keys, rotate on 401/402/429). |
+| - | `#` truncation in fly secrets | `fly secrets import` treats `#` as comment delimiter. `ADMIN_PASSWORD` containing `#` was truncated, causing login failure. |
+| - | fal.ai model deprecations | `fal-ai/stable-audio` may be deprecated. Need model fallback strategy. |
+| - | Auth secret encoding issue | HMAC token encoding. Fixed with base32 encoding. |

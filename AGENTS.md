@@ -1,102 +1,81 @@
-# AGENTS.md — Guidance for AI coding agents working on this repo
+# Agents — Animation Assistant
 
-Read before changes. *What* we build = **SPEC.md**; *how* = this file; status =
-**risks.md**. App is live at https://animation-assistant.fly.dev/.
+Agent coordination rules for the Animation Assistant project (Go+Python web app).
 
-## 1. What this is
+## Agents
 
-Animation Assistant builds animation **components** for Canva on a 3-act
-structure. Two generation surfaces, by design (not duplication):
-- **Go backend** (`server/`) — browser generation on fly.io, writes to **Azure
-  Blob** (`projects` container); calls OpenRouter (text+images) + ElevenLabs.
-- **Python scripts** (`scripts/`) — local generation triggered by the AI agent,
-  writes to local `./other`.
+| Agent   | Role | Strengths |
+|---------|------|-----------|
+| Claude  | Primary architect — full 7-stage journey, system design, Go backend, frontend, Python scripts | Structured thinking, multi-file reasoning, error analysis |
+| Gemini  | Multimodal specialist — storyboard image review, 3_Simulation visual analysis, image prompt tuning | Image understanding, multimodal comparisons |
+| Copilot | GitHub-native — PR reviews, commit discipline, CI/CD, issue management | IDE integration, git workflow, GitHub Actions |
+| Kilo Code | Precision code gen — type-safe Go, unit tests, strict linting | Focused edits, minimal changes, testing |
 
-Flow per project: **outline → script → components → audio → storyboard**.
-After storyboard, the executed image prompts are saved back to the project
-(`storyboard_prompts` field), which the script generator reads on subsequent
-runs to produce storyboard-aware scripts. This creates an optional feedback
-loop: **storyboard → script (re-generate with storyboard context)**.
+## 7-Stage Structure
 
-## 2. Hard rules
+| Stage | Folder | Purpose |
+|-------|--------|---------|
+| 1_Real_Unknown | `1_Real_Unknown/` | Problem discovery, requirements gathering |
+| 2_Environment | `2_Environment/` | Context, constraints, existing system analysis |
+| 3_Simulation | `3_Simulation/` | Prototyping, modeling, image analysis (Gemini) |
+| 4_Formula | `4_Formula/` | Solution design, architecture decisions, Thinking & Planning Gate |
+| 5_Symbols | `5_Symbols/` | Implementation — code in `server/`, `web/`, `scripts/`, `shared/` |
+| 6_Semblance | `6_Semblance/` | Testing, error logging, Error & Fix logging |
+| 7_Testing_Known | `7_Testing_Known/` | Validation, QA, edge cases |
 
-- **Three acts:** act-1 Problem, act-2 Solution, act-3 Lesson. Outline is
-  project-level; script/components/audio are per act. Never a single flat script.
-- **Typed components** (background, lower-third, speech-bubble, infographic,
-  …) each referencing a script beat (`script_ref`).
-- **Naming prefix:** `<slug>-<type>-NN.<ext>`.
-- **Shared shell on every page:** top nav (links+search+logout), current-project
-  header, footer. Pages render into `#topnav`/`#app-header`/`#app-footer` and
-  include `layout.js` + `auth.js`.
-- **Modals reuse the shared CSS** (`.modal-overlay` / `.modal` /
-  `.modal-header|body|footer` already in `styles.css`, see `projects.js`
-  `buildEditModal`). Don't invent a new overlay — build a `<div class="modal-overlay">`
-  and close on ✕ / backdrop / `Esc`. The Media Manager **📁 Generated Files**
-  browser uses this for its asset preview modal.
-- **Generated Files browser** (Media Manager `media-manager.js` `loadBrowse`):
-  every asset card has **⬇️ Download** (blob → real filename), **📋 Copy**
-  (context-aware: image data / text / URL, fallback URL), and **🔍 View**
-  (modal popup). Keep new asset surfaces consistent with these three actions.
-- **Model visibility + 3-type audio:** every Media Manager step shows the model
-  it triggers via a `.model-badge` filled from `GET /api/models`. The **§4 Audio**
-  section has 3 independent layers — voiceover (ElevenLabs), music (fal.ai),
-  SFX (fal.ai) — each with 👁️ Show Prompt / ⚡ Generate Prompt / 🚀 Execute.
-- **Secrets only via env** (`.env` local via KeyVault; `fly secrets` on fly.io).
-  Never log secrets. Basic admin login (cookie auth) by design.
-- **Storage via the Backend interface** — handlers use `a.store`, never raw paths.
+## Hard Rules
 
-## 3. Repo map
+- **Never commit secrets** — use Azure Key Vault `dp-kv-deliverypilot` for all secrets. `.env` is gitignored.
+- **Commit + push after every command** — each successful operation is committed with a descriptive message.
+- **Thinking & Planning Gate** in `4_Formula/` — before any implementation, document the plan in `4_Formula/` and get sign-off.
+- **Error & Fix logging** in `6_Semblance/` — every error encountered and its resolution is logged to `6_Semblance/`.
+- **Record every prompt** in `prompts.md` — all AI interactions are logged.
+- **Keep `index.html` at root** — the web root serves from `web/index.html`.
+- **Two-menu navigation system** — `projectMenu` (App, Docs, Specs) and `debugMenu` (all 7 stages + agent files).
+- **Active Reflection Routine** — after each task, reflect on what was done, what was learned, and what should change.
 
-```
-server/           Go backend (main): app, config, auth, openrouter (rotation+
-                  image), elevenlabs, components, audio, storyboard, projects,
-                  script, acts, healthz, util, errors, prompts (+ editable
-                  store/api) (+ main_test.go)
-server/storage/   Backend interface + Local + Azure (azblob SDK)
-web/              static frontend; assets/js/{layout,auth,media-manager,
-                  storyboard,projects,dashboard}.js ; pages/
-scripts/          Python local generators (script/components/audio/storyboard)
-shared/           Python helpers (config, acts, openrouter, elevenlabs,
-                  components, audio, storyboard, storage)
-fly.toml/Dockerfile/.dockerignore   fly.io deploy (Go+Python image)
-.env.example      documented keys; .env is gitignored
-```
+## Infrastructure
 
-## 4. Run / deploy
+| Component | Detail |
+|-----------|--------|
+| Backend | Go (`go run ./server`, port 8080) |
+| Frontend | Static HTML/CSS/JS in `web/` |
+| Storage | Azure Blob (container: `projects`; prompts container: `prompts`) |
+| AI Text | OpenRouter → Gemini models |
+| AI Images | OpenRouter → Gemini image models |
+| TTS | ElevenLabs (`eleven_turbo_v2_5`, voice "George") |
+| Music | fal.ai (`fal-ai/mmaudio-v2`) |
+| SFX | fal.ai (`fal-ai/stable-audio`) |
+| Deploy | Fly.io (`fly deploy`, `fly secrets`) |
+| Secrets | Azure Key Vault `dp-kv-deliverypilot` |
+| DNS | GitHub Pages → fly.io redirect |
 
-When asked to "open local" or "run locally":
+## Run / Deploy
+
 ```bash
-go run ./server                                   # local: http://localhost:8080
-open -a "Google Chrome" "http://localhost:8080"   # always open in Chrome, not default browser
+# Local
+go run ./server                              # http://localhost:8080
+open -a "Google Chrome" "http://localhost:8080"
+
+# Deploy
+fly deploy
+
+# Secrets from KeyVault
+KV=dp-kv-deliverypilot
+get(){ az keyvault secret show --vault-name "$KV" --name "$1" --query value -o tsv; }
+echo "ADMIN_PASSWORD='$(get AdminPassword)'" > .env
+echo "OPENROUTER_API_KEY='$(get OPENROUTER-API-KEY)'" >> .env
+echo "AZURE_STORAGE_CONNECTION_STRING='$(get AZURE-STORAGE-CONN-STR-AA)'" >> .env
+echo "TTS_API_KEY='$(get ELEVEN-LABS-API-KEY)'" >> .env
+echo "FAL_KEY='$(get FAL-KEY)'" >> .env
 ```
 
-When asked to "deploy" or "ship to fly.io":
-```bash
-fly deploy                                        # fly.io (secrets already set)
-```
+## Active Reflection Routine
 
-When asked to do both ("open local + deploy"), run the server in background and
-deploy in parallel, then open Chrome once the server is ready.
-
-Models (min Gemini 3 for text+image): text `google/gemini-3.5-flash`,
-image `google/gemini-3-pro-image`, storyboard image `google/gemini-3.1-flash-image`,
-TTS ElevenLabs `eleven_turbo_v2_5` / voice
-"George", music `fal-ai/mmaudio-v2`, SFX `fal-ai/stable-audio`. Active models
-are exposed at `GET /api/models` and shown inline as `.model-badge` pills on the
-Media Manager. Override via env.
-
-## 5. Known gotchas
-
-- Setting `AZURE_STORAGE_CONNECTION_STRING` switches to Azure (container auto-
-  created). Without it, local `./other` is used (ephemeral on fly.io).
-- `.env` values containing `;` (Azure conn string) must be **quoted** when
-  sourcing; the committed `.env.example` and the KeyVault script quote them.
-- OpenRouter 401/402/429 rotates to the next comma-separated key; if all fail,
-  the error explains the token is likely expired/over-limit.
-- Go + Python prompts are intentionally parallel (dual-mode); keep both in sync.
-  Both now read editable templates from a `prompts` store (Azure container
-  `prompts` on fly.io, local `other/_prompts` otherwise), seeded with the
-  compiled defaults. Edit live at `/pages/prompts.html` (API `/api/prompts`).
-
-## 6. When in doubt
-Re-read SPEC.md + risks.md. Ask before expanding scope.
+After every task:
+1. What was the goal?
+2. What was actually done?
+3. What worked well?
+4. What went wrong?
+5. What should change for next time?
+6. Update `risks.md` and `prompts.md` as needed.
