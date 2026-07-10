@@ -31,6 +31,7 @@ type storyboardVersion struct {
 	ImagePrompt string `json:"image_prompt"`
 	ImageModel  string `json:"image_model"`
 	CreatedAt   string `json:"created_at"`
+	Archived    bool   `json:"archived"` // hidden from the gallery UI when true
 }
 
 type storyboardVersions struct {
@@ -281,6 +282,44 @@ func (a *App) loadStoryboardVersions(slug string) []storyboardVersion {
 func (a *App) saveStoryboardVersions(slug string, versions []storyboardVersion) {
 	buf, _ := json.MarshalIndent(storyboardVersions{Versions: versions}, "", "  ")
 	_ = a.store.Write(slug, "storyboard/versions.json", buf)
+}
+
+// archiveStoryboardReq toggles the archived flag on one storyboard version.
+type archiveStoryboardReq struct {
+	ID       int  `json:"id"`
+	Archived bool `json:"archived"`
+}
+
+// archiveStoryboardVersion sets the archived flag on a storyboard image version
+// (by id). Archived versions are hidden from the gallery UI by default but are
+// never deleted — they can be restored via the same endpoint.
+func (a *App) archiveStoryboardVersion(w http.ResponseWriter, r *http.Request) {
+	slug, err := a.resolveSlug(r.PathValue("slug"))
+	if err != nil {
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
+		return
+	}
+	var req archiveStoryboardReq
+	body, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(body, &req); err != nil {
+		writeError(w, r, http.StatusBadRequest, "bad_request", "invalid JSON: "+err.Error())
+		return
+	}
+	versions := a.loadStoryboardVersions(slug)
+	found := false
+	for i := range versions {
+		if versions[i].ID == req.ID {
+			versions[i].Archived = req.Archived
+			found = true
+			break
+		}
+	}
+	if !found {
+		writeError(w, r, http.StatusNotFound, "not_found", "storyboard version not found")
+		return
+	}
+	a.saveStoryboardVersions(slug, versions)
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "id": req.ID, "archived": req.Archived, "versions": versions})
 }
 
 // storyboardActVars builds the template variables for one act's image prompt.

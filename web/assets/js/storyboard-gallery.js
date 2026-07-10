@@ -19,6 +19,7 @@ async function json(url, opts) {
 // resolved image versions. currentIdx is the project currently shown.
 let groups = [];
 let currentIdx = 0;
+let showArchived = false;
 
 const ACT_ORDER = ["act-1", "act-2", "act-3"];
 function actRank(act) {
@@ -90,6 +91,27 @@ function downloadImage(url, downloadName) {
   a.click();
 }
 
+// Versions currently visible given the archive filter.
+function shownVersions(proj) {
+  return proj.versions.filter(v => showArchived || !v.archived);
+}
+
+// Toggle the archived flag on a version (by id) via the backend, then re-render.
+async function setArchived(proj, id, archived) {
+  try {
+    await json(`${api}/projects/${encodeURIComponent(proj.project_id)}/storyboard/archive`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, archived }),
+    });
+    const v = proj.versions.find(x => x.id === id);
+    if (v) v.archived = archived;
+    renderProject();
+  } catch (err) {
+    alert("Failed to update archive status: " + err.message);
+  }
+}
+
 // One image card.
 function imageCard(proj, v) {
   const baseUrl = `${api}/projects/${encodeURIComponent(proj.project_id)}/raw/${v.file}`;
@@ -99,18 +121,22 @@ function imageCard(proj, v) {
 
   const card = document.createElement("div");
   card.className = "file-card";
+  if (v.archived) card.style.opacity = "0.5";
+  const archBadge = v.archived ? ` <span class="badge" style="background:var(--panel)">🗄️ archived</span>` : "";
+  const archLabel = v.archived ? "♻️ Unarchive" : "🗄️ Archive";
   card.innerHTML = `
     <div class="file-thumb" title="Click to view" style="cursor:zoom-in">
       <img alt="${escapeHtml(act)} v${escapeHtml(String(v.id))}" loading="lazy">
     </div>
     <div class="file-meta">
-      <span class="badge">${escapeHtml(actLabel(v.act))} · v${escapeHtml(String(v.id))}</span>
+      <span class="badge">${escapeHtml(actLabel(v.act))} · v${escapeHtml(String(v.id))}</span>${archBadge}
       <div class="muted" style="font-size:11px;margin-top:4px">${escapeHtml(v.created_at || "")}${v.image_model ? " · " + escapeHtml(v.image_model) : ""}</div>
     </div>
     <div class="file-actions">
       <button class="btn sbg-copy" data-label="📋 Copy">📋 Copy</button>
       <button class="btn sbg-view">🔍 View</button>
       <button class="btn sbg-dl">⬇️</button>
+      <button class="btn sbg-archive" data-label="${archLabel}">${archLabel}</button>
     </div>`;
 
   const img = card.querySelector("img");
@@ -121,6 +147,7 @@ function imageCard(proj, v) {
   card.querySelector(".sbg-view").addEventListener("click", () => openModal(proj, v, bust));
   card.querySelector(".sbg-copy").addEventListener("click", (e) => copyImage(bust, e.currentTarget));
   card.querySelector(".sbg-dl").addEventListener("click", () => downloadImage(bust, downloadName));
+  card.querySelector(".sbg-archive").addEventListener("click", () => setArchived(proj, v.id, !v.archived));
   return card;
 }
 
@@ -144,6 +171,7 @@ function openModal(proj, v, url) {
       <div class="modal-footer">
         <button class="btn sbg-copy">📋 Copy image</button>
         <button class="btn sbg-dl">⬇️ Download</button>
+        <button class="btn sbg-archive">${v.archived ? "♻️ Unarchive" : "🗄️ Archive"}</button>
       </div>
     </div>`;
   document.body.append(overlay);
@@ -155,28 +183,54 @@ function openModal(proj, v, url) {
   const dlName = `${proj.slug || proj.project_id}-${v.act || "storyboard"}-v${v.id}.png`;
   overlay.querySelector(".sbg-copy").addEventListener("click", (e) => copyImage(url, e.currentTarget));
   overlay.querySelector(".sbg-dl").addEventListener("click", () => downloadImage(url, dlName));
+  overlay.querySelector(".sbg-archive").addEventListener("click", () => { close(); setArchived(proj, v.id, !v.archived); });
 }
 
 function renderProject() {
   if (!groups.length) return;
   const proj = groups[currentIdx];
+  const shown = shownVersions(proj);
   document.getElementById("cur-title").textContent = proj.title || proj.project_id;
   const idStr = proj.project_id + (proj.slug && proj.slug !== proj.project_id ? " · " + proj.slug : "");
   document.getElementById("cur-meta").textContent = `Project ${currentIdx + 1} of ${groups.length} — ${idStr}`;
-  document.getElementById("cur-count").textContent = `${proj.versions.length} image${proj.versions.length === 1 ? "" : "s"}`;
+  const archivedCount = proj.versions.length - shown.length;
+  const countTxt = `${shown.length} image${shown.length === 1 ? "" : "s"}` + (archivedCount > 0 ? ` · ${archivedCount} archived` : "");
+  document.getElementById("cur-count").textContent = countTxt;
 
   const wrap = document.getElementById("images-wrap");
   wrap.innerHTML = "";
-  for (const v of proj.versions) wrap.append(imageCard(proj, v));
+  if (!shown.length) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.style.gridColumn = "1 / -1";
+    p.textContent = proj.versions.length
+      ? `All ${proj.versions.length} image(s) for this project are archived. Enable "Show archived" to view and restore them.`
+      : "No images.";
+    wrap.append(p);
+  } else {
+    for (const v of shown) wrap.append(imageCard(proj, v));
+  }
 
   document.getElementById("prev-btn").disabled = currentIdx === 0;
   document.getElementById("next-btn").disabled = currentIdx === groups.length - 1;
   document.getElementById("pager-info").textContent = `${currentIdx + 1} / ${groups.length}`;
   const picker = document.getElementById("project-picker");
   if (picker) picker.value = String(currentIdx);
+  refreshPickerLabels();
 
   // Persist last-viewed position in the URL hash (e.g. #2).
   if (history.replaceState) history.replaceState(null, "", "#" + (currentIdx + 1));
+}
+
+function pickerLabel(g) {
+  const shown = g.versions.filter(v => showArchived || !v.archived).length;
+  return `${g.title || g.project_id} · ${g.project_id} (${shown})`;
+}
+
+function refreshPickerLabels() {
+  const picker = document.getElementById("project-picker");
+  if (!picker) return;
+  [...picker.options].forEach((opt, i) => { if (groups[i]) opt.textContent = pickerLabel(groups[i]); });
 }
 
 function buildPicker() {
@@ -185,7 +239,7 @@ function buildPicker() {
   groups.forEach((g, i) => {
     const opt = document.createElement("option");
     opt.value = String(i);
-    opt.textContent = `${g.title || g.project_id} · ${g.project_id} (${g.versions.length})`;
+    opt.textContent = pickerLabel(g);
     picker.append(opt);
   });
   picker.addEventListener("change", () => {
@@ -235,6 +289,8 @@ async function load() {
     document.getElementById("next-btn").addEventListener("click", () => {
       if (currentIdx < groups.length - 1) { currentIdx++; renderProject(); }
     });
+    const sa = document.getElementById("show-archived");
+    if (sa) sa.addEventListener("change", () => { showArchived = sa.checked; renderProject(); });
     // Keyboard paging (left/right) when no modal/input is focused.
     document.addEventListener("keydown", (e) => {
       if (document.getElementById("sbg-modal")) return;

@@ -56,6 +56,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/audio/sfx", a.authed(a.getSFXStatus))
 	mux.HandleFunc("POST /api/projects/{slug}/storyboard", a.authed(a.generateStoryboard))
 	mux.HandleFunc("GET /api/projects/{slug}/storyboard", a.authed(a.getStoryboard))
+	mux.HandleFunc("POST /api/projects/{slug}/storyboard/archive", a.authed(a.archiveStoryboardVersion))
 
 	// one-time data migration: backfill project_id into every project.json
 	mux.HandleFunc("POST /api/admin/migrate-project-ids", a.authed(a.migrateProjectIDs))
