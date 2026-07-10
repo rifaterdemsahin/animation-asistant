@@ -7,7 +7,10 @@ const NAV_ITEMS = [
     { name: "📁 Projects", url: "/pages/projects.html" },
     { name: "🆕 Create", url: "/pages/create.html" },
   ]},
-  { name: "📋 Storyboard", url: "/pages/storyboard.html" },
+  { name: "📋 Storyboard", url: "/pages/storyboard.html", children: [
+    { name: "📋 Storyboard Creator", url: "/pages/storyboard.html" },
+    { name: "🖼️ Gallery", url: "/pages/storyboard-gallery.html" },
+  ]},
   { name: "📜 Script", url: "/pages/script-page.html" },
   { name: "🎛️ Media Manager", url: "/pages/media-manager.html" },
   { name: "🎧 Audio", url: "/pages/audio.html" },

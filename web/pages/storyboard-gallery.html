@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Storyboard Gallery</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>🖼️ Storyboard Gallery</h1>
+    <p class="lede">Every storyboard image across all projects. Images are <strong>grouped by project</strong> and shown <strong>one project at a time</strong> — use the <strong>Previous</strong> / <strong>Next</strong> buttons (or the project picker) to page through them. Each image has a <strong>📋 Copy</strong> button that puts the image itself on your clipboard.</p>
+
+    <div id="loading" class="panel">
+      <p class="muted">Loading storyboard images…</p>
+    </div>
+
+    <div id="gallery" class="hidden">
+      <!-- Paging toolbar -->
+      <div class="panel" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+        <div class="row" style="gap:8px;align-items:center">
+          <button id="prev-btn" class="btn">‹ Previous</button>
+          <span id="pager-info" class="muted" style="font-size:13px"></span>
+          <button id="next-btn" class="btn">Next ›</button>
+        </div>
+        <div class="row" style="gap:8px;align-items:center">
+          <label class="muted" style="font-size:13px" for="project-picker">Project:</label>
+          <select id="project-picker" class="btn" style="padding:6px 8px"></select>
+        </div>
+      </div>
+
+      <!-- Current project -->
+      <section class="panel" style="margin-top:16px">
+        <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <h2 id="cur-title" style="margin:0"></h2>
+          <span id="cur-count" class="badge"></span>
+        </div>
+        <p id="cur-meta" class="muted" style="font-size:13px;margin:6px 0 0"></p>
+        <div id="images-wrap" class="files-grid" style="margin-top:14px"></div>
+      </section>
+    </div>
+
+    <div id="empty" class="panel hidden" style="margin-top:16px">
+      <p>No storyboard images found across any project yet. Generate some from the <a href="/pages/storyboard.html">📋 Storyboard Creator</a> first.</p>
+    </div>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/storyboard-gallery.js"></script>
+</body>
+</html>
