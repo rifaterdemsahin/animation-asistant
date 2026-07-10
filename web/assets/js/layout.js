@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { name: "🛠️ Tools", url: "/pages/tools.html", children: [
     { name: "🛠️ Tools", url: "/pages/tools.html" },
     { name: "🔬 Compare Models", url: "/pages/compare-models.html" },
+    { name: "📊 Compare Scripts", url: "/pages/script-compare.html" },
   ]},
   { name: "🎓 Self Learning", url: "/pages/self_learning.html" },
 ];

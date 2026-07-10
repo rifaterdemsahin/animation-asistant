@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -82,6 +83,8 @@ type scriptReq struct {
 	Question string   `json:"question"`
 	Answer   string   `json:"answer"`
 	Why      string   `json:"why"`
+	// Provider selects the text backend: "openrouter" (default) or "deepseek".
+	Provider string `json:"provider"`
 }
 
 // scriptVersion is one saved script generation. Versions are never overwritten.
@@ -146,7 +149,11 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 	}
 
 	outline := a.loadOutlineMap(slug)
-	model := scriptModelName(a)
+	provider := strings.TrimSpace(req.Provider)
+	if provider == "" {
+		provider = "openrouter"
+	}
+	model := a.scriptProviderModel(provider)
 	ts := time.Now().UTC().Format(time.RFC3339)
 
 	done := []string{}
@@ -155,7 +162,7 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			continue
 		}
-		obj, err := a.generateAct(p, act, outline[act.Key])
+		obj, err := a.generateActWith(p, act, outline[act.Key], provider)
 		if err != nil {
 			writeError(w, r, http.StatusInternalServerError, "openrouter_error", fmt.Sprintf("act %s: %v", act.Key, err))
 			return
@@ -214,7 +221,7 @@ func (a *App) generateScript(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "acts": done})
 }
 
-func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, error) {
+func (a *App) actScriptMessages(p *Project, act Act, summary string) []orMessage {
 	if summary == "" {
 		summary = act.Purpose
 	}
@@ -244,12 +251,25 @@ func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, 
 	if sbCtx != "" {
 		userContent = sbCtx + userContent
 	}
-	msgs := []orMessage{
+	return []orMessage{
 		{Role: "system", Content: sys},
 		{Role: "user", Content: userContent},
 	}
-	a.savePromptMsg(p.Slug, act.Key, "script", msgs)
-	raw, err := a.chatText(msgs)
+}
+
+func (a *App) generateAct(p *Project, act Act, summary string) (map[string]any, error) {
+	return a.generateActWith(p, act, summary, "openrouter")
+}
+
+// generateActWith builds the prompt once and runs it against the requested
+// text provider (openrouter or deepseek). Only the default provider logs to
+// the prompt store, to avoid duplicating identical messages.
+func (a *App) generateActWith(p *Project, act Act, summary, provider string) (map[string]any, error) {
+	msgs := a.actScriptMessages(p, act, summary)
+	if provider == "" || provider == "openrouter" {
+		a.savePromptMsg(p.Slug, act.Key, "script", msgs)
+	}
+	raw, err := a.chatTextProvider(msgs, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -346,4 +366,93 @@ func actToMarkdown(act Act, obj map[string]any) string {
 		fmt.Fprintf(&b, "- **%s**: %s\n", id, strings.TrimSpace(text))
 	}
 	return b.String()
+}
+
+// compareScriptReq selects a single act to run through both providers.
+type compareScriptReq struct {
+	Act      string `json:"act"`
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+	Why      string `json:"why"`
+}
+
+type providerResult struct {
+	Provider  string `json:"provider"`
+	Model     string `json:"model"`
+	Markdown  string `json:"markdown"`
+	Beats     any    `json:"beats"`
+	Narration string `json:"narration"`
+	ElapsedMs int64  `json:"elapsed_ms"`
+	Chars     int    `json:"chars"`
+	Ok        bool   `json:"ok"`
+	Error     string `json:"error,omitempty"`
+}
+
+// compareScript runs one act's script prompt through BOTH OpenRouter and
+// DeepSeek (same prompt, parallel), returning side-by-side results so the UI
+// can compare quality, latency and length. Nothing is persisted.
+func (a *App) compareScript(w http.ResponseWriter, r *http.Request) {
+	p, err := a.resolveProject(r.PathValue("slug"))
+	if err != nil {
+		writeError(w, r, http.StatusNotFound, "not_found", "project not found")
+		return
+	}
+	var req compareScriptReq
+	body, _ := io.ReadAll(r.Body)
+	_ = json.Unmarshal(body, &req)
+	if req.Question != "" || req.Answer != "" || req.Why != "" {
+		p.Question = strings.TrimSpace(req.Question)
+		p.Answer = strings.TrimSpace(req.Answer)
+		p.Why = strings.TrimSpace(req.Why)
+	}
+
+	actKey := strings.TrimSpace(req.Act)
+	if actKey == "" {
+		actKey = "act-1"
+	}
+	act, ok := actByKey(actKey)
+	if !ok {
+		writeError(w, r, http.StatusBadRequest, "bad_request", "unknown act: "+actKey)
+		return
+	}
+	outline := a.loadOutlineMap(p.Slug)
+	msgs := a.actScriptMessages(p, act, outline[act.Key])
+
+	run := func(provider string) providerResult {
+		res := providerResult{Provider: provider, Model: a.scriptProviderModel(provider)}
+		start := time.Now()
+		raw, err := a.chatTextProvider(msgs, provider)
+		res.ElapsedMs = time.Since(start).Milliseconds()
+		if err != nil {
+			res.Error = err.Error()
+			return res
+		}
+		obj, perr := extractJSON(raw)
+		if perr != nil {
+			res.Error = "model did not return valid JSON: " + perr.Error()
+			return res
+		}
+		res.Markdown = actToMarkdown(act, obj)
+		res.Beats = obj["beats"]
+		res.Narration, _ = obj["narration"].(string)
+		res.Chars = len(res.Markdown)
+		res.Ok = true
+		return res
+	}
+
+	var orRes, dsRes providerResult
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() { defer wg.Done(); orRes = run("openrouter") }()
+	go func() { defer wg.Done(); dsRes = run("deepseek") }()
+	wg.Wait()
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":        true,
+		"act":       act.Key,
+		"act_title": act.Title,
+		"openrouter": orRes,
+		"deepseek":   dsRes,
+		"deepseek_configured": a.ds != nil && a.ds.configured(),
+	})
 }

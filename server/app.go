@@ -13,6 +13,7 @@ type App struct {
 	cfg       *Config
 	store     storage.Backend
 	or        *orClient
+	ds        *dsClient
 	prompts   PromptStore
 	pcache    map[string]string
 	pcacheMu  sync.Mutex
@@ -43,6 +44,7 @@ func (a *App) routes() http.Handler {
 	mux.HandleFunc("GET /api/projects/{slug}/outline", a.authed(a.getOutline))
 	mux.HandleFunc("POST /api/projects/{slug}/script", a.authed(a.generateScript))
 	mux.HandleFunc("GET /api/projects/{slug}/script", a.authed(a.getScript))
+	mux.HandleFunc("POST /api/projects/{slug}/script/compare", a.authed(a.compareScript))
 
 	mux.HandleFunc("POST /api/projects/{slug}/components", a.authed(a.generateComponents))
 	mux.HandleFunc("GET /api/projects/{slug}/components", a.authed(a.getComponents))

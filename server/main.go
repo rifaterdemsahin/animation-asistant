@@ -21,6 +21,7 @@ func main() {
 		cfg:       cfg,
 		store:     store,
 		or:        newORClient(cfg.OpenRouterKeys, cfg.OpenRouterTextModel, cfg.OpenRouterImageModel, cfg.StoryboardImageModel, cfg.OpenRouterBase),
+		ds:        newDSClient(cfg.DeepSeekKeys, cfg.DeepSeekModel, cfg.DeepSeekBase),
 		startedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
@@ -37,6 +38,11 @@ func main() {
 	}
 	if len(cfg.OpenRouterKeys) == 0 {
 		log.Print("WARNING: OPENROUTER_API_KEY not set")
+	}
+	if len(cfg.DeepSeekKeys) == 0 {
+		log.Print("NOTE: DEEPSEEK_API_KEY not set — script generation will use OpenRouter only (DeepSeek comparison disabled)")
+	} else {
+		log.Printf("DeepSeek enabled (model=%s) as an alternative script provider", cfg.DeepSeekModel)
 	}
 	if cfg.AzureConnString != "" {
 		log.Printf("Azure storage enabled (container=%s)", cfg.AzureContainer)

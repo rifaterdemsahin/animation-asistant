@@ -76,6 +76,15 @@
       <!-- 4. Preview/Generate/Execute -->
       <section class="panel">
         <h2>4️⃣ Generate &amp; Execute</h2>
+        <div class="row" style="margin-bottom:10px;align-items:center;gap:12px;flex-wrap:wrap">
+          <label class="row" style="gap:6px;align-items:center">Script model:
+            <select id="sc-provider" class="btn" style="padding:5px 8px">
+              <option value="openrouter">🤖 OpenRouter (Gemini)</option>
+              <option value="deepseek">🐳 DeepSeek</option>
+            </select>
+          </label>
+          <span id="sc-provider-note" class="muted" style="font-size:12px"></span>
+        </div>
         <div class="row" style="margin-bottom:10px">
           <button id="preview-prompt" class="btn">👁️ Show Prompt</button>
           <button id="generate-prompt" class="btn">✏️ Generate Prompt</button>

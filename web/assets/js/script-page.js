@@ -32,6 +32,8 @@ let outlineSummaries = {};
 let storyboardPrompts = {};
 let storyboardImages = {};
 let modelName = "";
+let modelsInfo = {};
+let deepseekConfigured = false;
 
 async function loadProjectMeta() {
   try {
@@ -86,11 +88,30 @@ async function loadPromptTemplate() {
 
 async function loadModel() {
   try {
-    const h = await json("/healthz");
-    modelName = h.text_model || "google/gemini-3.5-flash";
+    const m = await json("/api/models");
+    modelsInfo = m || {};
+    modelName = m.text || "google/gemini-3.5-flash";
+    deepseekConfigured = !!(m.deepseek && m.deepseek.configured);
     document.getElementById("model-name").textContent = modelName;
+    refreshProviderUI();
   } catch {
     document.getElementById("model-name").textContent = "(unavailable)";
+  }
+}
+
+function refreshProviderUI() {
+  const sel = document.getElementById("sc-provider");
+  const note = document.getElementById("sc-provider-note");
+  if (!sel) return;
+  if (sel.value === "deepseek" && !deepseekConfigured) {
+    note.textContent = "⚠️ DeepSeek not configured (DEEPSEEK_API_KEY missing) — will use OpenRouter.";
+    document.getElementById("model-name").textContent = modelName;
+  } else if (sel.value === "deepseek") {
+    note.textContent = "";
+    document.getElementById("model-name").textContent = (modelsInfo.deepseek && modelsInfo.deepseek.model) || "deepseek-chat";
+  } else {
+    note.textContent = "";
+    document.getElementById("model-name").textContent = modelName;
   }
 }
 
@@ -305,10 +326,12 @@ async function executePrompt() {
   const why = document.getElementById("qa-why").value.trim();
 
   setLoading(btn, true);
-  status.textContent = "Generating script with " + modelName + "…";
+  const provider = (document.getElementById("sc-provider") || {}).value || "openrouter";
+  const useModel = provider === "deepseek" ? ((modelsInfo.deepseek && modelsInfo.deepseek.model) || "deepseek-chat") : modelName;
+  status.textContent = "Generating script with " + useModel + "…";
 
   try {
-    const body = { acts, question, answer, why };
+    const body = { acts, question, answer, why, provider: (document.getElementById("sc-provider") || {}).value || "openrouter" };
     await json(`${api}/projects/${s}/script`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -363,4 +386,6 @@ document.addEventListener("layout:ready", async () => {
   document.getElementById("generate-prompt").addEventListener("click", generatePrompt);
   document.getElementById("execute-prompt").addEventListener("click", executePrompt);
   document.getElementById("copy-voiceover").addEventListener("click", copyVoiceover);
+  const prov = document.getElementById("sc-provider");
+  if (prov) prov.addEventListener("change", refreshProviderUI);
 });

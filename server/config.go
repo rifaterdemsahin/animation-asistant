@@ -22,6 +22,13 @@ type Config struct {
 	StoryboardImageModel string
 	OpenRouterBase       string
 
+	// DeepSeek (alternative text provider for script generation). OpenAI-
+	// compatible API; keys may be comma-separated for rotation. Optional —
+	// when unset, script generation falls back to OpenRouter.
+	DeepSeekKeys  []string
+	DeepSeekModel string
+	DeepSeekBase  string
+
 	// ElevenLabs TTS
 	ElevenLabsKey   string
 	ElevenLabsVoice string
@@ -47,6 +54,9 @@ func LoadConfig() *Config {
 		OpenRouterImageModel:  getenvDefault("OPENROUTER_IMAGE_MODEL", "google/gemini-3-pro-image"),
 		StoryboardImageModel:  getenvDefault("STORYBOARD_IMAGE_MODEL", ""),
 		OpenRouterBase:        getenvDefault("OPENROUTER_BASE", "https://openrouter.ai/api/v1"),
+		DeepSeekKeys:          splitCSV(os.Getenv("DEEPSEEK_API_KEY")),
+		DeepSeekModel:         getenvDefault("DEEPSEEK_MODEL", "deepseek-chat"),
+		DeepSeekBase:          getenvDefault("DEEPSEEK_BASE", "https://api.deepseek.com"),
 		ElevenLabsKey:         os.Getenv("TTS_API_KEY"),
 		ElevenLabsVoice:       getenvDefault("TTS_VOICE", "JBFqnCBsd6RMkjVDRZzb"), // George — Warm Storyteller
 		ElevenLabsModel:       getenvDefault("TTS_MODEL", "eleven_turbo_v2_5"),    // good rate + quality

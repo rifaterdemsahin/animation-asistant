@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Animation Assistant — Compare Script Models</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0; }
+    @media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+    .sc-card { background: var(--panel-2); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border); }
+    .sc-card h3 { margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .sc-card .meta { font-size: 0.8em; color: var(--muted); margin: 0 0 0.75rem 0; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .sc-card pre { white-space: pre-wrap; word-break: break-word; font-size: 0.82em; line-height: 1.5; margin: 0; max-height: 520px; overflow: auto; background: #0b0d12; padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    .badge-or { background: #7c3aed; color: #fff; padding: 0.15em 0.6em; border-radius: 4px; font-size: 0.78em; font-weight: 600; }
+    .badge-ds { background: #0ea5e9; color: #fff; padding: 0.15em 0.6em; border-radius: 4px; font-size: 0.78em; font-weight: 600; }
+    .err { color: var(--danger); }
+    .summary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .stat { background: var(--panel-2); border-radius: 8px; padding: 1rem 1.25rem; border: 1px solid var(--border); }
+    .stat .label { font-size: 0.78em; color: var(--muted); margin-bottom: 0.25rem; }
+    .stat .value { font-size: 1.35em; font-weight: 700; }
+    .winner { color: #34d399; }
+  </style>
+</head>
+<body>
+  <div id="topnav"></div>
+  <header id="app-header"></header>
+
+  <main class="page">
+    <h1>📊 Compare Script Models — OpenRouter vs DeepSeek</h1>
+    <p class="lede">Same project, same act, <strong>identical prompt</strong> — generated in parallel by <strong>OpenRouter (Gemini)</strong> and <strong>DeepSeek</strong>. Compare quality, length and latency to decide which to use for script generation. Run it from <a href="/pages/tools.html">🛠️ Tools</a>.</p>
+
+    <section class="panel">
+      <h2>1️⃣ Choose project &amp; act</h2>
+      <div id="no-project"><p class="muted">No project selected. <a href="/pages/projects.html">📁 Pick one</a> first.</p></div>
+      <div id="controls" class="hidden">
+        <div class="row" style="gap:12px;align-items:flex-end;flex-wrap:wrap">
+          <label>Project
+            <select id="project-sel" class="btn" style="padding:6px 8px"></select>
+          </label>
+          <label>Act
+            <select id="act-sel" class="btn" style="padding:6px 8px">
+              <option value="act-1">Act 1 — Problem</option>
+              <option value="act-2">Act 2 — Solution</option>
+              <option value="act-3">Act 3 — Lesson</option>
+            </select>
+          </label>
+          <button id="run-btn" class="btn primary">🚀 Generate &amp; Compare</button>
+          <span id="status" class="muted" style="font-size:13px"></span>
+        </div>
+        <p id="ds-note" class="muted" style="font-size:12px;margin-top:8px"></p>
+      </div>
+    </section>
+
+    <section class="summary-stats" id="stats"></section>
+
+    <section id="results"></section>
+
+    <section class="panel" style="margin-top:20px">
+      <h2>ℹ️ About this comparison</h2>
+      <p class="muted" style="font-size:13px;line-height:1.6">
+        Both providers receive the <strong>exact same system + user prompt</strong> (built from the project's Q&amp;A, outline and storyboard context) and run in parallel. DeepSeek is queried via its OpenAI-compatible API (<code>deepseek-chat</code>) with JSON output mode enforced.
+        Results are <strong>not persisted</strong> — this is a read-only A/B test. To actually save a script with a provider, use the <a href="/pages/script-page.html">📜 Script Writer</a> and pick the model in the "Script model" dropdown.
+      </p>
+      <p class="muted" style="font-size:13px">Configure: <code>DEEPSEEK_API_KEY</code> (comma-separated for rotation), <code>DEEPSEEK_MODEL</code> (default <code>deepseek-chat</code>), <code>DEEPSEEK_BASE</code>. Keys: <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com/api_keys</a>.</p>
+    </section>
+  </main>
+
+  <footer id="app-footer"></footer>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/debug.js"></script>
+  <script src="/assets/js/script-compare.js"></script>
+</body>
+</html>

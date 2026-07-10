@@ -9,11 +9,14 @@ func (a *App) healthz(w http.ResponseWriter, r *http.Request) {
 		"ok": true,
 		"keys": map[string]int{
 			"openrouter_keys": len(a.cfg.OpenRouterKeys),
+			"deepseek_keys":   len(a.cfg.DeepSeekKeys),
 			"elevenlabs":      boolToInt(a.cfg.ElevenLabsKey != ""),
 			"azure":           boolToInt(a.cfg.AzureConnString != ""),
 		},
 		"storage":                a.store.Name(),
 		"text_model":             a.cfg.OpenRouterTextModel,
+		"deepseek_model":         a.cfg.DeepSeekModel,
+		"deepseek_configured":    a.ds != nil && a.ds.configured(),
 		"image_model":            a.cfg.OpenRouterImageModel,
 		"storyboard_image_model": a.storyboardImageModel(),
 		"started_at":             a.startedAt,
@@ -40,6 +43,11 @@ func (a *App) models(w http.ResponseWriter, r *http.Request) {
 		"text":             a.cfg.OpenRouterTextModel,
 		"image":            a.cfg.OpenRouterImageModel,
 		"storyboard_image": a.storyboardImageModel(),
+		"deepseek": map[string]any{
+			"provider":   "deepseek",
+			"model":      a.cfg.DeepSeekModel,
+			"configured": a.ds != nil && a.ds.configured(),
+		},
 		"voiceover": map[string]string{
 			"provider": "elevenlabs",
 			"model":    a.cfg.ElevenLabsModel,
