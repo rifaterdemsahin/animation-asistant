@@ -40,7 +40,7 @@ function projectCmp(a, b) {
   if (an && bn) return an - bn;
   if (an && !bn) return -1;
   if (!an && bn) return 1;
-  return (a.title || "").localeCompare(b.title || "");
+  return (a.project_id || "").localeCompare(b.project_id || "");
 }
 function qNum(id) {
   const m = /^q(\d+)$/.exec(String(id || ""));
@@ -185,7 +185,7 @@ function buildPicker() {
   groups.forEach((g, i) => {
     const opt = document.createElement("option");
     opt.value = String(i);
-    opt.textContent = `${g.title || g.project_id} (${g.versions.length})`;
+    opt.textContent = `${g.title || g.project_id} · ${g.project_id} (${g.versions.length})`;
     picker.append(opt);
   });
   picker.addEventListener("change", () => {
