@@ -17,6 +17,9 @@
   <!-- PrismJS for Syntax Highlighting (for Symbols) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 
+  <!-- Shared debug overlay menu styles -->
+  <link rel="stylesheet" href="web/assets/css/debug-menu.css">
+
   <style>
     /* Design Tokens / Variables */
     :root {
@@ -305,159 +308,7 @@
       border-radius: 4px;
     }
 
-    /* Floating Debug Toggle Button */
-    .debug-toggle-btn {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-violet), var(--accent-cyan));
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 20px var(--accent-violet-glow);
-      z-index: 999;
-      transition: var(--transition);
-    }
-
-    .debug-toggle-btn:hover {
-      transform: scale(1.1) rotate(15deg);
-      box-shadow: 0 6px 24px rgba(6, 182, 212, 0.6);
-    }
-
-    /* Debug Side Overlay Menu */
-    .debug-menu-overlay {
-      position: fixed;
-      top: 0;
-      right: -420px;
-      width: 400px;
-      height: 100vh;
-      background-color: rgba(11, 15, 25, 0.95);
-      backdrop-filter: blur(20px);
-      border-left: 1px solid var(--border-color);
-      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-      z-index: 998;
-      transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 2.5rem 2rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .debug-menu-overlay.open {
-      right: 0;
-    }
-
-    .debug-menu-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 1rem;
-    }
-
-    .debug-menu-title {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--accent-cyan);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    /* Autocomplete Search input */
-    .search-wrapper {
-      position: relative;
-      margin-bottom: 1.5rem;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 0.75rem 1rem 0.75rem 2.5rem;
-      background-color: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: white;
-      font-family: var(--font-body);
-      outline: none;
-      transition: var(--transition);
-    }
-
-    .search-input:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 0.85rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-    }
-
-    /* Debug menu items list */
-    .debug-links-list {
-      list-style: none;
-      overflow-y: auto;
-      flex-grow: 1;
-      padding-right: 0.5rem;
-    }
-
-    /* Custom Scrollbar for list */
-    .debug-links-list::-webkit-scrollbar {
-      width: 6px;
-    }
-    .debug-links-list::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .debug-links-list::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-
-    .debug-item {
-      margin-bottom: 0.5rem;
-    }
-
-    .debug-divider {
-      height: 1px;
-      background-color: var(--border-color);
-      margin: 1rem 0;
-    }
-
-    .debug-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background-color: rgba(255, 255, 255, 0.02);
-      border: 1px solid transparent;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      transition: var(--transition);
-    }
-
-    .debug-link:hover {
-      background-color: rgba(6, 182, 212, 0.08);
-      border-color: rgba(6, 182, 212, 0.2);
-      color: var(--accent-cyan);
-      transform: translateX(4px);
-    }
-
-    .debug-link-icon {
-      font-size: 0.85rem;
-      opacity: 0.5;
-    }
-
-    /* Stage Steps Timeline styling */
+    /* Timeline Steps (keep for index.html) */
     .timeline-steps {
       list-style: none;
       display: flex;
@@ -519,10 +370,6 @@
         flex-direction: column;
         gap: 1rem;
         padding: 1rem;
-      }
-      .debug-menu-overlay {
-        width: 100vw;
-        right: -100vw;
       }
       .hero-section {
         margin-top: 2rem;
@@ -697,196 +544,25 @@
     </ul>
   </div>
 
+  <script src="web/assets/js/debug-menu.js"></script>
   <script>
-    // 🗃️ Menu Configuration Fallback Data
-    let navigationData = {
-      projectMenu: [
-        { label: "Home", url: "index.html" },
-        { label: "Docs", url: "markdown_renderer.html?file=2_Environment/README.md" },
-        { label: "API", url: "markdown_renderer.html?file=4_Formula/README.md" }
-      ],
-      debugMenu: [
-        { label: "1. Real Unknown", url: "1_Real_Unknown/" },
-        { label: "   ├─ Kanban Board", url: "1_Real_Unknown/kanban.md" },
-        { label: "   ├─ Cost Tracker", url: "1_Real_Unknown/costs.md" },
-        { label: "2. Environment", url: "2_Environment/" },
-        { label: "   ├─ Architecture", url: "2_Environment/architecture.md" },
-        { label: "   ├─ Tools Overview", url: "2_Environment/tools.md" },
-        { label: "   ├─ Fly.io (Deployments)", url: "2_Environment/fly_io.md" },
-        { label: "   ├─ Supabase (Database)", url: "2_Environment/supabase.md" },
-        { label: "   ├─ Axiom (Logs)", url: "2_Environment/axiom.md" },
-        { label: "3. Simulation", url: "3_Simulation/" },
-        { label: "4. Formula", url: "4_Formula/" },
-        { label: "   ├─ Database", url: "4_Formula/database.md" },
-        { label: "   ├─ Extensions", url: "4_Formula/extensions.md" },
-        { label: "   ├─ Navigation", url: "4_Formula/navigation.md" },
-        { label: "   ├─ Logging & Auto-Fix", url: "4_Formula/logging_and_autofix.md" },
-        { label: "5. Symbols", url: "5_Symbols/" },
-        { label: "6. Semblance", url: "6_Semblance/" },
-        { label: "7. Testing Known", url: "7_Testing_Known/" },
-        { label: "---", url: "divider" },
-        { label: "agents.md", url: "agents.md" },
-        { label: "prompts.md", url: "prompts.md" },
-        { label: "claude.md", url: "claude.md" },
-        { label: "gemini.md", url: "gemini.md" },
-        { label: "copilot.md", url: "copilot.md" },
-        { label: "kilocode.md", url: "kilocode.md" }
-      ]
-    };
-
-    // 🍪 Helper Functions for Cookie Management
-    function setCookie(name, value, days = 7) {
-      const d = new Date();
-      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-      document.cookie = `${name}=${value};path=/;expires=${d.toUTCString()};SameSite=Strict`;
-    }
-
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
-    }
-
-    // Console debugging utility for development
-    function debugLog(message, data = '') {
-      if (getCookie("debug") === "true") {
-        console.log(`%c[Debug Mode] ${message}`, 'color: #06b6d4; font-weight: bold;', data);
-      }
-    }
-
-    // 🖥️ UI Handlers
-    document.addEventListener("DOMContentLoaded", () => {
-      debugLog("DOM content fully loaded. Initializing debug logs...");
-
-      const debugToggle = document.getElementById("debugToggle");
-      const debugClose = document.getElementById("debugClose");
-      const debugMenuOverlay = document.getElementById("debugMenuOverlay");
-      const debugSearch = document.getElementById("debugSearch");
-      const debugLinksList = document.getElementById("debugLinksList");
-      const projectMenuContainer = document.getElementById("projectMenu");
-
-      // Load Reusable Menu Configuration
-      fetch("navigation_config.json")
-        .then(res => res.json())
-        .then(data => {
-          debugLog("Dynamic navigation config loaded successfully.", data);
-          navigationData = data;
-          initMenus();
-        })
-        .catch(err => {
-          console.warn("Failed to load navigation config, using local fallback.", err);
-          initMenus();
-        });
-
-      function initMenus() {
-        debugLog("Initializing Project and Debug Menus.", navigationData);
-        // 1. Build Project Menu
-        projectMenuContainer.innerHTML = "";
-        navigationData.projectMenu.forEach((item, index) => {
-          const link = document.createElement("a");
-          
-          // Route relative URLs (except Home index.html) through renderer if they are MD files or directories
-          let finalUrl = item.url;
-          if (finalUrl !== "index.html" && !finalUrl.startsWith("http") && !finalUrl.includes("markdown_renderer.html")) {
-            finalUrl = `markdown_renderer.html?file=${finalUrl}`;
-          }
-          
-          link.href = finalUrl;
-          link.className = `menu-link ${index === 0 ? 'active' : ''}`;
-          link.textContent = item.label;
-          projectMenuContainer.appendChild(link);
-        });
-
-        // 2. Build Debug Menu
-        buildDebugMenu();
-      }
-
-      // Build Debug Menu List Items
-      function buildDebugMenu(filterText = "") {
-        debugLog(`Building Debug Menu with filter: "${filterText}"`);
-        debugLinksList.innerHTML = "";
-        const query = filterText.toLowerCase();
-
-        navigationData.debugMenu.forEach(item => {
-          if (query && item.label === "---") return;
-          if (query && !item.label.toLowerCase().includes(query)) return;
-
-          if (item.label === "---") {
-            const divider = document.createElement("li");
-            divider.className = "debug-divider";
-            debugLinksList.appendChild(divider);
-          } else {
-            const li = document.createElement("li");
-            li.className = "debug-item";
-            
-            const a = document.createElement("a");
-            
-            // Route relative URLs dynamically through the renderer
-            let finalUrl = item.url;
-            if (finalUrl !== "index.html" && finalUrl !== "divider" && !finalUrl.startsWith("http")) {
-              finalUrl = `markdown_renderer.html?file=${finalUrl}`;
-            }
-            
-            a.href = finalUrl;
-            a.className = "debug-link";
-            a.innerHTML = `
-              <span>${item.label}</span>
-              <i class="fa-solid fa-chevron-right debug-link-icon"></i>
-            `;
-            li.appendChild(a);
-            debugLinksList.appendChild(li);
-          }
-        });
-      }
-
-      // 3. Search Autocomplete Listener
-      debugSearch.addEventListener("input", (e) => {
-        buildDebugMenu(e.target.value);
-      });
-
-      // 4. Persistence of Debug Panel via Cookie
-      const debugState = getCookie("debug");
-      debugLog("Initial debug state from cookie:", debugState);
-      if (debugState === "true") {
-        debugMenuOverlay.classList.add("open");
-      }
-
-      // Toggle action
-      debugToggle.addEventListener("click", () => {
-        const isOpen = debugMenuOverlay.classList.toggle("open");
-        setCookie("debug", isOpen ? "true" : "false");
-        debugLog("Debug overlay toggled. Active state:", isOpen);
-      });
-
-      // Close Action
-      debugClose.addEventListener("click", () => {
-        debugMenuOverlay.classList.remove("open");
-        setCookie("debug", "false");
-        debugLog("Debug overlay closed.");
-      });
-    });
-
     // 🎠 Image Carousel Logic
-    let activeSlideIndex = 0;
-    const slides = document.querySelectorAll(".carousel-slide");
-    const dots = document.querySelectorAll(".carousel-dot");
+    document.addEventListener("DOMContentLoaded", function () {
+      var slides = document.querySelectorAll(".carousel-slide");
+      var dots = document.querySelectorAll(".carousel-dot");
+      var activeSlideIndex = 0;
 
-    function setSlide(index) {
-      activeSlideIndex = index;
-      slides.forEach((slide, i) => {
-        slide.classList.toggle("active", i === index);
-      });
-      dots.forEach((dot, i) => {
-        dot.classList.toggle("active", i === index);
-      });
-    }
+      window.setSlide = function (index) {
+        activeSlideIndex = index;
+        slides.forEach(function (slide, i) { slide.classList.toggle("active", i === index); });
+        dots.forEach(function (dot, i) { dot.classList.toggle("active", i === index); });
+      };
 
-    // Auto play every 5 seconds
-    setInterval(() => {
-      let nextIndex = (activeSlideIndex + 1) % slides.length;
-      setSlide(nextIndex);
-    }, 5000);
+      setInterval(function () {
+        var nextIndex = (activeSlideIndex + 1) % slides.length;
+        window.setSlide(nextIndex);
+      }, 5000);
+    });
   </script>
 </body>
 </html>

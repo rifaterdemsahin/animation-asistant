@@ -11,6 +11,17 @@ let searchTerm = "";
 
 function escapeHtml(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
+const WPS = 2.5;
+function estimateSeconds(text) {
+  const words = (text || "").trim().split(/\s+/).filter(Boolean).length;
+  return Math.round(words / WPS);
+}
+function formatDuration(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? m + "m " + s + "s" : s + "s";
+}
+
 async function json(url, opts) {
   const r = await fetch(url, { credentials: "same-origin", ...opts });
   if (!r.ok) throw new Error((await r.text()) || r.statusText);
@@ -93,9 +104,11 @@ function render() {
   }
 
   for (const act of (s.acts || [])) {
+    const dur = estimateSeconds(act.voiceover || "");
     html += '<div class="act-section" style="margin-bottom:16px;border-left:3px solid var(--accent);padding-left:12px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
     html += '<strong>' + escapeHtml(act.title) + ' (' + escapeHtml(act.role) + ')</strong>';
+    html += '<span style="color:var(--muted);font-size:0.85em;">~' + formatDuration(dur) + '</span>';
     html += '<button class="btn btn-copy-act" data-act="' + escapeHtml(act.key) + '" style="font-size:0.8em;">Copy</button>';
     html += '</div>';
     html += '<pre style="white-space:pre-wrap;font-family:inherit;font-size:0.95em;line-height:1.6;background:var(--panel-2,var(--bg));padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;">' + escapeHtml(act.voiceover || "") + '</pre>';

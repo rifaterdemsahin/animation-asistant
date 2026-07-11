@@ -34,14 +34,16 @@ body {
 /* dropdown submenu */
 .nav-dropdown { position: relative; display: inline-block; }
 .nav-group-trigger { cursor: pointer; }
-.nav-dropdown-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 160px;
+.nav-dropdown-menu { position: absolute; top: 100%; left: 0; min-width: 160px;
   background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
-  z-index: 60; padding: 4px 0; margin-top: 4px; }
+  z-index: 60; padding: 4px 0; margin-top: 4px;
+  opacity: 0; visibility: hidden; transform: translateY(-6px);
+  transition: opacity 0.2s ease, visibility 0s linear 0.3s, transform 0.2s ease; }
 .nav-dropdown-menu a { display: block; padding: 8px 14px; color: var(--ink); text-decoration: none;
   border-radius: 0; white-space: nowrap; }
 .nav-dropdown-menu a:hover { background: var(--panel); }
-.nav-dropdown:hover .nav-dropdown-menu { display: block; }
-.nav-sep { color: var(--border); margin: 0 -4px; }
+.nav-dropdown:hover .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0);
+  transition: opacity 0.2s ease, visibility 0s linear 0s, transform 0.2s ease; }
 .logged-in-badge { color: var(--accent-2); padding: 6px 8px; border-radius: 6px; font-weight: 600; }
 #logout-btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
   padding: 5px 12px; border-radius: 6px; cursor: pointer; }
