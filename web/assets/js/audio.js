@@ -45,13 +45,13 @@ document.addEventListener("layout:ready", function () {
     try {
       await json(api + "/projects/" + s, { method: "PUT", body: JSON.stringify({ notes: notes }) });
       status.textContent = "✓ Saved";
-      status.style.color = "var(--accent)";
+      status.style.color = "#6c8cff";
       btn.textContent = orig;
       btn.disabled = false;
       setTimeout(function () { status.textContent = ""; }, 4000);
     } catch (err) {
       status.textContent = "✗ Error: " + err.message;
-      status.style.color = "var(--danger)";
+      status.style.color = "#ff6b6b";
       btn.textContent = orig;
       btn.disabled = false;
     }
