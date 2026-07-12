@@ -2,6 +2,8 @@
 // grouped by project. Shows ONE project at a time with Previous/Next paging.
 // Each image has a copy-to-clipboard button (image data → clipboard).
 const api = "/api";
+const CACHE_KEY = "storyboard_gallery_cache_v1";
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => (
@@ -13,6 +15,25 @@ async function json(url, opts) {
   const r = await fetch(url, { credentials: "same-origin", ...opts });
   if (!r.ok) throw new Error((await r.text()) || r.statusText);
   return r.json();
+}
+
+// Cache
+function getCache() {
+  try { const raw = localStorage.getItem(CACHE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+function setCache(groupsArr) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), groups: groupsArr })); } catch {}
+}
+function cacheAgeText() {
+  const c = getCache();
+  if (!c) return "no cache";
+  const age = Math.round((Date.now() - c.ts) / 1000);
+  if (age < 60) return age + "s ago";
+  return Math.round(age / 60) + "m ago";
+}
+function updateCacheLabel() {
+  const el = document.getElementById("cache-label");
+  if (el) el.textContent = "cached " + cacheAgeText();
 }
 
 // State: list of projects that have at least one storyboard image, with their
@@ -248,11 +269,59 @@ function buildPicker() {
   });
 }
 
-async function load() {
+function showGroups() {
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("empty").classList.add("hidden");
+  document.getElementById("gallery").classList.remove("hidden");
+  const hashIdx = parseInt((location.hash || "").replace("#", ""), 10);
+  currentIdx = (hashIdx >= 1 && hashIdx <= groups.length) ? hashIdx - 1 : 0;
+  buildPicker();
+  renderProject();
+}
+
+let uiWired = false;
+function wireUI() {
+  if (uiWired) return;
+  uiWired = true;
+  document.getElementById("prev-btn").addEventListener("click", () => {
+    if (currentIdx > 0) { currentIdx--; renderProject(); }
+  });
+  document.getElementById("next-btn").addEventListener("click", () => {
+    if (currentIdx < groups.length - 1) { currentIdx++; renderProject(); }
+  });
+  const sa = document.getElementById("show-archived");
+  if (sa) sa.addEventListener("change", () => { showArchived = sa.checked; renderProject(); });
+  document.addEventListener("keydown", (e) => {
+    if (document.getElementById("sbg-modal")) return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "select" || tag === "textarea") return;
+    if (e.key === "ArrowLeft" && currentIdx > 0) { currentIdx--; renderProject(); }
+    if (e.key === "ArrowRight" && currentIdx < groups.length - 1) { currentIdx++; renderProject(); }
+  });
+}
+
+async function load(refresh) {
+  const cache = getCache();
+  const fresh = cache && (Date.now() - cache.ts) < CACHE_TTL;
+
+  if (!refresh && fresh && cache.groups && cache.groups.length > 0) {
+    groups = cache.groups;
+    showGroups();
+    wireUI();
+    updateCacheLabel();
+    return;
+  }
+
+  if (!refresh && cache && cache.groups && cache.groups.length > 0) {
+    groups = cache.groups;
+    showGroups();
+    wireUI();
+    updateCacheLabel();
+  }
+
   try {
     const data = await json(`${api}/projects`);
     const projects = (data.projects || []).filter(p => p.project_id);
-    // Fetch storyboard versions for each project in parallel.
     const results = await Promise.all(projects.map(async (p) => {
       try {
         const sb = await json(`${api}/projects/${encodeURIComponent(p.project_id)}/storyboard`);
@@ -272,39 +341,28 @@ async function load() {
     document.getElementById("loading").classList.add("hidden");
     if (!groups.length) {
       document.getElementById("empty").classList.remove("hidden");
+      document.getElementById("gallery").classList.add("hidden");
       return;
     }
 
-    // Restore position from URL hash (#N, 1-indexed).
-    const hashIdx = parseInt((location.hash || "").replace("#", ""), 10);
-    currentIdx = (hashIdx >= 1 && hashIdx <= groups.length) ? hashIdx - 1 : 0;
-
-    document.getElementById("gallery").classList.remove("hidden");
-    buildPicker();
-    renderProject();
-
-    document.getElementById("prev-btn").addEventListener("click", () => {
-      if (currentIdx > 0) { currentIdx--; renderProject(); }
-    });
-    document.getElementById("next-btn").addEventListener("click", () => {
-      if (currentIdx < groups.length - 1) { currentIdx++; renderProject(); }
-    });
-    const sa = document.getElementById("show-archived");
-    if (sa) sa.addEventListener("change", () => { showArchived = sa.checked; renderProject(); });
-    // Keyboard paging (left/right) when no modal/input is focused.
-    document.addEventListener("keydown", (e) => {
-      if (document.getElementById("sbg-modal")) return;
-      const tag = (e.target.tagName || "").toLowerCase();
-      if (tag === "input" || tag === "select" || tag === "textarea") return;
-      if (e.key === "ArrowLeft" && currentIdx > 0) { currentIdx--; renderProject(); }
-      if (e.key === "ArrowRight" && currentIdx < groups.length - 1) { currentIdx++; renderProject(); }
-    });
+    showGroups();
+    wireUI();
+    setCache(groups);
+    updateCacheLabel();
   } catch (err) {
     document.getElementById("loading").classList.add("hidden");
+    if (cache && cache.groups && cache.groups.length > 0) {
+      updateCacheLabel();
+      return;
+    }
     const empty = document.getElementById("empty");
     empty.classList.remove("hidden");
     empty.querySelector("p").textContent = "Failed to load storyboard images: " + err.message;
   }
 }
 
-document.addEventListener("layout:ready", load);
+document.addEventListener("layout:ready", () => {
+  load(false);
+  const rb = document.getElementById("refresh-btn");
+  if (rb) rb.addEventListener("click", () => load(true));
+});

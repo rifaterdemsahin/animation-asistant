@@ -98,21 +98,27 @@ function render() {
   html += '<button class="btn btn-copy-act" data-act="all" style="font-size:0.85em;">Copy All</button>';
   html += '<span class="copy-status" style="color:var(--accent-2);font-size:0.85em;"></span>';
   html += '</div></div>';
+  html += '<span class="copy-global-status" style="color:var(--accent-2);font-size:0.85em;margin-left:8px;"></span>';
 
   if (s.topic) {
     html += '<p style="color:var(--muted);margin:0 0 12px;">' + escapeHtml(s.topic) + '</p>';
   }
 
+  const actBgColors = ["#1a1c2b", "#1b2a1e", "#2a1e24", "#1e232a", "#2a221d"];
+  let actIdx = 0;
   for (const act of (s.acts || [])) {
     const dur = estimateSeconds(act.voiceover || "");
-    html += '<div class="act-section" style="margin-bottom:16px;border-left:3px solid var(--accent);padding-left:12px;">';
+    const bgColor = actBgColors[actIdx % actBgColors.length];
+    html += '<div class="act-section" style="margin-bottom:16px;border-left:3px solid var(--accent);padding:12px;background:' + bgColor + ';border-radius:8px;">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
     html += '<strong>' + escapeHtml(act.title) + ' (' + escapeHtml(act.role) + ')</strong>';
     html += '<span style="color:var(--muted);font-size:0.85em;">~' + formatDuration(dur) + '</span>';
     html += '<button class="btn btn-copy-act" data-act="' + escapeHtml(act.key) + '" style="font-size:0.8em;">Copy</button>';
+    html += ' <span class="copy-act-status" style="color:var(--accent-2);font-size:0.85em;"></span>';
     html += '</div>';
     html += '<pre style="white-space:pre-wrap;font-family:inherit;font-size:0.95em;line-height:1.6;background:var(--panel-2,var(--bg));padding:12px;border-radius:6px;max-height:300px;overflow-y:auto;">' + escapeHtml(act.voiceover || "") + '</pre>';
     html += '</div>';
+    actIdx++;
   }
 
   html += '</div>'; // script-card
@@ -131,11 +137,14 @@ function render() {
         const act = (s.acts || []).find(a => a.key === actKey);
         if (act) text = act.voiceover || "";
       }
-      const statusEl = btn.parentElement.querySelector(".copy-status") || btn.nextElementSibling;
+      const statusEl = btn.nextElementSibling && btn.nextElementSibling.classList.contains("copy-act-status")
+        ? btn.nextElementSibling
+        : btn.closest(".script-card").querySelector(".copy-global-status");
       navigator.clipboard.writeText(text.trim()).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = "Copied!";
-        setTimeout(() => { btn.textContent = orig; }, 1500);
+        if (statusEl) {
+          statusEl.textContent = "✅";
+          setTimeout(() => { statusEl.textContent = ""; }, 1500);
+        }
       }).catch(err => {
         if (statusEl) { statusEl.textContent = "Copy failed"; setTimeout(() => { statusEl.textContent = ""; }, 2000); }
       });

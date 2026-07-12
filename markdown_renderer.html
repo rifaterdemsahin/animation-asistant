@@ -295,6 +295,8 @@
 
   <script src="web/assets/js/debug-menu.js"></script>
   <script>
+    // Fallback guard if shared debug-menu.js fails to load
+    window.debugLog = window.debugLog || function(){};
     // Markdown rendering and Mermaid setup
     document.addEventListener("DOMContentLoaded", function () {
       var editGitHubBtn = document.getElementById("editGitHubBtn");

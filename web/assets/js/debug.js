@@ -123,6 +123,7 @@
       '<div class="db-header">' +
         '<span class="db-title">Debug Console</span>' +
         '<button id="db-clear">Clear</button>' +
+        '<button id="db-clear-nav-cache">Clear Nav Cache</button>' +
         '<button id="db-pull-server">Pull server errors</button>' +
         '<button id="db-close">Close</button>' +
       '</div>' +
@@ -155,6 +156,13 @@
       entries = [];
       render();
       updateBadge();
+    });
+
+    document.getElementById('db-clear-nav-cache').addEventListener('click', function () {
+      try { localStorage.removeItem('project_nav_cache_v1'); } catch {}
+      this.textContent = 'Cleared!';
+      var self = this;
+      setTimeout(function () { self.textContent = 'Clear Nav Cache'; }, 1500);
     });
 
     document.getElementById('db-pull-server').addEventListener('click', function () {

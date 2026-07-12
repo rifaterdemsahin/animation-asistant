@@ -62,7 +62,7 @@
   };
 
   function routeUrl(url) {
-    if (url === "index.html" || url === "divider" || url.startsWith("http")) return url;
+    if (url === "index.html" || url === "divider" || url.startsWith("http") || url.includes("markdown_renderer.html")) return url;
     return "markdown_renderer.html?file=" + url;
   }
 
@@ -131,8 +131,13 @@
       });
 
     if (debugSearch) {
+      var searchTimer;
       debugSearch.addEventListener("input", function (e) {
-        if (debugLinksList) buildDebugMenu(debugLinksList, e.target.value);
+        clearTimeout(searchTimer);
+        var val = e.target.value;
+        searchTimer = setTimeout(function () {
+          if (debugLinksList) buildDebugMenu(debugLinksList, val);
+        }, 150);
       });
     }
 

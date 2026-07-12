@@ -1,6 +1,74 @@
 const api = "/api";
 const pid = () => (window.currentProject && window.currentProject() || {}).project_id;
 
+// --- project nav cache (for prev/next navigation) ---
+const NAV_CACHE_KEY = "project_nav_cache_v1";
+const NAV_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getNavCache() {
+  try {
+    const raw = localStorage.getItem(NAV_CACHE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    if (!Array.isArray(c.projects) || Date.now() - c.ts > NAV_CACHE_TTL) return null;
+    return c.projects;
+  } catch { return null; }
+}
+
+function setNavCache(projects) {
+  try {
+    localStorage.setItem(NAV_CACHE_KEY, JSON.stringify({ projects, ts: Date.now() }));
+  } catch {}
+}
+
+function clearNavCache() {
+  try { localStorage.removeItem(NAV_CACHE_KEY); } catch {}
+}
+
+async function loadNavProjects() {
+  let projects = getNavCache();
+  if (!projects) {
+    try {
+      const data = await json(api + "/projects");
+      projects = data.projects.map(p => ({ project_id: p.project_id, slug: p.slug, title: p.title }));
+      setNavCache(projects);
+    } catch { return []; }
+  }
+  return projects;
+}
+
+function wireNavButtons(projects) {
+  const cur = window.currentProject();
+  if (!cur || !projects.length) {
+    document.getElementById("sc-prev").disabled = true;
+    document.getElementById("sc-next").disabled = true;
+    return;
+  }
+  const ids = projects.map(p => p.project_id || p.slug);
+  const idx = ids.indexOf(cur.project_id || cur.slug);
+  if (idx === -1) {
+    document.getElementById("sc-prev").disabled = true;
+    document.getElementById("sc-next").disabled = true;
+    return;
+  }
+  const prevBtn = document.getElementById("sc-prev");
+  const nextBtn = document.getElementById("sc-next");
+  if (idx > 0) {
+    const prev = projects[idx - 1];
+    prevBtn.onclick = () => { location.href = "/pages/script-page.html?project=" + encodeURIComponent(prev.project_id || prev.slug); };
+    prevBtn.disabled = false;
+  } else {
+    prevBtn.disabled = true;
+  }
+  if (idx < projects.length - 1) {
+    const next = projects[idx + 1];
+    nextBtn.onclick = () => { location.href = "/pages/script-page.html?project=" + encodeURIComponent(next.project_id || next.slug); };
+    nextBtn.disabled = false;
+  } else {
+    nextBtn.disabled = true;
+  }
+}
+
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -383,6 +451,8 @@ document.addEventListener("layout:ready", async () => {
   await loadPromptTemplate();
   loadModel();
   loadExistingScript();
+
+  loadNavProjects().then(projects => wireNavButtons(projects));
 
   document.getElementById("preview-prompt").addEventListener("click", showPreview);
   document.getElementById("generate-prompt").addEventListener("click", generatePrompt);
