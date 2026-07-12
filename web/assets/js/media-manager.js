@@ -603,13 +603,26 @@ document.addEventListener("layout:ready", function () {
   document.getElementById("refresh-files").addEventListener("click", function () { loadBrowse(); });
 
   document.getElementById("mm-notes-save").addEventListener("click", async function () {
+    var btn = document.getElementById("mm-notes-save");
     var notes = document.getElementById("mm-notes").value;
     var status = document.getElementById("mm-notes-status");
+    var orig = btn.textContent;
+    btn.textContent = "Saving...";
+    btn.disabled = true;
+    status.style.color = "";
     try {
       await j(api + "/projects/" + s, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes: notes }) });
-      status.textContent = "Saved!";
-      setTimeout(function () { status.textContent = ""; }, 2000);
-    } catch (err) { status.textContent = "Error: " + err.message; }
+      status.textContent = "✓ Saved";
+      status.style.color = "var(--accent)";
+      btn.textContent = orig;
+      btn.disabled = false;
+      setTimeout(function () { status.textContent = ""; }, 4000);
+    } catch (err) {
+      status.textContent = "✗ Error: " + err.message;
+      status.style.color = "var(--danger)";
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
   });
 
   loadModels(); loadStoryboardImg(); loadOutline(); loadScript(); loadComponents(); loadVoiceover(); loadMusic(); loadSFX(); loadBrowse();

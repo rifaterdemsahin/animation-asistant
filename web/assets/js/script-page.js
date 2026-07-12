@@ -390,13 +390,26 @@ document.addEventListener("layout:ready", async () => {
   document.getElementById("copy-voiceover").addEventListener("click", copyVoiceover);
 
   document.getElementById("sc-notes-save").addEventListener("click", async () => {
+    const btn = document.getElementById("sc-notes-save");
     const notes = document.getElementById("sc-notes").value;
     const status = document.getElementById("sc-notes-status");
+    const orig = btn.textContent;
+    btn.textContent = "Saving...";
+    btn.disabled = true;
+    status.style.color = "";
     try {
       await json(`${api}/projects/${s}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes }) });
-      status.textContent = "Saved!";
-      setTimeout(() => { status.textContent = ""; }, 2000);
-    } catch (err) { status.textContent = "Error: " + err.message; }
+      status.textContent = "✓ Saved";
+      status.style.color = "var(--accent)";
+      btn.textContent = orig;
+      btn.disabled = false;
+      setTimeout(() => { status.textContent = ""; }, 4000);
+    } catch (err) {
+      status.textContent = "✗ Error: " + err.message;
+      status.style.color = "var(--danger)";
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
   });
 
   const prov = document.getElementById("sc-provider");

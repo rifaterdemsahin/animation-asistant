@@ -35,13 +35,26 @@ document.addEventListener("layout:ready", function () {
   }).catch(function () {});
 
   el("at-notes-save").addEventListener("click", async function () {
+    var btn = el("at-notes-save");
     var notes = el("at-notes").value;
     var status = el("at-notes-status");
+    var orig = btn.textContent;
+    btn.textContent = "Saving...";
+    btn.disabled = true;
+    status.style.color = "";
     try {
       await json(api + "/projects/" + s, { method: "PUT", body: JSON.stringify({ notes: notes }) });
-      status.textContent = "Saved!";
-      setTimeout(function () { status.textContent = ""; }, 2000);
-    } catch (err) { status.textContent = "Error: " + err.message; }
+      status.textContent = "✓ Saved";
+      status.style.color = "var(--accent)";
+      btn.textContent = orig;
+      btn.disabled = false;
+      setTimeout(function () { status.textContent = ""; }, 4000);
+    } catch (err) {
+      status.textContent = "✗ Error: " + err.message;
+      status.style.color = "var(--danger)";
+      btn.textContent = orig;
+      btn.disabled = false;
+    }
   });
 
   el("show-vo-prompt").addEventListener("click", function () {
