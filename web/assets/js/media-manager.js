@@ -388,6 +388,8 @@ document.addEventListener("layout:ready", function () {
       if (p.answer) ctx.push("Solution: " + p.answer);
       if (p.why) ctx.push("Why: " + p.why);
       document.getElementById("prompt-context").textContent = ctx.length ? ctx.join(" | ") : "No Q&A metadata — edit on Projects page.";
+      const notesEl = document.getElementById("mm-notes");
+      if (notesEl) notesEl.value = p.notes || "";
       return p;
     } catch { return null; }
   }
@@ -599,6 +601,16 @@ document.addEventListener("layout:ready", function () {
   document.getElementById("gen-script").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { beatsByAct = {}; await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadScript(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("gen-components").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadComponents(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("refresh-files").addEventListener("click", function () { loadBrowse(); });
+
+  document.getElementById("mm-notes-save").addEventListener("click", async function () {
+    var notes = document.getElementById("mm-notes").value;
+    var status = document.getElementById("mm-notes-status");
+    try {
+      await j(api + "/projects/" + s, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes: notes }) });
+      status.textContent = "Saved!";
+      setTimeout(function () { status.textContent = ""; }, 2000);
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
 
   loadModels(); loadStoryboardImg(); loadOutline(); loadScript(); loadComponents(); loadVoiceover(); loadMusic(); loadSFX(); loadBrowse();
 });

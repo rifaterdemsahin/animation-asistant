@@ -33,6 +33,7 @@ type Project struct {
 	Answer            string               `json:"answer,omitempty"`
 	Why               string               `json:"why,omitempty"`
 	Tasks             []TaskItem           `json:"tasks,omitempty"`
+	Notes             string               `json:"notes,omitempty"`
 	ActNotes          map[string]string    `json:"act_notes,omitempty"`
 	StoryboardPrompts map[string]string    `json:"storyboard_prompts,omitempty"`
 	Status            string               `json:"status"`
@@ -75,6 +76,7 @@ type projectUpdate struct {
 	Why           *string            `json:"why"`
 	Status        *string            `json:"status"`
 	Tasks         *[]TaskItem        `json:"tasks"`
+	Notes         *string            `json:"notes"`
 	ActNotes      *map[string]string `json:"act_notes"`
 }
 
@@ -465,6 +467,9 @@ func (a *App) updateProject(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Status != nil {
 		existing.Status = validStatus(*in.Status)
+	}
+	if in.Notes != nil {
+		existing.Notes = *in.Notes
 	}
 	if in.Tasks != nil {
 		existing.Tasks = *in.Tasks

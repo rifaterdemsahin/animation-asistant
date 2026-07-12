@@ -28,6 +28,22 @@ document.addEventListener("layout:ready", function () {
   el("at-title").textContent = cur.title + " (" + s + ")";
   el("at-status").textContent = cur.project_id || cur.slug;
 
+  // Load project notes
+  json(api + "/projects/" + s).then(function (p) {
+    var notesEl = el("at-notes");
+    if (notesEl) notesEl.value = p.notes || "";
+  }).catch(function () {});
+
+  el("at-notes-save").addEventListener("click", async function () {
+    var notes = el("at-notes").value;
+    var status = el("at-notes-status");
+    try {
+      await json(api + "/projects/" + s, { method: "PUT", body: JSON.stringify({ notes: notes }) });
+      status.textContent = "Saved!";
+      setTimeout(function () { status.textContent = ""; }, 2000);
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+
   el("show-vo-prompt").addEventListener("click", function () {
     var pre = el("vo-prompt");
     if (pre.classList.contains("hidden")) {

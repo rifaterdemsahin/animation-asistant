@@ -520,6 +520,10 @@ function buildEditModal(p) {
         ${tasksHTML}
       </div>
       <div class="section">
+        <h3>Notes</h3>
+        <textarea name="notes" rows="4" placeholder="General project notes..." style="width:100%">${escapeHtml(p.notes || "")}</textarea>
+      </div>
+      <div class="section">
         <h3>Act Notes</h3>
         ${actNotesHTML}
       </div>
@@ -578,6 +582,7 @@ async function editProject(p) {
       });
     }
 
+    const notes = modal.querySelector('[name="notes"]').value;
     const actNotes = {};
     for (const key of ["act-1", "act-2", "act-3"]) {
       const ta = modal.querySelector(`[name="act_note_${key}"]`);
@@ -594,7 +599,7 @@ async function editProject(p) {
           status,
           question, answer, why,
           canva_link: canvaLink || null,
-          tasks, act_notes: actNotes,
+          tasks, notes, act_notes: actNotes,
         }),
       });
       modal.remove();

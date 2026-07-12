@@ -47,6 +47,8 @@ async function loadProjectMeta() {
     document.getElementById("qa-why").value = p.why || "";
     document.getElementById("qa-topic").textContent = "topic: " + (p.topic || p.title || "(untitled)");
     storyboardPrompts = p.storyboard_prompts || {};
+    const notesEl = document.getElementById("sc-notes");
+    if (notesEl) notesEl.value = p.notes || "";
     return p;
   } catch (err) {
     document.getElementById("sc-status").textContent = "Failed to load project: " + err.message;
@@ -386,6 +388,17 @@ document.addEventListener("layout:ready", async () => {
   document.getElementById("generate-prompt").addEventListener("click", generatePrompt);
   document.getElementById("execute-prompt").addEventListener("click", executePrompt);
   document.getElementById("copy-voiceover").addEventListener("click", copyVoiceover);
+
+  document.getElementById("sc-notes-save").addEventListener("click", async () => {
+    const notes = document.getElementById("sc-notes").value;
+    const status = document.getElementById("sc-notes-status");
+    try {
+      await json(`${api}/projects/${s}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes }) });
+      status.textContent = "Saved!";
+      setTimeout(() => { status.textContent = ""; }, 2000);
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+
   const prov = document.getElementById("sc-provider");
   if (prov) prov.addEventListener("change", refreshProviderUI);
 });

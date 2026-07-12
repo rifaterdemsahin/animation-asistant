@@ -161,6 +161,8 @@ async function loadProjectMeta() {
     document.getElementById("qa-answer").value = answer;
     document.getElementById("qa-why").value = why;
     document.getElementById("qa-topic").textContent = "topic: " + (p.topic || p.title || "(untitled)");
+    const notesEl = document.getElementById("sb-notes");
+    if (notesEl) notesEl.value = p.notes || "";
     return p;
   } catch (err) {
     document.getElementById("prompt-status").textContent = "Failed to load project metadata: " + err.message;
@@ -286,6 +288,16 @@ document.addEventListener("layout:ready", async () => {
 
   document.getElementById("generate-prompt").addEventListener("click", generatePrompt);
   document.getElementById("execute-prompt").addEventListener("click", executePrompt);
+
+  document.getElementById("sb-notes-save").addEventListener("click", async () => {
+    const notes = document.getElementById("sb-notes").value;
+    const status = document.getElementById("sb-notes-status");
+    try {
+      await json(`${api}/projects/${s}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes }) });
+      status.textContent = "Saved!";
+      setTimeout(() => { status.textContent = ""; }, 2000);
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
 
   loadStoryboard().then(() => {
     if (document.querySelector("#sb-image-wrap img") || document.querySelector("#sb-image-wrap .panel")) {
