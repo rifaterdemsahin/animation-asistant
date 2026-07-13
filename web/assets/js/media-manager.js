@@ -77,14 +77,20 @@ function renderSpriteVersions(versions) {
   var out = document.getElementById("sprite-img-out"); out.innerHTML = "";
   if (!versions || !versions.length) { out.innerHTML = "<p class='muted'>No sprite sheet yet — generate concepts, then generate the sheet.</p>"; return; }
   var latest = versions[versions.length - 1];
+  var url = api + "/projects/" + pid() + "/raw/" + latest.file;
   var img = document.createElement("img");
-  img.src = api + "/projects/" + pid() + "/raw/" + latest.file;
+  img.src = url;
   img.alt = "sprite sheet";
   img.style.maxWidth = "100%"; img.style.borderRadius = "8px"; img.style.border = "1px solid var(--border)";
   out.append(img);
-  var meta = document.createElement("p"); meta.className = "muted"; meta.style.fontSize = "12px";
+  var row = document.createElement("div"); row.className = "row"; row.style.marginTop = "6px"; row.style.gap = "8px";
+  var meta = document.createElement("span"); meta.className = "muted"; meta.style.fontSize = "12px";
   meta.textContent = "v" + latest.id + " · " + latest.file;
-  out.append(meta);
+  var copyBtn = document.createElement("button"); copyBtn.className = "btn"; copyBtn.type = "button";
+  copyBtn.textContent = "📋 Copy Image";
+  copyBtn.addEventListener("click", function (e) { copyAsset({ type: "image", url: url, path: latest.file }, e.currentTarget); });
+  row.append(meta, copyBtn);
+  out.append(row);
 }
 async function loadSprite() {
   try {
