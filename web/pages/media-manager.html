@@ -80,7 +80,22 @@
       </section>
 
       <section class="panel">
-        <h2>🖼️ 3. Components (typed images) <span id="mb-components" class="model-badge"></span></h2>
+        <h2>🧩 3. Sprite Generator <span id="mb-sprite" class="model-badge"></span></h2>
+        <p class="muted">Extracts 14 icon concepts from the generated script, then generates one technical sprite sheet with all 14 icons in a grid.</p>
+        <div class="row">
+          <button id="sprite-concepts-btn" class="btn">📋 Generate concepts from script</button>
+          <button id="sprite-preview-btn" class="btn">👁️ Preview Concepts</button>
+          <button id="sprite-show-btn" class="btn">👁️ Prompt Visualiser</button>
+          <button id="sprite-gen-btn" class="btn primary">⚡ Generate Sprite Sheet</button>
+          <span id="sprite-status" class="muted" style="font-size:13px"></span>
+        </div>
+        <pre id="sprite-concepts-out" class="out hidden" style="font-size:12px;max-height:160px;overflow:auto"></pre>
+        <pre id="sprite-prompt" class="out hidden muted" style="font-size:11px;max-height:260px;overflow:auto"></pre>
+        <div id="sprite-img-out" style="margin-top:10px"></div>
+      </section>
+
+      <section class="panel">
+        <h2>🖼️ 4. Components (typed images) <span id="mb-components" class="model-badge"></span></h2>
         <p class="muted">Each component has its own prompt + Generate button. Use <strong>Generate all components</strong> to bulk-create every type for the selected acts.</p>
         <div class="row">
           <button id="gen-components" class="btn primary">⚡ Generate all components</button>
@@ -90,7 +105,7 @@
       </section>
 
       <section class="panel">
-        <h2>🎧 4. Audio <span class="badge">3 types</span></h2>
+        <h2>🎧 5. Audio <span class="badge">3 types</span></h2>
         <p class="muted">Three independent audio layers per act — each with 👁️ Show Prompt (raw template), ⚡ Generate Prompt (rendered with project context), and 🚀 Execute (run generation). Uses the act checkboxes in §2.</p>
 
         <div class="audio-block">

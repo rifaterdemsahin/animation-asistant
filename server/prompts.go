@@ -54,6 +54,15 @@ type audioPrompt struct {
 	SfxTypes     []sfxType `json:"sfx_types"`
 }
 
+// spritePrompt drives the Sprite Generator step: a text call extracts 14 icon
+// concepts from the project's script, then an image call renders those
+// concepts into a single 14-icon technical sprite sheet.
+type spritePrompt struct {
+	ConceptsSystem string `json:"concepts_system"`
+	ConceptsUser   string `json:"concepts_user"`
+	ImagePrompt    string `json:"image_prompt"`
+}
+
 type storyboardPrompt struct {
 	System     string            `json:"system"`
 	User       string            `json:"user"`
@@ -151,6 +160,7 @@ var promptDescriptors = []PromptDescriptor{
 	{ID: "outline", Title: "Outline (project-level)", Description: "Generates the 3-act outline JSON (title, logline, act summaries).", Variables: []string{"topic", "component_type"}},
 	{ID: "script", Title: "Script (per act)", Description: "Writes one act's narration + visual beats.", Variables: []string{"topic", "act_key", "act_role", "summary", "purpose", "storyboard_prompts"}},
 	{ID: "components", Title: "Components (typed images)", Description: "Per-act component images. Edit default_types, the styles map, and image_prompt.", Variables: []string{"style", "beat", "topic"}},
+	{ID: "sprite", Title: "Sprite Generator (14-icon sheet)", Description: "Extracts 14 icon concepts from the script (text call), then renders one 14-icon technical sprite sheet (image call).", Variables: []string{"topic", "script", "concepts"}},
 	{ID: "audio", Title: "Audio (music + SFX)", Description: "fal.ai background music + sound-effect prompts.", Variables: []string{"genre", "mood", "act_role", "topic", "desc"}},
 	{ID: "storyboard", Title: "Storyboard (assembly + per-act images)", Description: "Assembles scenes (JSON) and generates one storyboard image per act (3 total).", Variables: []string{"context", "topic", "question", "answer", "why", "act_key", "act_title", "act_role", "act_summary", "act_script"}},
 }
@@ -170,6 +180,7 @@ type promptDefaults struct {
 	Outline    outlinePrompt
 	Script     scriptPrompt
 	Components componentsPrompt
+	Sprite     spritePrompt
 	Audio      audioPrompt
 	Storyboard storyboardPrompt
 }
@@ -232,6 +243,32 @@ Return a single JSON object with this exact shape:
 			},
 			ImagePrompt: "{{style}}. Illustrate this idea: {{beat}}. Topic: {{topic}}. Flat vector, clean, consistent style.",
 		},
+		Sprite: spritePrompt{
+			ConceptsSystem: "You analyze an animated explainer video's script and extract concrete visual concepts suitable for a technical icon sprite sheet. Return JSON only, no markdown.",
+			ConceptsUser: `Topic: {{topic}}
+
+Script content:
+{{script}}
+
+Extract exactly 14 distinct concepts from this script that would each make a good individual technical icon (a specific mechanism, tool, step, or metaphor mentioned in the narration or beats). Return JSON with this exact shape:
+{"concepts":["Concept Label 1","Concept Label 2", "...14 total"]}
+Each label must be short (1-4 words), concrete, and easy for an illustrator to draw as a single icon. JSON only.`,
+			ImagePrompt: `Create a clean, technical sprite sheet image containing exactly 14 individual vector-style graphic icons, arranged in a neat grid (e.g., 4 columns by 4 rows or similar balanced layout).
+
+[DESIGN STYLE & AESTHETIC]
+- Style: Crisp, modern tech-illustration with a distinct "pixel-art/sprite-sheet" look.
+- Linework: Clean, defined black or dark-gray outlines for high visibility.
+- Palette: Professional and vibrant tech color scheme (cool blues, teals, grays, and accents of greens and yellows).
+- Background: A subtle, light-gray blueprint grid or graph paper pattern to reinforce the technical/architectural theme.
+
+[STRUCTURE & LAYOUT]
+- Each icon must be a distinct, self-contained graphic illustrating a specific technical concept.
+- Place a clear, centered text label directly beneath every single icon using a clean, sans-serif font.
+- Maintain consistent spacing, scale, and lighting across all sprites so they look like a unified UI asset kit.
+
+[THE 14 GRAPHIC CONCEPTS TO INCLUDE]
+{{concepts}}`,
+		},
 		Audio: audioPrompt{
 			MusicPrompt:  "{{genre}} {{mood}} background music for a {{act_role}} act in an explainer video about: {{topic}}. 30 seconds, seamless loop.",
 			DefaultGenre: "cinematic",
@@ -267,6 +304,7 @@ func defaultPromptJSON() map[string]string {
 		"outline":    marshal(d.Outline),
 		"script":     marshal(d.Script),
 		"components": marshal(d.Components),
+		"sprite":     marshal(d.Sprite),
 		"audio":      marshal(d.Audio),
 		"storyboard": marshal(d.Storyboard),
 	}
@@ -580,6 +618,22 @@ func (a *App) componentsTmpl() (map[string]string, []string, string) {
 		v.ImagePrompt = d.ImagePrompt
 	}
 	return v.Styles, v.DefaultTypes, v.ImagePrompt
+}
+
+// spriteTmpl returns (conceptsSystem, conceptsUser, imagePrompt) for the sprite generator.
+func (a *App) spriteTmpl() (string, string, string) {
+	d := defaultPromptValues().Sprite
+	v := parseOr(a.promptRaw("sprite"), d)
+	if v.ConceptsSystem == "" {
+		v.ConceptsSystem = d.ConceptsSystem
+	}
+	if v.ConceptsUser == "" {
+		v.ConceptsUser = d.ConceptsUser
+	}
+	if v.ImagePrompt == "" {
+		v.ImagePrompt = d.ImagePrompt
+	}
+	return v.ConceptsSystem, v.ConceptsUser, v.ImagePrompt
 }
 
 // musicTmpl returns (musicPrompt, defaultGenre, defaultMood).

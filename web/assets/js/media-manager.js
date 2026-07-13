@@ -57,6 +57,44 @@ var compTmpl = null;     // components prompt template: {default_types, styles, 
 var beatsByAct = {};     // actKey -> [beat text,...] from the latest script version
 var compTopic = "";
 
+// --- Sprite Generator: 14 icon concepts (from script) -> 14-icon sprite sheet ---
+var spriteTmpl = null;      // {concepts_system, concepts_user, image_prompt}
+var spriteConcepts = [];    // cached list of 14 concept labels
+
+async function ensureSpriteTmpl() {
+  if (spriteTmpl) return spriteTmpl;
+  try { var r = await j(api + "/prompts/sprite"); spriteTmpl = JSON.parse(r.raw); } catch { spriteTmpl = null; }
+  return spriteTmpl;
+}
+function formatConceptListJS(concepts) { return concepts.map(function (c, i) { return (i + 1) + ". " + c; }).join("\n"); }
+
+function renderSpriteConcepts(concepts) {
+  var pre = document.getElementById("sprite-concepts-out");
+  if (concepts && concepts.length) { pre.textContent = formatConceptListJS(concepts); pre.classList.remove("hidden"); }
+  else { pre.textContent = ""; pre.classList.add("hidden"); }
+}
+function renderSpriteVersions(versions) {
+  var out = document.getElementById("sprite-img-out"); out.innerHTML = "";
+  if (!versions || !versions.length) { out.innerHTML = "<p class='muted'>No sprite sheet yet — generate concepts, then generate the sheet.</p>"; return; }
+  var latest = versions[versions.length - 1];
+  var img = document.createElement("img");
+  img.src = api + "/projects/" + pid() + "/raw/" + latest.file;
+  img.alt = "sprite sheet";
+  img.style.maxWidth = "100%"; img.style.borderRadius = "8px"; img.style.border = "1px solid var(--border)";
+  out.append(img);
+  var meta = document.createElement("p"); meta.className = "muted"; meta.style.fontSize = "12px";
+  meta.textContent = "v" + latest.id + " · " + latest.file;
+  out.append(meta);
+}
+async function loadSprite() {
+  try {
+    var r = await j(api + "/projects/" + pid() + "/sprite");
+    spriteConcepts = r.concepts || [];
+    renderSpriteConcepts(spriteConcepts);
+    renderSpriteVersions(r.versions || []);
+  } catch {}
+}
+
 function renderCompPrompt(tmpl, style, beat, topic) {
   return (tmpl || "{{style}}. Illustrate this idea: {{beat}}. Topic: {{topic}}. Flat vector, clean, consistent style.")
     .replace(/\{\{style\}\}/g, style)
@@ -160,6 +198,7 @@ async function loadModels() {
     set("mb-outline", models.text);
     set("mb-script", models.text);
     set("mb-components", models.image);
+    set("mb-sprite", models.image);
     set("mb-storyboard", models.storyboard_image);
     if (models.voiceover) {
       var v = models.voiceover.voice === "JBFqnCBsd6RMkjVDRZzb" ? "George" : (models.voiceover.voice || "");
@@ -599,6 +638,58 @@ document.addEventListener("layout:ready", function () {
 
   document.getElementById("gen-outline").addEventListener("click", async function (e) { var b = e.currentTarget; loading(b, true); try { var r = await j(api + "/projects/" + s + "/outline", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }); document.getElementById("outline-out").textContent = JSON.stringify(r.outline, null, 2); document.getElementById("outline-out").classList.remove("hidden"); document.getElementById("outline-state").textContent = "✅ ready"; } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("gen-script").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { beatsByAct = {}; await j(api + "/projects/" + s + "/script", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadScript(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
+  document.getElementById("sprite-concepts-btn").addEventListener("click", async function (e) {
+    var b = e.currentTarget; var status = document.getElementById("sprite-status");
+    loading(b, true); status.textContent = "Extracting 14 concepts from script…";
+    try {
+      var r = await j(api + "/projects/" + s + "/sprite/concepts", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      spriteConcepts = r.concepts || [];
+      renderSpriteConcepts(spriteConcepts);
+      status.textContent = spriteConcepts.length + " concepts extracted.";
+    } catch (err) { status.textContent = "Error: " + err.message; }
+    finally { loading(b, false); }
+  });
+
+  document.getElementById("sprite-preview-btn").addEventListener("click", async function () {
+    var pre = document.getElementById("sprite-concepts-out");
+    var status = document.getElementById("sprite-status");
+    if (!pre.classList.contains("hidden")) { pre.classList.add("hidden"); return; }
+    try {
+      var r = await j(api + "/projects/" + s + "/sprite/concepts");
+      spriteConcepts = r.concepts || [];
+      if (!spriteConcepts.length) { status.textContent = "No concepts yet — click “Generate concepts from script” first."; return; }
+      renderSpriteConcepts(spriteConcepts);
+      status.textContent = "Previewing " + spriteConcepts.length + " stored concepts.";
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+
+  document.getElementById("sprite-show-btn").addEventListener("click", async function () {
+    var pre = document.getElementById("sprite-prompt");
+    if (!pre.classList.contains("hidden")) { pre.classList.add("hidden"); return; }
+    var status = document.getElementById("sprite-status");
+    try {
+      var t = await ensureSpriteTmpl();
+      if (!spriteConcepts.length) { var r = await j(api + "/projects/" + s + "/sprite/concepts"); spriteConcepts = r.concepts || []; }
+      await ensureTopic();
+      var tmpl = (t && t.image_prompt) || "";
+      var text = spriteConcepts.length
+        ? renderTmplJS(tmpl, { concepts: formatConceptListJS(spriteConcepts), topic: compTopic })
+        : tmpl.replace(/\{\{concepts\}\}/g, "(no concepts yet — click “Generate concepts from script” first)").replace(/\{\{topic\}\}/g, compTopic || "");
+      pre.textContent = text; pre.classList.remove("hidden");
+    } catch (err) { status.textContent = "Error: " + err.message; }
+  });
+
+  document.getElementById("sprite-gen-btn").addEventListener("click", async function (e) {
+    var b = e.currentTarget; var status = document.getElementById("sprite-status");
+    loading(b, true); status.textContent = "Generating sprite sheet…";
+    try {
+      await j(api + "/projects/" + s + "/sprite", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      await loadSprite();
+      status.textContent = "Sprite sheet generated.";
+    } catch (err) { status.textContent = "Error: " + err.message; }
+    finally { loading(b, false); }
+  });
+
   document.getElementById("gen-components").addEventListener("click", async function (e) { var b = e.currentTarget; var a = acts(); if (!a.length) { alert("Select at least one act."); return; } loading(b, true); try { await j(api + "/projects/" + s + "/components", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ acts: a }) }); await loadComponents(); } catch (err) { alert(err.message); } finally { loading(b, false); } });
   document.getElementById("refresh-files").addEventListener("click", function () { loadBrowse(); });
 
@@ -625,5 +716,5 @@ document.addEventListener("layout:ready", function () {
     }
   });
 
-  loadModels(); loadStoryboardImg(); loadOutline(); loadScript(); loadComponents(); loadVoiceover(); loadMusic(); loadSFX(); loadBrowse();
+  loadModels(); loadStoryboardImg(); loadOutline(); loadScript(); loadSprite(); loadComponents(); loadVoiceover(); loadMusic(); loadSFX(); loadBrowse();
 });
