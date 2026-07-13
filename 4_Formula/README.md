@@ -23,6 +23,7 @@ system and a reference for future changes.
 | 10 | [Gemini Direct vs OpenRouter](10-gemini-direct-vs-openrouter-cost.md) | Cost comparison: Gemini direct API vs OpenRouter |
 | 11 | [Storyboard Pipeline Estimate](11-storyboard-cost-and-pipeline-estimate.md) | End-to-end storyboard cost and pipeline projections |
 | 12 | [Checking Missing Scripts](12-checking-missing-scripts.md) | Formula and API for identifying projects without scripts |
+| 16 | [Sprite Generator](16-sprite-generator.md) | 14-icon technical sprite sheet: concept extraction + image generation endpoints |
 
 ## Quick Reference
 

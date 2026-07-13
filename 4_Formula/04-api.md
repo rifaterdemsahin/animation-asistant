@@ -157,6 +157,49 @@ Get all generated act scripts.
 }
 ```
 
+### POST /api/projects/{slug}/sprite/concepts
+Extract exactly 14 icon concepts from the project's generated script via OpenRouter text model. Requires at least one act's script to already exist.
+```json
+// Response 200
+{"ok": true, "concepts": ["Chaotic Spreadsheet", "Conflicting Data", "...", "Bridge Of Light"]}  // 14 items
+
+// Response 400 (no script yet)
+{"error": true, "code": "script_required", "message": "No script content found — generate the Script (step 2) first."}
+```
+
+### GET /api/projects/{slug}/sprite/concepts
+Get the stored concept list (no generation, zero cost) — used to preview without regenerating.
+```json
+// Response 200
+{"concepts": ["Chaotic Spreadsheet", "..."]}  // null/absent if not yet generated
+```
+
+### POST /api/projects/{slug}/sprite
+Render the stored 14 concepts into the sprite-sheet image prompt and generate one 14-icon technical sprite sheet via OpenRouter image model. Versioned — never overwrites a prior sheet.
+```json
+// Response 200
+{
+  "ok": true,
+  "version": {
+    "id": 1,
+    "file": "sprite/sprite-sheet-01.png",
+    "prompt": "Create a clean, technical sprite sheet image containing exactly 14...",
+    "concepts": ["Chaotic Spreadsheet", "..."],
+    "created_at": "2026-07-13T10:40:51Z"
+  }
+}
+
+// Response 400 (no concepts yet)
+{"error": true, "code": "concepts_required", "message": "Generate the 14 concepts from the script first."}
+```
+
+### GET /api/projects/{slug}/sprite
+Get the full sprite manifest: stored concepts + version history.
+```json
+// Response 200
+{"concepts": ["Chaotic Spreadsheet", "..."], "versions": [{"id": 1, "file": "sprite/sprite-sheet-01.png", "prompt": "...", "concepts": [...], "created_at": "..."}]}
+```
+
 ### POST /api/projects/{slug}/components
 Generate typed component images per act via OpenRouter image model.
 ```json

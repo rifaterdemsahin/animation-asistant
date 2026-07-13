@@ -162,6 +162,34 @@ Per-act typed component manifest:
 | `transition` | Animated connecting element between beats | `<slug>-transition-NN.png` |
 | *(extensible)* | New types can be added without pipeline changes | |
 
+## Sprite Generator (`sprite/sprite.json`)
+
+Project-level 14-icon technical sprite sheet. Concepts are extracted from the
+script via a text call; the image is generated from those concepts:
+
+```json
+{
+  "concepts": [
+    "Chaotic Spreadsheet", "Conflicting Data", "Disconnected Tools", "Central Hub",
+    "Database Icon", "CRM Connector", "ERP Connector", "Digital Highway",
+    "Data Chaos", "Data Stream", "Lightbulb Innovation", "Gear Adaptation",
+    "Shield Resilience", "Bridge Of Light"
+  ],
+  "versions": [
+    {
+      "id": 1,
+      "file": "sprite/sprite-sheet-01.png",
+      "prompt": "Create a clean, technical sprite sheet image containing exactly 14...",
+      "concepts": ["Chaotic Spreadsheet", "..."],
+      "created_at": "2026-07-13T10:40:51Z"
+    }
+  ]
+}
+```
+
+Versioned like storyboard images — monotonic IDs, never overwrites a prior
+sheet. See [16-sprite-generator.md](16-sprite-generator.md) for the full spec.
+
 ## Audio
 
 Per-act audio files:
@@ -287,6 +315,9 @@ Generate a script for {{topic}}...
 │   └── ... (same structure)
 ├── act-3-lesson/
 │   └── ... (same structure)
+├── sprite/
+│   ├── sprite.json           # {concepts: [...14], versions: [...]}
+│   └── sprite-sheet-01.png
 └── storyboard/
     ├── storyboard.json
     ├── versions.json

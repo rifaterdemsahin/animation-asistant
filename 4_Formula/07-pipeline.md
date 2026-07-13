@@ -39,6 +39,23 @@ Phase 2: Script (per act)
     │    → Saves prompt audit: prompts/<ts>-<act>-script.json
     │
     ▼
+Phase 2.5: Sprite Generator (project-level, optional, independent branch)
+    │
+    │  POST /api/projects/{slug}/sprite/concepts
+    │    → Reads every act's <act-slug>/script/act.md
+    │    → Renders: {{topic}}, {{script}}
+    │    → Chat: OpenRouter → text model
+    │    → Extracts JSON: {concepts: [14 short labels]}
+    │    → Stores: sprite/sprite.json (concepts)
+    │    → Saves prompt audit: prompts/<ts>-sprite-sprite-concepts.json
+    │
+    │  POST /api/projects/{slug}/sprite
+    │    → Renders image_prompt: {{concepts}} (numbered list), {{topic}}
+    │    → Generate image: OpenRouter → google/gemini-3-pro-image
+    │    → Stores: sprite/sprite-sheet-NN.png (versioned, never overwrites)
+    │    → Saves prompt audit: prompts/<ts>-sprite-sprite-sheet.json
+    │
+    ▼
 Phase 3: Components (per act × type)
     │
     │  POST /api/projects/{slug}/components  {acts: [...], types: [...]}
@@ -150,6 +167,8 @@ savePromptMsg(slug, act, step, msgs []orMessage)
 |------|---------|----------|
 | Outline | `generateOutline` | `prompts/<ts>-outline-outline.json` |
 | Script (per act) | `generateAct` | `prompts/<ts>-<act>-script.json` |
+| Sprite concepts | `generateSpriteConcepts` | `prompts/<ts>-sprite-sprite-concepts.json` |
+| Sprite sheet image | `generateSprite` | `prompts/<ts>-sprite-sprite-sheet.json` |
 | Components (per type) | `generateComponents` | `prompts/<ts>-<act>-component-<type>.json` |
 | Voiceover TTS | `generateAudio` | (implicit via narration text) |
 | Music | `generateMusic` | `prompts/<ts>-<act>-music.json` |
@@ -181,6 +200,7 @@ renderTmpl(template, vars) → interpolated prompt string
 | `outline` | `outline_system`, `outline_user` | `{{topic}}`, `{{component_type}}` |
 | `script` | `script_system`, `script_user` | `{{topic}}`, `{{act_key}}`, `{{act_role}}`, `{{summary}}`, `{{purpose}}`, `{{storyboard_prompts}}` |
 | `components` | Styles map + `components_image` | `{{style}}`, `{{beat}}`, `{{topic}}` |
+| `sprite` | `concepts_system`, `concepts_user`, `image_prompt` | `{{topic}}`, `{{script}}`, `{{concepts}}` |
 | `audio_music` | Template + defaults for genre/mood | `{{genre}}`, `{{mood}}`, `{{act_role}}`, `{{topic}}` |
 | `audio_sfx` | Template + SFX type list | `{{desc}}` |
 | `storyboard` | `storyboard_system`, `storyboard_user` + per-act templates | `{{context}}`, `{{topic}}`, `{{question}}`, `{{answer}}`, `{{why}}`, `{{act_key}}`, `{{act_title}}`, `{{act_role}}`, `{{act_summary}}`, `{{act_script}}` |

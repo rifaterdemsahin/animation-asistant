@@ -12,7 +12,7 @@ and `<script src="/assets/js/debug.js">`.
 | Projects | `web/pages/projects.html` | List, create, delete projects |
 | Storyboard | `web/pages/storyboard.html` | Generate storyboard JSON + per-act images (editable prompts) |
 | Script | `web/pages/script-page.html` | View/regenerate per-act scripts |
-| Media Manager | `web/pages/media-manager.html` | Full pipeline: outline → script → components → audio |
+| Media Manager | `web/pages/media-manager.html` | Full pipeline: outline → script → sprite generator → components → audio |
 | Audio | `web/pages/audio.html` | Voiceover, music, SFX generation per act |
 | Create | `web/pages/create.html` | New project: Q&A input, single/bulk mode |
 | Test | `web/pages/test.html` | Hit all API endpoints for testing |
